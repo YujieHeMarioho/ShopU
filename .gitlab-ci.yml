@@ -25,7 +25,7 @@ stages:          # List of stages for jobs, and their order of execution
 job_medium:
   stage: pre-build
   tags:
-    - saas-linux-medium-amd64
+    - docker-runner
   script:
     - echo "This job runs on the medium Linux x86-64 instance"
 
