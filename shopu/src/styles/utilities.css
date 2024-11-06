@@ -1,0 +1,24 @@
+/* styles/utilities.css */
+
+/* Flexbox */
+.flex {
+    display: flex;
+}
+
+.flex-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Text */
+.text-center {
+    text-align: center;
+}
+
+/* Spacing */
+.m-0 { margin: 0; }
+.mt-1 { margin-top: var(--padding-small); }
+.mb-2 { margin-bottom: var(--padding-medium); }
+.p-1 { padding: var(--padding-small); }
+.p-2 { padding: var(--padding-medium); }

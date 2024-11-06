@@ -44,36 +44,38 @@ img {
   width: 100%;
   height: auto;
 }
+
 input:focus, textarea:focus, select:focus {
   outline: none;
 }
 
 @media (min-width:1700px) {
-	main .container {
-		max-width: 100%;
-		padding: 0 150px;
-	}
+  main .container {
+    max-width: 100%;
+    padding: 0 150px;
+  }
 }
 
+/************ Navbar ************/
 nav.navbar {
   padding: 18px 0;
   position: fixed;
   width: 100%;
   top: 0;
   z-index: 9999;
-  transition: 0.32 ease-in-out;
+  transition: 0.32s ease-in-out;
 }
 
-nav.navbar.scrolled{
+nav.navbar.scrolled {
   padding: 0px 0;
   background-color: #121212;
 }
 
-nav.navbar a.navbar-brand{
+nav.navbar a.navbar-brand {
   width: 9%;
 }
 
-nav.navbar .navbar-nav .nav-link.navbar-link{
+nav.navbar .navbar-nav .nav-link.navbar-link {
   font-weight: 400;
   color: #fff !important;
   letter-spacing: 0.8px;
@@ -83,21 +85,21 @@ nav.navbar .navbar-nav .nav-link.navbar-link{
 }
 
 nav.navbar .navbar-nav a.nav-link.navbar-link:hover,
-nav.navbar .navbar-nav a.nav-link.navbar-link:active{
+nav.navbar .navbar-nav a.nav-link.navbar-link:active {
   opacity: 1;
 }
 
-span.navbar-text{
+span.navbar-text {
   display: flex;
   align-items: center;
 }
 
-.social-icon{
+.social-icon {
   display: inline-block;
   margin-left: 14px;
 }
 
-.social-icon a{
+.social-icon a {
   width: 42px;
   height: 42px;
   background: rgba(217, 217, 217, 0.1);
@@ -110,8 +112,8 @@ span.navbar-text{
   border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
-.social-icon a::before{
-  content:"";
+.social-icon a::before {
+  content: "";
   width: 42px;
   height: 42px;
   position: absolute;
@@ -121,23 +123,23 @@ span.navbar-text{
   transition: 0.3s ease-in-out;
 }
 
-.social-icon a:hover::before{
+.social-icon a:hover::before {
   transform: scale(1);
 }
 
-.social-icon a img{
+.social-icon a img {
   width: 40%;
   z-index: 1;
   transition: 0.3s ease-in-out;
 }
 
-.social-icon a:hover img{
+.social-icon a:hover img {
   filter: brightness(0) saturate(100%) invert(0%) sepia(7%) saturate(9%) hue-rotate(346deg);
 }
 
-.navbar-text button{
+.navbar-text button {
   font-weight: 700;
-  color:#fff;
+  color: #fff;
   border: 1px solid #fff;
   padding: 18px 34px;
   font-size: 18px;
@@ -147,12 +149,12 @@ span.navbar-text{
   transition: 0.3s ease-in-out;
 }
 
-.navbar-text button span{
+.navbar-text button span {
   z-index: 1;
 }
 
-.navbar-text button::before{
-  content:"";
+.navbar-text button::before {
+  content: "";
   width: 0%;
   height: 100%;
   position: absolute;
@@ -163,11 +165,11 @@ span.navbar-text{
   transition: 0.3s ease-in-out;
 }
 
-.navbar-text button:hover{
-  color:#121212;
+.navbar-text button:hover {
+  color: #121212;
 }
 
-.navbar-text button:hover::before{
+.navbar-text button:hover::before {
   content: "";
   width: 100%;
   height: 100%;
@@ -183,7 +185,7 @@ span.navbar-text{
   opacity: 75%;
 }
 
-.user a{
+.user a {
   font-weight: 400;
   color: #58d5f5 !important;
   letter-spacing: 0.8px;
@@ -193,12 +195,12 @@ span.navbar-text{
 }
 
 nav.navbar .navbar-toggler:active,
-nav.navbar .navbar-toggler:focus{
+nav.navbar .navbar-toggler:focus {
   outline: none;
   box-shadow: none;
 }
 
-nav.navbar .navbar-toggler-icon{
+nav.navbar .navbar-toggler-icon {
   width: 24px;
   height: 17px;
   background-image: none;
@@ -208,12 +210,12 @@ nav.navbar .navbar-toggler-icon{
   top: -2px;
 }
 
-nav.navbar .navbar-toggler-icon:focus{
+nav.navbar .navbar-toggler-icon:focus {
   border-bottom: 2px solid #fff;
 }
 
 nav.navbar .navbar-toggler-icon::after,
-nav.navbar .navbar-toggler-icon::before{
+nav.navbar .navbar-toggler-icon::before {
   width: 24px;
   position: absolute;
   height: 2px;
@@ -225,24 +227,82 @@ nav.navbar .navbar-toggler-icon::before{
   transition: all 300ms linear;
 }
 
-nav.navbar .navbar-toggler-icon:after{
+nav.navbar .navbar-toggler-icon:after {
   top: 8px;
 }
 
-nav.navbar .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon:after{
+nav.navbar .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon:after {
   transform: rotate(45deg);
   background-color: #fff;
   height: 2px;
 }
 
-nav.navbar .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon:before{
+nav.navbar .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon:before {
   transform: translateY(8px) rotate(-45deg);
   background-color: #fff;
   height: 2px;
 }
 
-nav.navbar .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon{
+nav.navbar .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon {
   border-color: transparent;
+}
+
+/************ Sidebar ************/
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 250px;
+  height: 100vh;
+  background-color: #1a1a1a;
+  color: #fff;
+  padding-top: 50px;
+  transition: transform 0.3s ease-in-out;
+  z-index: 1000;
+}
+
+.sidebar.hidden {
+  transform: translateX(-100%);
+}
+
+.sidebar ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.sidebar ul li {
+  padding: 20px;
+  font-size: 18px;
+  text-align: left;
+}
+
+.sidebar ul li:hover {
+  background-color: #333;
+  cursor: pointer;
+}
+
+.sidebar ul li a {
+  color: #fff;
+  text-decoration: none;
+}
+
+.sidebar .close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  font-size: 30px;
+  color: #fff;
+  cursor: pointer;
+}
+
+/************ Content ************/
+.main-content {
+  margin-left: 250px; /* Sidebar width */
+  transition: margin-left 0.3s ease-in-out;
+}
+
+.main-content.shifted {
+  margin-left: 0;
 }
 
 /************ Banner Css ************/
@@ -270,6 +330,7 @@ nav.navbar .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon{
   line-height: 1.5em;
   width: 96%;
 }
+
 .banner button {
   color: #fff;
   font-weight: 700;
@@ -279,54 +340,14 @@ nav.navbar .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon{
   display: flex;
   align-items: center;
 }
+
 .banner button svg {
   font-size: 25px;
   margin-left: 10px;
   transition: 0.3s ease-in-out;
   line-height: 1;
 }
+
 .banner button:hover svg {
   margin-left: 25px;
-}
-
-
-
-
-.App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }
