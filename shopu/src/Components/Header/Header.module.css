@@ -1,0 +1,335 @@
+/* Header Wrapper */
+.headerWrapper {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+/* Main Header Layout */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f5f5f5; 
+    padding: var(--padding-medium);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Logo Container */
+.logoContainer {
+    display: flex;
+    align-items: center;
+}
+
+.logo {
+    height: 40px;
+    margin-right: var(--padding-small);
+}
+
+.brandName {
+    font-size: 1.5rem;
+    color: var(--primary-color);
+}
+
+/* Search Bar Styling */
+.searchContainer {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 var(--padding-medium);
+}
+
+.searchInput {
+    width: 60%;
+    padding: var(--padding-small);
+    border: 1px solid var(--text-color-light);
+    border-radius: 4px 0 0 4px;
+    outline: none;
+}
+
+.searchButton {
+    background-color: var(--primary-color);
+    border: none;
+    padding: var(--padding-small);
+    border-radius: 0 4px 4px 0;
+    cursor: pointer;
+}
+
+/* Cart and Sign-in/Out Icons */
+.iconContainer {
+    display: flex;
+    align-items: center;
+}
+
+.icon {
+    position: relative;
+    margin-left: var(--padding-medium);
+    cursor: pointer;
+    background-color: white;  /* Keep background white */
+    padding: 12px;
+    border-radius: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: black;  /* Keep icon color black */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Hover and Focus Effect */
+.icon:hover, .icon:focus {
+    background-color: var(--primary-color); /* Change background color on hover/focus */
+    transform: scale(1.05); /* Slightly scale up the icon */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15); /* More pronounced shadow */
+}
+
+/* Active state - when the button is pressed */
+.icon:active {
+    transform: scale(0.95); /* "Press" effect, scales the button down slightly */
+    background-color: var(--primary-color-dark); /* Darker shade when pressed */
+}
+
+/* Cart Count Badge */
+.cartCount {
+    position: absolute;
+    top: -5px;
+    right: -10px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    padding: 2px 5px;
+    font-size: 0.75rem;
+}
+
+/* Responsive Design for Accessibility */
+@media (max-width: 768px) {
+    .icon {
+        padding: 14px;
+        font-size: 1.25rem;
+    }
+
+    .cartCount {
+        font-size: 0.9rem;
+        top: -8px;
+        right: -12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .icon {
+        padding: 16px;
+    }
+
+    .cartCount {
+        font-size: 1rem;
+        top: -10px;
+        right: -14px;
+    }
+}
+
+
+
+.dropdown {
+    display: none;
+    position: absolute;
+    right: 0;
+    background-color: white;
+    border: 1px solid var(--text-color-light);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+}
+
+.icon:hover .dropdown {
+    display: block;
+}
+
+.dropdownMenu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.dropdownMenu li {
+    padding: var(--padding-small);
+}
+
+.dropdownMenu li a {
+    text-decoration: none;
+    color: var(--text-color);
+}
+
+.dropdownMenu li:hover {
+    background-color: var(--background-color-light);
+}
+
+/* Second layer styles for categories */
+.secondLayer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #ffffff; 
+    padding: var(--padding-medium);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    width: 100%;
+}
+
+/* Categories Button Style */
+.categoriesButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+}
+
+.categoriesButton .categoriesIcon {
+  margin-right: 8px; 
+}
+
+/* Active Link Style */
+.activeLink {
+    color: var(--primary-color) !important; /* Primary color for active links */
+    font-weight: bold; /* Optional: make it bold */
+}
+
+/* Links Container */
+.linksContainer {
+    display: flex;
+    align-items: center;
+    gap: var(--padding-large); /* More space between links */
+}
+
+.linksContainer a {
+    text-decoration: none;
+    color: var(--text-color);
+}
+
+.linksContainer a:hover {
+    text-decoration: underline;
+}
+
+/* Contact Us and Phone Number */
+.contactPhone {
+    display: flex;
+    align-items: center;
+    font-size: 1rem;
+    color: black; /* Set color to black */
+    margin-left: auto; /* Push the contact and phone number to the far right */
+}
+
+.contactPhone span {
+    margin-right: var(--padding-small); /* Space between 'Contact Us' and phone number */
+}
+
+/* Show this when user is signed out */
+.contactPhoneVisible {
+    display: flex;
+}
+
+/* Hide when signed in */
+.contactPhoneHidden {
+    display: none;
+}
+
+/* Sign In/Register Buttons */
+.signIn, .register {
+    margin-left: var(--padding-small);
+    padding: var(--padding-small) var(--padding-medium);
+    border: none;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 20px;
+    cursor: pointer;
+}
+
+.signIn:hover, .register:hover {
+    background-color: var(--secondary-color);
+}
+
+/* Categories Popup */
+.categoriesPopup {
+    position: absolute;
+    top: 100%; /* Position below the button */
+    left: 0;
+    background: white; /* Background color */
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000; /* Ensure it appears above other elements */
+    width: 200px; /* Set width to your preference */
+}
+
+.categoriesPopup ul {
+    list-style: none; /* Remove bullets */
+    padding: 10px; /* Add padding */
+    margin: 0; /* Remove default margin */
+}
+
+.categoriesPopup li {
+    margin: 5px 0; /* Space between items */
+}
+
+.categoriesPopup a {
+    text-decoration: none; /* Remove underline */
+    color: var(--text-color); /* Use your text color variable */
+}
+
+.categoriesPopup a:hover {
+    color: var(--primary-color); /* Change color on hover */
+}
+
+
+/* Show categories popup when button is clicked */
+.showPopup .categoriesPopup {
+    display: block;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    position: fixed; /* Fixed position to cover the screen */
+    top: 0;
+    right: -300px; /* Start hidden off-screen */
+    width: 300px; /* Width of the sidebar */
+    height: 100%; /* Full height */
+    background-color: white; /* Background color */
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2); /* Shadow for depth */
+    transition: right 0.3s ease; /* Smooth transition */
+    z-index: 1000; /* Above other elements */
+}
+
+.sidebar.open {
+    right: 0; /* Show the sidebar */
+}
+
+.sidebarContent {
+    padding: var(--padding-medium); /* Padding for content */
+    color: black; /* Set text color to black */
+}
+
+.sidebarHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.5rem;
+    margin-bottom: var(--padding-medium);
+}
+
+.closeButton {
+    cursor: pointer;
+    font-size: 1.5rem;
+    background: none;
+    border: none;
+}
+
+/* User Profile Image */
+.profileImage {
+    width: 100px; /* Circle diameter */
+    height: 100px; /* Circle diameter */
+    border-radius: 50%; /* Make it circular */
+    object-fit: cover; /* Cover the image */
+    margin-bottom: var(--padding-medium); /* Space below the image */
+}
