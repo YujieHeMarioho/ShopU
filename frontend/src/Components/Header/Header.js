@@ -1,14 +1,18 @@
+// frontend/src/Components/Header/Header.js
+
 import React, { useState } from 'react';
 import { FaSearch, FaShoppingCart, FaHeart, FaBars, FaUser, FaTimes } from 'react-icons/fa';
 import { useLocation, useNavigate } from 'react-router-dom';
 import styles from './Header.module.css';
+import { useAuth0 } from '@auth0/auth0-react';
 
 const Header = () => {
     const [showCategoriesPopup, setShowCategoriesPopup] = useState(false);
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [showSidebar, setShowSidebar] = useState(false);
     const location = useLocation();
     const navigate = useNavigate();
+
+    const { loginWithRedirect, logout, isAuthenticated, user, isLoading, error } = useAuth0();
 
     const toggleCategoriesPopup = () => {
         setShowCategoriesPopup(!showCategoriesPopup);
@@ -22,15 +26,22 @@ const Header = () => {
         return location.pathname === path ? styles.activeLink : '';
     };
 
-    // Function to handle navigation to the login page
-    const handleSignInClick = () => {
-        navigate('/login'); // Replace with the route to your login page
+    const handleAuthAction = () => {
+        if (isAuthenticated) {
+            navigate('/profile');
+        } else {
+            loginWithRedirect();
+        }
+    };
+
+    const handleLogout = () => {
+        logout({ returnTo: window.location.origin });
     };
 
     return (
         <div className={styles.headerWrapper}>
             <div className={styles.header}>
-                <div className={styles.logoContainer}>
+                <div className={styles.logoContainer} onClick={() => navigate('/home')}>
                     <img src="ShopULogo.png" alt="ShopU Logo" className={styles.logo} />
                     <span className={styles.brandName}>ShopU</span>
                 </div>
@@ -41,14 +52,14 @@ const Header = () => {
                     </button>
                 </div>
                 <div className={styles.iconContainer}>
-                    <div className={styles.icon}>
+                    <div className={styles.icon} onClick={() => navigate('/cart')}>
                         <FaShoppingCart />
                         <span className={styles.cartCount}>3</span>
                     </div>
-                    <div className={styles.icon}>
+                    <div className={styles.icon} onClick={() => navigate('/favorites')}>
                         <FaHeart />
                     </div>
-                    <div className={styles.icon} onClick={toggleSidebar}>
+                    <div className={styles.icon} onClick={handleAuthAction}>
                         <FaUser />
                     </div>
                 </div>
@@ -90,39 +101,44 @@ const Header = () => {
                 </div>
 
                 <div className={styles.buttonsContainer}>
-                    {!isLoggedIn ? (
+                    {!isAuthenticated ? (
                         <>
-                            <button className={styles.signIn} onClick={handleSignInClick}>Sign In</button>
-                            <button className={styles.register}>Register</button>
+                            <button className={styles.signIn} onClick={() => loginWithRedirect()}>Sign In</button>
+                            <button className={styles.register} onClick={() => loginWithRedirect({ screen_hint: "signup" })}>Register</button>
                         </>
                     ) : (
-                        <button className={styles.signIn}>My Account</button>
+                        <>
+                            <button className={styles.signIn} onClick={() => navigate('/profile')}>My Account</button>
+                            <button className={styles.logout} onClick={handleLogout}>Logout</button>
+                        </>
                     )}
                 </div>
             </div>
 
             {/* Sidebar for User Info */}
-            <div className={`${styles.sidebar} ${showSidebar ? styles.open : ''}`}>
-                <div className={styles.sidebarContent}>
-                    <div className={styles.sidebarHeader}>
-                        <h2>User Profile</h2>
-                        <button className={styles.closeButton} onClick={toggleSidebar}>
-                            <FaTimes />
-                        </button>
+            {isAuthenticated && (
+                <div className={`${styles.sidebar} ${showSidebar ? styles.open : ''}`}>
+                    <div className={styles.sidebarContent}>
+                        <div className={styles.sidebarHeader}>
+                            <h2>User Profile</h2>
+                            <button className={styles.closeButton} onClick={toggleSidebar}>
+                                <FaTimes />
+                            </button>
+                        </div>
+                        <img
+                            src={user.picture}
+                            alt={user.name}
+                            className={styles.profileImage}
+                        />
+                        <p><strong>Name:</strong> {user.name}</p>
+                        <p><strong>Email:</strong> {user.email}</p>
+                        {/* Add more user info as needed */}
                     </div>
-                    <img
-                        src="/path/to/profile-image.jpg" // Replace with the actual path to the user's profile image
-                        alt="Profile"
-                        className={styles.profileImage}
-                    />
-                    <p><strong>Name:</strong> John Doe</p>
-                    <p><strong>Email:</strong> johndoe@example.com</p>
-                    <p><strong>Orders:</strong> 5</p>
-                    <p><strong>Favorites:</strong> 10</p>
                 </div>
-            </div>
+            )}
         </div>
     );
+
 };
 
 export default Header;
