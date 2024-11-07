@@ -1,6 +1,5 @@
-// src/Components/Marketplace/Marketplace.js
 import React from 'react';
-import { Banner, Statistics, CardGrid } from '../../Common';
+import { Banner, Statistics, CardGrid, FilterSidebar } from '../../Common';
 import { Button } from 'react-bootstrap';
 
 function Marketplace() {
@@ -53,16 +52,18 @@ function Marketplace() {
 
       {/* Create New Listing Button */}
       <div className="my-4">
-      <Button
-        className="create-listing-button"
-        onClick={handleCreateListing}
-        >
-        Create New Listing
+        <Button className="create-listing-button" onClick={handleCreateListing}>
+          Create New Listing
         </Button>
       </div>
 
-      {/* Render CardGrid with listings */}
-      <CardGrid listings={listings} />
+      <div className="d-flex">
+        {/* Filter Sidebar */}
+        <FilterSidebar />
+
+        {/* Render CardGrid with listings */}
+        <CardGrid listings={listings} />
+      </div>
     </div>
   );
 }
