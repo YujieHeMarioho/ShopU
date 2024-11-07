@@ -9,6 +9,7 @@ import Banner from './Components/Common/Banner';
 import Statistics from './Components/Common/Statistics';
 import Home from './Components/Pages/Home/Home';
 import Resources from './Components/Pages/Resources/Resources';
+import SiginSide from './Components/Pages/Login/sign-in-side/SignInSide';
 
 function App() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -27,6 +28,7 @@ function App() {
                     <Route path="/home" element={<Home />} />
                     <Route path="/marketplace" element={<Marketplace />} />
                     <Route path="/resources" element={<Resources />} />
+                    <Route path="/login" element={<SiginSide />} />
                 </Routes>
 
                 {/* Footer */}

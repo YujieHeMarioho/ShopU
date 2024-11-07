@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FaSearch, FaShoppingCart, FaHeart, FaBars, FaUser, FaTimes } from 'react-icons/fa';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import styles from './Header.module.css';
 
 const Header = () => {
@@ -8,6 +8,7 @@ const Header = () => {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [showSidebar, setShowSidebar] = useState(false);
     const location = useLocation();
+    const navigate = useNavigate();
 
     const toggleCategoriesPopup = () => {
         setShowCategoriesPopup(!showCategoriesPopup);
@@ -19,6 +20,11 @@ const Header = () => {
 
     const getActiveLinkClass = (path) => {
         return location.pathname === path ? styles.activeLink : '';
+    };
+
+    // Function to handle navigation to the login page
+    const handleSignInClick = () => {
+        navigate('/login'); // Replace with the route to your login page
     };
 
     return (
@@ -86,7 +92,7 @@ const Header = () => {
                 <div className={styles.buttonsContainer}>
                     {!isLoggedIn ? (
                         <>
-                            <button className={styles.signIn}>Sign In</button>
+                            <button className={styles.signIn} onClick={handleSignInClick}>Sign In</button>
                             <button className={styles.register}>Register</button>
                         </>
                     ) : (
