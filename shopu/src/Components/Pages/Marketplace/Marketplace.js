@@ -1,8 +1,12 @@
-import React from 'react';
-import { Banner, Statistics, CardGrid, FilterSidebar } from '../../Common';
-import { Button } from 'react-bootstrap';
+import React, { useState } from 'react';
+import { Banner, CardGrid, FilterSidebar } from '../../Common';
+import { Button, Modal } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 
 function Marketplace() {
+  const [showModal, setShowModal] = useState(false);
+  const navigate = useNavigate();
+
   // Sample listings data
   const listings = [
     {
@@ -30,17 +34,33 @@ function Marketplace() {
       price: '49.99',
     },
     {
-        image: 'https://via.placeholder.com/300x200',
-        title: 'Item 5',
-        description: 'This is a description for item 5.',
-        price: '19.99',
+      image: 'https://via.placeholder.com/300x200',
+      title: 'Item 5',
+      description: 'This is a description for item 5.',
+      price: '19.99',
     },
   ];
 
+  // Open modal when "Create New Listing" button is clicked
   const handleCreateListing = () => {
-    // Action to take when the button is clicked
-    alert("Redirecting to create a new listing...");
-    // Later replace this with routing or showing a modal for creating the listing.
+    setShowModal(true);
+  };
+
+  // Close modal
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
+
+  // Navigate to create item listing page
+  const handleNewItemListing = () => {
+    setShowModal(false);
+    navigate('/create-item-listing');
+  };
+
+  // Navigate to create service listing page
+  const handleNewServiceListing = () => {
+    setShowModal(false);
+    navigate('/create-service-listing');
   };
 
   return (
@@ -56,6 +76,23 @@ function Marketplace() {
           Create New Listing
         </Button>
       </div>
+
+      {/* Modal for Additional Options */}
+      <Modal show={showModal} onHide={handleCloseModal} centered>
+        <Modal.Header closeButton>
+          <Modal.Title style={{ color: 'black' }}>Select Listing Type</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="d-grid gap-2">
+            <Button variant="primary" onClick={handleNewItemListing}>
+              Create New Item Listing
+            </Button>
+            <Button variant="secondary" onClick={handleNewServiceListing}>
+              Create New Service Listing
+            </Button>
+          </div>
+        </Modal.Body>
+      </Modal>
 
       <div className="d-flex">
         {/* Filter Sidebar */}
