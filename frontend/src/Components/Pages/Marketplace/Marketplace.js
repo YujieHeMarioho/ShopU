@@ -1,11 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Banner, CardGrid, FilterSidebar } from '../../Common';
 import { Button, Modal } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 
 function Marketplace() {
+  const [listingss, setListings] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Fetch the most recent listings from the server
+    const fetchListings = async () => {
+      try {
+        const response = await fetch('http://localhost:8080/api/listings');
+        const data = await response.json();
+        setListings(data);
+      } catch (error) {
+        console.error('Error fetching listings:', error);
+      }
+    };
+
+    fetchListings();
+  }, []);
 
   // Sample listings data
   const listings = [

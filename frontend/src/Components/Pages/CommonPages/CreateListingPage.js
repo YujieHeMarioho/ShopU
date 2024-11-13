@@ -94,15 +94,39 @@ const CreateListingPage = () => {
     return true;
   };
   
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateForm()) {
       alert("Please fill in all required fields, including uploading an image.");
       return;
     }
   
-    // Logic for form submission here
-    alert('Listing created successfully!');
+    const formDataToSubmit = new FormData();
+    Object.keys(formData).forEach(key => {
+      if (key === 'image' && formData[key]) {
+        formDataToSubmit.append('image', formData[key]);
+      } else {
+        formDataToSubmit.append(key, JSON.stringify(formData[key]));
+      }
+    });
+  
+    try {
+      const response = await fetch('http://localhost:8080/api/listings', {
+        method: 'POST',
+        body: formDataToSubmit,
+      });
+  
+      if (response.ok) {
+        alert('Listing created successfully!');
+        // Navigate to the marketplace page
+        window.location.href = '/marketplace';
+      } else {
+        alert('Failed to create listing.');
+      }
+    } catch (error) {
+      console.error('Error creating listing:', error);
+    }
   };
+  
   
   
 
