@@ -67,10 +67,44 @@ const CreateListingPage = () => {
     }
   };
 
+  const validateForm = () => {
+    // Required fields (add other fields if necessary)
+    const requiredFields = isServicePage 
+      ? ['businessName', 'description', 'contactDetails.phone', 'contactDetails.email'] 
+      : ['title', 'description', 'price', 'location', 'deliveryType'];
+  
+    // Check if any required field is empty
+    for (let field of requiredFields) {
+      const fieldValue = field.includes('.') ? field.split('.').reduce((o, key) => (o ? o[key] : null), formData) : formData[field];
+      if (!fieldValue) {
+        return false;
+      }
+    }
+  
+    // Check if each service has required values (for service pages only)
+    if (isServicePage && formData.services.some(service => !service.name || !service.price || (formData.appointmentBased && !service.estimatedTime))) {
+      return false;
+    }
+  
+    // Check if image is uploaded
+    if (!formData.image) {
+      return false;
+    }
+  
+    return true;
+  };
+  
   const handleSubmit = () => {
+    if (!validateForm()) {
+      alert("Please fill in all required fields, including uploading an image.");
+      return;
+    }
+  
     // Logic for form submission here
     alert('Listing created successfully!');
   };
+  
+  
 
   return (
     <Container className={currentStyles.createListingPage}>
