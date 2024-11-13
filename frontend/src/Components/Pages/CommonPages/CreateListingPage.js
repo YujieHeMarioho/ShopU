@@ -56,6 +56,13 @@ const CreateListingPage = () => {
     }));
   };
 
+  const removeService = (index) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      services: prevData.services.filter((_, i) => i !== index),
+    }));
+  };
+
   const handleAvailabilityChange = (date) => {
     setFormData((prevData) => ({ ...prevData, availability: date }));
   };
@@ -68,38 +75,36 @@ const CreateListingPage = () => {
   };
 
   const validateForm = () => {
-    // Required fields (add other fields if necessary)
-    const requiredFields = isServicePage 
-      ? ['businessName', 'description', 'contactDetails.phone', 'contactDetails.email'] 
+    const requiredFields = isServicePage
+      ? ['businessName', 'description', 'contactDetails.phone', 'contactDetails.email']
       : ['title', 'description', 'price', 'location', 'deliveryType'];
-  
-    // Check if any required field is empty
+
     for (let field of requiredFields) {
-      const fieldValue = field.includes('.') ? field.split('.').reduce((o, key) => (o ? o[key] : null), formData) : formData[field];
+      const fieldValue = field.includes('.')
+        ? field.split('.').reduce((o, key) => (o ? o[key] : null), formData)
+        : formData[field];
       if (!fieldValue) {
         return false;
       }
     }
-  
-    // Check if each service has required values (for service pages only)
+
     if (isServicePage && formData.services.some(service => !service.name || !service.price || (formData.appointmentBased && !service.estimatedTime))) {
       return false;
     }
-  
-    // Check if image is uploaded
+
     if (!formData.image) {
       return false;
     }
-  
+
     return true;
   };
-  
+
   const handleSubmit = async () => {
     if (!validateForm()) {
       alert("Please fill in all required fields, including uploading an image.");
       return;
     }
-  
+
     const formDataToSubmit = new FormData();
     Object.keys(formData).forEach(key => {
       if (key === 'image' && formData[key]) {
@@ -108,16 +113,15 @@ const CreateListingPage = () => {
         formDataToSubmit.append(key, JSON.stringify(formData[key]));
       }
     });
-  
+
     try {
       const response = await fetch('http://localhost:8080/api/listings', {
         method: 'POST',
         body: formDataToSubmit,
       });
-  
+
       if (response.ok) {
         alert('Listing created successfully!');
-        // Navigate to the marketplace page
         window.location.href = '/marketplace';
       } else {
         alert('Failed to create listing.');
@@ -126,9 +130,6 @@ const CreateListingPage = () => {
       console.error('Error creating listing:', error);
     }
   };
-  
-  
-  
 
   return (
     <Container className={currentStyles.createListingPage}>
@@ -157,12 +158,12 @@ const CreateListingPage = () => {
                     onChange={() => setFormData((prevData) => ({ ...prevData, appointmentBased: !prevData.appointmentBased }))}
                   />
                 </Form.Group>
-                
+
                 {/* Offered Services Section */}
                 <Form.Group controlId="services">
                   <Form.Label>Offered Services</Form.Label>
                   {formData.services.map((service, index) => (
-                    <div key={index}>
+                    <div key={index} className="d-flex align-items-center mb-2">
                       <Form.Control
                         type="text"
                         placeholder="Service Name"
@@ -175,6 +176,7 @@ const CreateListingPage = () => {
                           placeholder="Estimated Time (hrs)"
                           value={service.estimatedTime}
                           onChange={(e) => handleServiceChange(index, 'estimatedTime', e.target.value)}
+                          className="ml-2"
                         />
                       )}
                       <Form.Control
@@ -182,16 +184,24 @@ const CreateListingPage = () => {
                         placeholder="Price"
                         value={service.price}
                         onChange={(e) => handleServiceChange(index, 'price', e.target.value)}
+                        className="ml-2"
                       />
+                      <Button
+                        variant="danger"
+                        onClick={() => removeService(index)}
+                        className="ml-2"
+                      >
+                        X
+                      </Button>
                     </div>
                   ))}
                   <Button variant="secondary" onClick={addService}>Add Another Service</Button>
                 </Form.Group>
-                
+
                 {formData.appointmentBased && (
                   <Calendar value={formData.availability} onChange={handleAvailabilityChange} />
                 )}
-                
+
                 {/* Contact Details */}
                 <Form.Group controlId="contactPhone">
                   <Form.Label>Phone</Form.Label>
