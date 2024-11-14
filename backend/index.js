@@ -3,12 +3,17 @@ import { auth } from 'express-openid-connect';
 import dotenv from 'dotenv';
 import multer from 'multer';
 
+// import routes
+import favoritesRoutes from './routes/favorites.js';
+
 // Load environment variables from .env file
 dotenv.config(); 
 
 // Initialize Express app
 const app = express();
 const port = 8080;
+
+app.use(express.json());
 
 // Multer configuration for handling FormData
 const upload = multer();
@@ -19,7 +24,6 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   next();
 });
-
 
 // Auth0 configuration
 const config = {
@@ -33,6 +37,8 @@ const config = {
 
 // Attach the Auth0 authentication router
 app.use(auth(config));
+
+app.use('/api', favoritesRoutes)
 
 // Basic route to check authentication status
 app.get('/', (req, res) => {
