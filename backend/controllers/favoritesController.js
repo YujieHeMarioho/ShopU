@@ -13,12 +13,18 @@ export const getAllFavorites = async (req, res) => {
 
 // Endpoint to add a new favorited item 
 export const favoriteItem = async (req, res) => {
-    const { user_id, listing_id, favorited_at } = req.body; // Get favorite data from the request body
+    const { listing_id } = req.params;
+    // Grab user_id from auth0 once it's available
+    const user_id = req.oidc.user.sub;
 
     // Check if all required fields are provided
-    if (!user_id || !listing_id || !favorited_at) {
-        return res.status(400).json({ error: 'Missing required fields', fields: { user_id, listing_id, favorited_at }});
+    if (!user_id || !listing_id) {
+        return res.status(400).json({ error: 'Missing required fields', fields: { user_id, listing_id}});
     }
+
+    // Generate the favorited_at timestamp
+    const favorited_at = new Date().toISOString(); // Current timestamp in ISO format
+
     try {
         // Insert new favorite into the database
         const result = await pool.query(
@@ -34,12 +40,9 @@ export const favoriteItem = async (req, res) => {
 
 // Endpoint to add a new favorited item 
 export const unfavoriteItem = async (req, res) => {
-    console.log(req.body); // For POST
-    console.log(req.params); // For DELETE
-    console.log(req.query); // For DELETE
-
+    // Grab user_id from auth0 once it's available
+    const user_id = req.oidc.user.sub;
     const { listing_id } = req.params;  
-    const { user_id } = req.query;  
 
     // Check if all required fields are provided
     if (!user_id || !listing_id) {
