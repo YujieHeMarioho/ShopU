@@ -2,7 +2,7 @@ import React from 'react';
 import { CardComponent } from './Card';
 import { Container, Row, Col } from 'react-bootstrap';
 
-export const CardGrid = ({ listings }) => {
+export const CardGrid = ({ listings, onCardClick }) => {
   return (
     <Container>
       <Row>
@@ -13,6 +13,7 @@ export const CardGrid = ({ listings }) => {
               title={listing.title}
               description={listing.description}
               price={listing.price}
+              onClick={() => onCardClick(listing)}
             />
           </Col>
         ))}

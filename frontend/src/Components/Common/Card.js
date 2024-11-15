@@ -1,9 +1,9 @@
 import React from 'react';
 import { Card, Button } from 'react-bootstrap';
 
-export const CardComponent = ({ image, title, description, price }) => {
+export const CardComponent = ({ image, title, description, price, onClick }) => {
   return (
-    <Card className="mb-4">
+    <Card className="mb-4" onClick={onClick}>
       <Card.Img variant="top" src={image} alt={title} />
       <Card.Body>
         <Card.Title>{title}</Card.Title>

@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Banner, Statistics, CardGrid, FilterSidebar } from '../../Common';
 import { Button } from 'react-bootstrap';
+import ListingModal from './Listings';
+
 
 function Marketplace() {
   // Sample listings data
@@ -37,11 +39,25 @@ function Marketplace() {
     },
   ];
 
+  const [showModal, setShowModal] = useState(false);
+  const [selectedListing, setSelectedListing] = useState(null);
+
   const handleCreateListing = () => {
     // Action to take when the button is clicked
     alert("Redirecting to create a new listing...");
     // Later replace this with routing or showing a modal for creating the listing.
   };
+
+  const handleCardClick = (listing) => {
+    setSelectedListing(listing);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedListing(null);
+  };
+
 
   return (
     <div>
@@ -62,8 +78,10 @@ function Marketplace() {
         <FilterSidebar />
 
         {/* Render CardGrid with listings */}
-        <CardGrid listings={listings} />
+        <CardGrid listings={listings} onCardClick={handleCardClick} />
       </div>
+
+      <ListingModal show={showModal} onHide={handleCloseModal} listing={selectedListing} />
     </div>
   );
 }
