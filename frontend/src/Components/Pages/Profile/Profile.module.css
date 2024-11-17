@@ -1,12 +1,13 @@
-/* src/Components/Pages/Profile/Profile.module.css */
+/* frontend/src/Components/Pages/Profile/Profile.module.css */
 
 .profileContainer {
     max-width: 600px;
-    margin: 0 auto;
+    margin: 40px auto;
     padding: 20px;
     background-color: #f9f9f9;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
 }
 
 .profileImage {
@@ -24,7 +25,9 @@
 
 .profileDetails strong {
     display: inline-block;
-    width: 100px;
+    width: 150px;
+    text-align: right;
+    margin-right: 10px;
 }
 
 @media (max-width: 600px) {
@@ -38,6 +41,6 @@
     }
 
     .profileDetails strong {
-        width: 80px;
+        width: 120px;
     }
 }

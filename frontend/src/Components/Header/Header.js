@@ -101,14 +101,15 @@ const Header = () => {
                 </div>
 
                 <div className={styles.buttonsContainer}>
-                    {!isAuthenticated ? (
+                    {!isLoading && !user && (
                         <>
                             <button className={styles.signIn} onClick={() => loginWithRedirect()}>Sign In</button>
-                            <button className={styles.register} onClick={() => loginWithRedirect({ screen_hint: "signup" })}>Register</button>
                         </>
-                    ) : (
+                    )}  
+
+                  
+                    {!isLoading && user &&(
                         <>
-                            <button className={styles.signIn} onClick={() => navigate('/profile')}>My Account</button>
                             <button className={styles.logout} onClick={handleLogout}>Logout</button>
                         </>
                     )}
