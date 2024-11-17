@@ -1,46 +1,18 @@
-/* frontend/src/Components/Pages/Profile/Profile.module.css */
+/* src/views/Profile.css */
 
-.profileContainer {
-    max-width: 600px;
-    margin: 40px auto;
-    padding: 20px;
-    background-color: #f9f9f9;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    text-align: center;
-}
-
-.profileImage {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-bottom: 20px;
-}
-
-.profileDetails {
-    font-size: 1.1em;
-    line-height: 1.6;
-}
-
-.profileDetails strong {
-    display: inline-block;
-    width: 150px;
-    text-align: right;
-    margin-right: 10px;
-}
-
-@media (max-width: 600px) {
-    .profileContainer {
-        padding: 15px;
-    }
-
-    .profileImage {
-        width: 120px;
-        height: 120px;
-    }
-
-    .profileDetails strong {
-        width: 120px;
-    }
-}
+.profile-card {
+    border-radius: 15px;
+  }
+  
+  .profile-header {
+    background: linear-gradient(135deg, #6b73ff 0%, #000dff 100%);
+    color: white;
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+  }
+  
+  .profile-picture {
+    border: 5px solid #ffffff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  

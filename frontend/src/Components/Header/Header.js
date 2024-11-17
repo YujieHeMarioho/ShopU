@@ -110,7 +110,7 @@ const Header = () => {
                   
                     {!isLoading && user &&(
                         <>
-                            <button className={styles.logout} onClick={handleLogout}>Logout</button>
+                            <button className={styles.signIn} onClick={handleLogout}>Logout</button>
                         </>
                     )}
                 </div>
