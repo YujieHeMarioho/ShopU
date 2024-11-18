@@ -1,6 +1,4 @@
-// src/views/Profile.js
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { Container, Row, Col, Card, Button } from 'react-bootstrap';
 import { FaEnvelope, FaUser, FaEdit } from 'react-icons/fa'; // Optional: For icons
@@ -9,6 +7,39 @@ import './Profile.module.css'; // Optional: Custom CSS
 const Profile = () => {
   const { user } = useAuth0();
   const { name, picture, email, nickname, updated_at, created_at } = user;
+
+  useEffect(() => {
+    const saveUserToBackend = async () => {
+      try {
+        const response = await fetch('http://localhost:8080/api/users', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email,
+            name,
+            picture,
+            nickname,
+            created_at,
+          }),
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.message || 'Failed to save user to backend');
+        }
+        console.log('User saved successfully:', data);
+      } catch (error) {
+        console.error('Error saving user:', error);
+      }
+    };
+
+    // Call saveUserToBackend when user information is available
+    if (user) {
+      saveUserToBackend();
+    }
+  }, [user, email, name, picture, nickname, created_at]);
 
   return (
     <Container className="my-5">
