@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { Container, Row, Col, Card, Button } from 'react-bootstrap';
-import { FaEnvelope, FaUser, FaEdit } from 'react-icons/fa'; // Optional: For icons
+import { FaEnvelope, FaUser, FaEdit } from 'react-icons/fa';
 import './Profile.module.css'; // Optional: Custom CSS
 
 const Profile = () => {
@@ -18,7 +18,7 @@ const Profile = () => {
           },
           body: JSON.stringify({
             email,
-            name,
+            name, // Full name
             picture,
             nickname,
             created_at,
@@ -63,7 +63,7 @@ const Profile = () => {
             <Col md={9}>
               <h4 className="mb-3">
                 <FaUser className="me-2 text-primary" />
-                {name}
+                {name} {/* Display full name */}
               </h4>
               <p className="mb-2">
                 <FaEnvelope className="me-2 text-secondary" />
