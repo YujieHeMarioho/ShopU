@@ -14,8 +14,6 @@ export const getAllFavorites = async (req, res) => {
 // Endpoint to add a new favorited item 
 export const favoriteItem = async (req, res) => {
     const { listing_id } = req.params;
-    // Grab user_id from auth0 once it's available
-    const user_id = req.oidc.user.sub;
 
     // Check if all required fields are provided
     if (!user_id || !listing_id) {
@@ -40,8 +38,6 @@ export const favoriteItem = async (req, res) => {
 
 // Endpoint to add a new favorited item 
 export const unfavoriteItem = async (req, res) => {
-    // Grab user_id from auth0 once it's available
-    const user_id = req.oidc.user.sub;
     const { listing_id } = req.params;  
 
     // Check if all required fields are provided
