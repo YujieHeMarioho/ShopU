@@ -1,6 +1,6 @@
 import React from 'react';
-import { CardComponent } from './Card';
 import { Container, Row, Col } from 'react-bootstrap';
+import { CardComponent } from './Card';
 
 export const CardGrid = ({ listings }) => {
   return (
@@ -13,10 +13,22 @@ export const CardGrid = ({ listings }) => {
               title={listing.title}
               description={listing.description}
               price={listing.price}
+              onCardClick={() => openListingDetails(listing)}
+              onFavoriteClick={() => saveToFavorites(listing)}
             />
+
           </Col>
         ))}
       </Row>
     </Container>
   );
+};
+
+// Example functions (define these in your component or context)
+const openListingDetails = (listing) => {
+  // Logic to open a modal or navigate to a details page
+};
+
+const saveToFavorites = (listing) => {
+  // Logic to save the item to favorites
 };
