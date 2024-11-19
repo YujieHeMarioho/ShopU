@@ -6,6 +6,7 @@ import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Header from './Components/Header/Header';
 import Footer from './Components/Footer/Footer';
+import Favorites from './Components/Pages/Favorites/Favorites';
 import Marketplace from './Components/Pages/Marketplace/Marketplace';
 import Banner from './Components/Common/Banner';
 import Statistics from './Components/Common/Statistics';
@@ -31,6 +32,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/home" element={<Home />} />
+          <Route path="/favorites" element={<Favorites />} />
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/resources" element={<Resources />} />
           {/* Protected Route */}
