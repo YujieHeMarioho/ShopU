@@ -1,0 +1,19 @@
+{
+    "sqltools.connections": [
+        {
+            "pgOptions": {
+                "ssl": {
+                    "rejectUnauthorized": false
+                }
+            },
+            "previewLimit": 50,
+            "server": "database-3.c7qvzrjj511x.us-east-1.rds.amazonaws.com",
+            "port": 5432,
+            "askForPassword": true,
+            "driver": "PostgreSQL",
+            "name": "awsdb",
+            "database": "shopU",
+            "username": "postgres"
+        }
+    ]
+}
