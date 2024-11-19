@@ -1,74 +1,95 @@
 import express from 'express';
-import { auth } from 'express-openid-connect';
+import bodyParser from 'body-parser';
+import cors from 'cors';
 import dotenv from 'dotenv';
-import multer from 'multer';
+import pkg from 'pg';
 
-// import routes
-import favoritesRoutes from './routes/favorites.js';
+dotenv.config();
 
-// Load environment variables from .env file
-dotenv.config(); 
-
-// Initialize Express app
+const { Pool } = pkg;
 const app = express();
 const port = 8080;
 
-app.use(express.json());
-
-// Multer configuration for handling FormData
-const upload = multer();
-
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  next();
+// Database Connection
+const pool = new Pool({
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASSWORD,
+  port: process.env.DB_PORT,
+  ssl: {
+    rejectUnauthorized: false, // Adjust based on your SSL requirements
+  },
 });
 
-// Auth0 configuration
-const config = {
-  authRequired: false, // Set to true if authentication is required for all routes
-  auth0Logout: true,
-  secret: process.env.AUTH0_SECRET,
-  baseURL: 'http://localhost:8080', // Replace with your base URL in production
-  clientID: process.env.AUTH0_CLIENT_ID,
-  issuerBaseURL: process.env.AUTH0_ISSUER_BASE_URL
-};
+// Middleware
+app.use(cors());
+app.use(bodyParser.json());
 
-// Attach the Auth0 authentication router
-app.use(auth(config));
-
-app.use('/api', favoritesRoutes)
-
-// Basic route to check authentication status
+// Basic Route
 app.get('/', (req, res) => {
-  res.send(req.oidc.isAuthenticated() ? 'Logged in' : 'Logged out');
+  res.send('Hello from backend!');
 });
 
-// Example protected route
-app.get('/profile', (req, res) => {
-  if (req.oidc.isAuthenticated()) {
-    res.send(`Welcome ${req.oidc.user.name}`);
-  } else {
-    res.send('You need to log in to view this page.');
+// Get All Users
+app.get('/users', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM users;');
+    res.status(200).json(result.rows);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ message: 'Error fetching users', error });
   }
 });
 
-// Route to handle POST request to /api/listings
-// Use multer's `upload.none()` to handle non-file form data
-app.post('/api/listings', upload.none(), (req, res) => {
-  // Now req.body should contain the form data
-  const formData = req.body;
+// Save or Update User
+app.post('/api/users', async (req, res) => {
+  const {
+    email: edu_email,
+    name,
+    picture: profile_picture,
+    nickname,
+    created_at,
+  } = req.body;
 
-  console.log('Received form data:', formData);
+  try {
+    const query = `
+      INSERT INTO users (
+        edu_email,
+        profile_picture,
+        name,
+        create_date,
+        is_admin
+      )
+      VALUES ($1, $2, $3, $4, $5)
+      ON CONFLICT (edu_email) 
+      DO UPDATE SET 
+        profile_picture = EXCLUDED.profile_picture,
+        name = EXCLUDED.name
+      RETURNING *;
+    `;
 
-  // Process the data as needed (e.g., save to a database)
+    const values = [
+      edu_email,
+      profile_picture,
+      name,
+      created_at,
+      false, // Default is_admin to false for new users
+    ];
 
-  // Send a response back to the client
-  res.status(200).json({ message: 'Form data received successfully', data: formData });
+    const result = await pool.query(query, values);
+
+    res.status(200).json({
+      message: 'User saved successfully!',
+      user: result.rows[0],
+    });
+  } catch (error) {
+    console.error('Error saving user:', error);
+    res.status(500).json({ message: 'Error saving user', error });
+  }
 });
 
-// Start the server
+// Start Server
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
