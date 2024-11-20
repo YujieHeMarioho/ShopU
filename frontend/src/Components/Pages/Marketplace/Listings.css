@@ -1,0 +1,83 @@
+/* css for listing cards */
+.card-title {
+	color: black;
+	font-weight: bold;
+}
+
+/* */
+.card-text {
+	color: black;
+	opacity: 1;
+}
+
+/**/
+.card-price {
+	color: black;
+	font-size: 1.2em;
+}
+
+/**/
+.img-fluid {
+	max-width: 100%;
+	height: auto;
+}
+
+/**/
+.modal-title {
+	color: black;
+	font-size: 1.5rem;
+	font-weight: bold;
+}
+
+/* Styling the modal body */
+.modal-body {
+	display: flex;
+	/* Use flexbox for horizontal layout */
+	flex-direction: row;
+	/* Horizontal layout: image on the left, content on the right */
+	gap: 20px;
+	/* Space between image and content */
+	align-items: flex-start;
+	/* Align items to the top */
+}
+
+/* Styling the image */
+.modal-body img {
+	width: 40%;
+	/* Image takes up 40% of the modal width */
+	max-width: 300px;
+	/* Optional: Limit the maximum width */
+	height: auto;
+	/* Maintain aspect ratio */
+	border-radius: 8px;
+	/* Optional: Add rounded corners */
+}
+
+/* Container for content on the right */
+.modal-body .content {
+	display: flex;
+	/* Use flexbox for stacking content */
+	flex-direction: column;
+	/* Stack items vertically */
+	gap: 10px;
+	/* Space between each content item */
+	width: 100%;
+	/* Ensure it takes up remaining space */
+}
+
+/* Styling for individual content elements */
+.modal-body .card-text {
+	font-size: 1rem;
+	color: #555;
+}
+
+.modal-body .card-price {
+	font-size: 1.25rem;
+	font-weight: bold;
+	color: #333;
+}
+
+.modal-body button {
+	padding: 10px 20px;
+	font-size: 1rem;
+}
