@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button, Form, ButtonGroup } from 'react-bootstrap';
 import styles from './FilterSidebar.module.css';
 
-const FilterSidebar = () => {
+const FilterSidebar = ({ onFilterChange }) => {
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedType, setSelectedType] = useState(''); // Initially no selection
   const [selectedRatings, setSelectedRatings] = useState([]); // Multiple ratings selection
@@ -28,9 +28,14 @@ const FilterSidebar = () => {
     );
   };
 
+  // Call the parent component's filter change handler with the current filters
   const handleApplyFilters = () => {
-    // Apply filter logic here
-    console.log('Filters applied:', { selectedCategories, selectedType, selectedRatings });
+    const filters = {
+      categories: selectedCategories,
+      type: selectedType,
+      ratings: selectedRatings,
+    };
+    onFilterChange(filters);
   };
 
   return (

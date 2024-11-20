@@ -14,6 +14,7 @@ import Resources from './Components/Pages/Resources/Resources';
 import Profile from './Components/Pages/Profile/Profile';
 import PrivateRoute from './Components/Common/PrivateRoute';
 import Auth0ProviderWithHistory from './auth0Provider';
+import CreateListingPage from './Components/Pages/CommonPages/CreateListingPage';
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -33,6 +34,8 @@ function App() {
           <Route path="/home" element={<Home />} />
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/resources" element={<Resources />} />
+          <Route path="/create-item-listing" element={<CreateListingPage />} />
+          <Route path="/create-service-listing" element={<CreateListingPage />} />
           {/* Protected Route */}
           <Route
             path="/profile"
