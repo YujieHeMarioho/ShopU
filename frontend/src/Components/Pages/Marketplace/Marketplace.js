@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Banner, CardGrid, FilterSidebar } from '../../Common';
-import { Form, ListGroup } from 'react-bootstrap';
+import { Form, ListGroup, Modal, Button } from 'react-bootstrap';
 import Fuse from 'fuse.js';  // Import Fuse.js library
 import styles from './Marketplace.module.css'; // Import CSS module for styling
+import { useNavigate } from 'react-router-dom';
 
 // Dummy data for marketplace listings
 const dummyData = [
@@ -164,6 +165,8 @@ export const Marketplace = () => {
   const [filteredResults, setFilteredResults] = useState(dummyData);  // Default to show all listings
   const [suggestions, setSuggestions] = useState([]); // Store suggested search results
   const [isDropdownVisible, setDropdownVisible] = useState(false); // Control visibility of suggestions
+  const [showModal, setShowModal] = useState(false);
+  const navigate = useNavigate();
 
   // Fuse.js setup for fuzzy search
   const fuse = useMemo(() => {
@@ -273,6 +276,29 @@ export const Marketplace = () => {
     }));
   };
 
+   // Open modal when "Create New Listing" button is clicked
+   const handleCreateListing = () => {
+    setShowModal(true);
+  };
+
+  // Close modal
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
+
+  // Navigate to create item listing page
+  const handleNewItemListing = () => {
+    setShowModal(false);
+    navigate('/create-item-listing');
+  };
+
+  // Navigate to create service listing page
+  const handleNewServiceListing = () => {
+    setShowModal(false);
+    navigate('/create-service-listing');
+  };
+
+
   return (
     <div className={styles.marketplaceContainer}>
       {/* Search Bar */}
@@ -299,6 +325,30 @@ export const Marketplace = () => {
             ))}
           </ListGroup>
         )}
+
+        {/* Create New Listing Button */}
+      <div className="my-4">
+        <Button className="create-listing-button" onClick={handleCreateListing}>
+          Create New Listing
+        </Button>
+      </div>
+
+      {/* Modal for Additional Options */}
+      <Modal show={showModal} onHide={handleCloseModal} centered>
+        <Modal.Header closeButton>
+          <Modal.Title style={{ color: 'black' }}>Select Listing Type</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="d-grid gap-2">
+            <Button variant="primary" onClick={handleNewItemListing}>
+              Create New Item Listing
+            </Button>
+            <Button variant="secondary" onClick={handleNewServiceListing}>
+              Create New Service Listing
+            </Button>
+          </div>
+        </Modal.Body>
+      </Modal>
       </div>
   
       {/* Layout container for the filter sidebar and card grid */}
