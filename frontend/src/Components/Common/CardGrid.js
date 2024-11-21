@@ -3,7 +3,7 @@ import { Container, Row, Col } from 'react-bootstrap';
 import { CardComponent } from './Card';
 import styles from './CardGrid.module.css';
 
-export const CardGrid = ({ listings = [], onCardClick }) => {
+export const CardGrid = ({ listings = [], openListingDetails }) => {
   return (
     <Container>
       <Row className={styles.cardGrid}>
@@ -19,7 +19,7 @@ export const CardGrid = ({ listings = [], onCardClick }) => {
                 title={listing.title}
                 description={listing.description}
                 price={listing.price}
-                onCardClick={() => openListingDetails(listing)}
+                onListingClick={() => openListingDetails(listing)}
                 onFavoriteClick={() => saveToFavorites(listing)}
               />
             </Col>

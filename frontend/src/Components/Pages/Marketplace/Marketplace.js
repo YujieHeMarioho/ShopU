@@ -4,6 +4,7 @@ import { Form, ListGroup, Modal, Button } from 'react-bootstrap';
 import Fuse from 'fuse.js';  // Import Fuse.js library
 import styles from './Marketplace.module.css'; // Import CSS module for styling
 import { useNavigate } from 'react-router-dom';
+import ListingModal from './Listings';
 
 // Dummy data for marketplace listings
 const dummyData = [
@@ -168,6 +169,9 @@ export const Marketplace = () => {
   const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
 
+  const [showListingModal, setShowListingModal] = useState(false);
+  const [selectedListing, setSelectedListing] = useState(null);
+
   // Fuse.js setup for fuzzy search
   const fuse = useMemo(() => {
     const options = {
@@ -276,8 +280,8 @@ export const Marketplace = () => {
     }));
   };
 
-   // Open modal when "Create New Listing" button is clicked
-   const handleCreateListing = () => {
+  // Open modal when "Create New Listing" button is clicked
+  const handleCreateListing = () => {
     setShowModal(true);
   };
 
@@ -298,6 +302,16 @@ export const Marketplace = () => {
     navigate('/create-service-listing');
   };
 
+  const handleCardClick = (listing) => {
+    setSelectedListing(listing);
+    setShowListingModal(true);
+  };
+
+  const handleCloseListingModal = () => {
+    setShowListingModal(false);
+    setSelectedListing(null);
+  };
+
 
   return (
     <div className={styles.marketplaceContainer}>
@@ -310,7 +324,7 @@ export const Marketplace = () => {
           onChange={handleSearchChange}
           className={styles.searchBar}
         />
-  
+
         {/* Show suggestions if dropdown is visible */}
         {isDropdownVisible && suggestions.length > 0 && (
           <ListGroup className={styles.suggestionsDropdown}>
@@ -327,30 +341,30 @@ export const Marketplace = () => {
         )}
 
         {/* Create New Listing Button */}
-      <div className="my-4">
-        <Button className="create-listing-button" onClick={handleCreateListing}>
-          Create New Listing
-        </Button>
+        <div className="my-4">
+          <Button className="create-listing-button" onClick={handleCreateListing}>
+            Create New Listing
+          </Button>
+        </div>
+
+        {/* Modal for Additional Options */}
+        <Modal show={showModal} onHide={handleCloseModal} centered>
+          <Modal.Header closeButton>
+            <Modal.Title style={{ color: 'black' }}>Select Listing Type</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <div className="d-grid gap-2">
+              <Button variant="primary" onClick={handleNewItemListing}>
+                Create New Item Listing
+              </Button>
+              <Button variant="secondary" onClick={handleNewServiceListing}>
+                Create New Service Listing
+              </Button>
+            </div>
+          </Modal.Body>
+        </Modal>
       </div>
 
-      {/* Modal for Additional Options */}
-      <Modal show={showModal} onHide={handleCloseModal} centered>
-        <Modal.Header closeButton>
-          <Modal.Title style={{ color: 'black' }}>Select Listing Type</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <div className="d-grid gap-2">
-            <Button variant="primary" onClick={handleNewItemListing}>
-              Create New Item Listing
-            </Button>
-            <Button variant="secondary" onClick={handleNewServiceListing}>
-              Create New Service Listing
-            </Button>
-          </div>
-        </Modal.Body>
-      </Modal>
-      </div>
-  
       {/* Layout container for the filter sidebar and card grid */}
       <div className={styles.layoutContainer}>
         {/* Filter Sidebar */}
@@ -361,17 +375,17 @@ export const Marketplace = () => {
             className={styles.filterSidebar}
           />
         </div>
-  
+
         {/* Card Grid displaying filtered results */}
         <div className={styles.cardGridContainer}>
-          <CardGrid listings={filteredResults} className={styles.cardGrid} />
+          <CardGrid listings={filteredResults} className={styles.cardGrid} openListingDetails={handleCardClick} />
         </div>
       </div>
 
-      <ListingModal show={showModal} onHide={handleCloseModal} listing={selectedListing} />
+      <ListingModal show={showListingModal} onHide={handleCloseListingModal} listing={selectedListing} />
     </div>
   );
-  
+
 };
 
 export default Marketplace;
