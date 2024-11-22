@@ -1,0 +1,18 @@
+:root {
+    /* Colors */
+    --primary-color: #02AE5E;
+    --secondary-color: #018045;
+    --background-color: #F5F5F5;
+    --text-color: #333333;
+
+    /* Fonts */
+    --font-family: 'Roboto', sans-serif;
+    --font-size-base: 16px;
+    --font-weight-regular: 400;
+    --font-weight-bold: 600;
+
+    /* Spacing */
+    --padding-small: 8px;
+    --padding-medium: 16px;
+    --padding-large: 24px;
+}
