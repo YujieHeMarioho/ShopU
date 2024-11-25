@@ -1,0 +1,138 @@
+/* Card Container */
+.socialCard {
+    border: none;
+    border-radius: 16px;
+    padding: 20px;
+    margin: 20px 0;
+    background: linear-gradient(135deg, #fdfbfb, #ebedee);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .socialCard:hover {
+    transform: scale(1.02);
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.15), 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .profilePic {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-right: 16px;
+  }
+  
+  .author {
+    font-weight: bold;
+    font-size: 18px;
+    color: #333;
+  }
+  
+  /* Media Section */
+  .media {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s ease-in-out;
+  }
+  
+  .media:hover {
+    transform: scale(1.05);
+  }
+  
+  /* Card Body */
+  .body {
+    margin-top: 10px;
+  }
+  
+  .title {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 12px;
+    color: #333;
+  }
+  
+  .description {
+    font-size: 16px;
+    color: #555;
+    line-height: 1.6;
+  }
+  
+  /* Footer Buttons */
+  .footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 16px;
+  }
+  
+  .button {
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    color: #666;
+    transition: background 0.3s ease, color 0.3s ease, transform 0.2s ease;
+    cursor: pointer;
+  }
+  
+  .button:hover {
+    background: #f5f5f5;
+    color: #333;
+    transform: scale(1.05);
+  }
+  
+  .button[style*="blue"] {
+    color: #007bff !important;
+    background: rgba(0, 123, 255, 0.1);
+  }
+  
+  .button[style*="green"] {
+    color: #28a745 !important;
+    background: rgba(40, 167, 69, 0.1);
+  }
+  
+  .button[style*="red"] {
+    color: #dc3545 !important;
+    background: rgba(220, 53, 69, 0.1);
+  }
+  
+  .viewItemButton {
+    background: linear-gradient(90deg, #6a11cb, #2575fc);
+    color: white;
+    font-weight: bold;
+    padding: 8px 20px;
+    transition: background 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .viewItemButton:hover {
+    background: linear-gradient(90deg, #2575fc, #6a11cb);
+    transform: scale(1.05);
+  }
+  
+  /* Alert */
+  .alert {
+    margin-top: 15px;
+    padding: 10px;
+    background: #e3fcef;
+    border-left: 4px solid #28a745;
+    color: #155724;
+    font-size: 14px;
+    border-radius: 8px;
+  }
+  

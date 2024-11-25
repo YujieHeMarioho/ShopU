@@ -1,24 +1,54 @@
 import React from 'react';
 import { Container, Row, Col } from 'react-bootstrap';
 import { CardComponent } from './Card';
+import SocialCard from './SocialCard';
 
-export const CardGrid = ({ listings }) => {
+export const CardGrid = ({ listings = [], variant = 'marketplace' }) => {
   return (
     <Container>
       <Row>
-        {listings.map((listing, index) => (
-          <Col key={index} xs={12} sm={6} md={4} lg={3}>
-            <CardComponent
-              image={listing.image}
-              title={listing.title}
-              description={listing.description}
-              price={listing.price}
-              onCardClick={() => openListingDetails(listing)}
-              onFavoriteClick={() => saveToFavorites(listing)}
-            />
-
+        {listings.length === 0 ? (
+          <Col xs={12}>
+            <p>No listings available.</p>
           </Col>
-        ))}
+        ) : (
+          listings.map((listing, index) => (
+            <Col
+              key={index}
+              xs={12}
+              sm={6}
+              md={variant === 'marketplace' ? 4 : 6}
+              lg={variant === 'marketplace' ? 3 : 4}
+            >
+              {variant === 'marketplace' ? (
+                // Marketplace Card
+                <CardComponent
+                  image={listing.image}
+                  title={listing.title}
+                  description={listing.description}
+                  price={listing.price}
+                  onCardClick={() => openListingDetails(listing)}
+                  onFavoriteClick={() => saveToFavorites(listing)}
+                />
+              ) : (
+                // Social Feed Card
+                <SocialCard
+                  image={listing.image}
+                  video={listing.video}
+                  title={listing.title}
+                  description={listing.description}
+                  profilePic={listing.profilePic}
+                  author={listing.author}
+                  likes={listing.likes}
+                  isLiked={listing.isLiked}
+                  onLike={() => toggleLike(listing)}
+                  onSave={() => savePost(listing)}
+                  onShare={() => sharePost(listing)}
+                />
+              )}
+            </Col>
+          ))
+        )}
       </Row>
     </Container>
   );
@@ -31,4 +61,16 @@ const openListingDetails = (listing) => {
 
 const saveToFavorites = (listing) => {
   // Logic to save the item to favorites
+};
+
+const toggleLike = (post) => {
+  // Logic to toggle like on a post
+};
+
+const savePost = (post) => {
+  // Logic to save the post
+};
+
+const sharePost = (post) => {
+  // Logic to share the post
 };
