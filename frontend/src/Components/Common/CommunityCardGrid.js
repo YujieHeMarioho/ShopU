@@ -2,13 +2,13 @@ import React from 'react';
 import { Container, Row, Col } from 'react-bootstrap';
 import { CommunityCardComponent } from './CommunityCard';
 
-export const CommunityCardGrid = ({ communitites }) => {
+export const CommunityCardGrid = ({ communities }) => {
   return (
     <Container>
       <Row>
-        {communitites.map((community, index) => (
+        {communities.map((community, index) => (
           <Col key={index} xs={12} sm={6} md={4} lg={3}>
-            <CardComponent
+            <CommunityCardComponent
               image={community.image}
               title={community.title}
               description={community.description}

@@ -1,6 +1,6 @@
 import React, { act, useState } from 'react';
 import { Card, Button, Alert } from 'react-bootstrap';
-import styles from './Card.module.css';
+import styles from './CommunityCard.module.css';
 
 export const CommunityCardComponent = ({ image, title, description, communityId}) => {
   const [isJoined, setIsJoined] = useState(false);
@@ -11,7 +11,7 @@ export const CommunityCardComponent = ({ image, title, description, communityId}
 
     try{
       const action = isJoined ? 'remove' : 'add';
-      const success = await joinAPICall(listingId, action);
+      const success = await joinAPICall(communityId, action);
       console.error('In the try');
    
       if(success){
@@ -43,7 +43,7 @@ export const CommunityCardComponent = ({ image, title, description, communityId}
           <Card.Img variant="top" src={image} alt={title} className={styles.cardImage} />
           <Button
             variant="light"
-            className={`${styles.JoinButton} ${isJoined ? styles.joined : ''}`}
+            className={`${styles.joinButton} ${isJoined ? styles.joined : ''}`}
             onClick={handleJoinClick}
           >
             {isJoined ? '💖' : '🤍'}

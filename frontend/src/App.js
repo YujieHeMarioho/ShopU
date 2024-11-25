@@ -7,6 +7,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import Header from './Components/Header/Header';
 import Footer from './Components/Footer/Footer';
 import Favorites from './Components/Pages/Favorites/Favorites';
+import Communities from './Components/Pages/Community/Community';
 import Marketplace from './Components/Pages/Marketplace/Marketplace';
 import Banner from './Components/Common/Banner';
 import Statistics from './Components/Common/Statistics';
@@ -35,6 +36,7 @@ function App() {
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/resources" element={<Resources />} />
+          <Route path="/community" element={<Communities />} />
           {/* Protected Route */}
           <Route
             path="/profile"
