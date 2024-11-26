@@ -61,7 +61,6 @@ export const getAuth0User = async (req, res) => {
       }
 };
   
-  
 // Save or Update user
 export const updateUser =  async (req, res) => {
     const { userId, email, name, picture } = req.body;
