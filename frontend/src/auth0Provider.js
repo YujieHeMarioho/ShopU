@@ -4,11 +4,12 @@ import { Auth0Provider, useAuth0 } from '@auth0/auth0-react';
 
 const SaveUserToBackend = () => {
   const { user, isAuthenticated } = useAuth0();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const saveUserToBackend = async () => {
       if (!isAuthenticated || !user) return;
-
+      console.log(user)
       try {
         const response = await fetch('http://localhost:8080/api/users', {
           method: 'POST',
@@ -18,16 +19,20 @@ const SaveUserToBackend = () => {
           body: JSON.stringify({
             email: user.email,
             name: user.name,
-            picture: user.picture,
-            nickname: user.nickname,
-            created_at: user.updated_at, // Use updated_at for now as Auth0 does not provide created_at by default
+            user_id: user.sub
           }),
         });
-
-        if (!response.ok) {
-          throw new Error('Failed to save user to the backend');
+  
+        const data = await response.json();
+  
+        if (response.ok) {
+          if (response.status === 201 && data.message === 'User created successfully') {
+            // Redirect to profile page to complete info setup
+            navigate('/profile');
+          }
+        } else {
+          throw new Error('Failed to save user');
         }
-        console.log('User saved successfully after login');
       } catch (error) {
         console.error('Error saving user:', error);
       }
