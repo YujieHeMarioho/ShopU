@@ -3,6 +3,8 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import pkg from 'pg';
+import listings from './routes/listings.js';
+
 
 dotenv.config();
 
@@ -88,6 +90,9 @@ app.post('/api/users', async (req, res) => {
     res.status(500).json({ message: 'Error saving user', error });
   }
 });
+
+// Mount the listing routes
+app.use('/api', listings,);
 
 // Start Server
 app.listen(port, () => {

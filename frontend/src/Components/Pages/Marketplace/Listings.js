@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, Button, Dropdown, DropdownButton, DropdownItem } from 'react-bootstrap';
-import './Listings.css'; // Import the CSS file
+import './Listings.css'; 
 
 function ListingModal({ show, onHide, listing }) {
  const [dropDownTitle, setDropDownTitle] = useState('Select an Option')
@@ -17,13 +17,16 @@ function ListingModal({ show, onHide, listing }) {
        <Modal.Title className="card-title">{listing.title}</Modal.Title>
      </Modal.Header>
      <Modal.Body className="modal-body"> 
+      <div>
+        
+      </div>
     <img src={listing.image} alt={listing.title} className="img" /> 
      <div className="content">
          <h5 className="card-price">${listing.price}</h5>
          <div className="product-options">
            <label htmlFor="product-options-dropdown" className="card-text"> Product Options </label>
            <Dropdown>
-             <Dropdown.Toggle id="product-options-dropdown" variant="outline-light" className="options-dropdown"> {dropDownTitle} </Dropdown.Toggle>
+             <Dropdown.Toggle id="product-options-dropdown" variant="outline-light" className="dropdown-text"> {dropDownTitle} </Dropdown.Toggle>
              <Dropdown.Menu>
                <Dropdown.Item as="button" onClick={()=> handleDropDownClick('Drop Off Location')}>Drop Off Location</Dropdown.Item>
                <Dropdown.Item as="button" onClick={()=> handleDropDownClick('Pickup From Seller')}>Pickup From Seller</Dropdown.Item>

@@ -59,6 +59,11 @@
 	color: #333;
 }
 
+.modal-body .dropdown-text {
+	font-size: 1rem;
+	color: #555;
+}
+
 .modal-body button {
 	padding: 10px 20px;
 	font-size: 1rem;

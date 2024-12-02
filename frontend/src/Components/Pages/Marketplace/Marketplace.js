@@ -161,9 +161,10 @@ const dummyData = [
 ];
 
 export const Marketplace = () => {
+  const [listings, setListings] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState({});
-  const [filteredResults, setFilteredResults] = useState(dummyData);  // Default to show all listings
+  const [filteredResults, setFilteredResults] = useState(listings);  // Default to show all listings
   const [suggestions, setSuggestions] = useState([]); // Store suggested search results
   const [isDropdownVisible, setDropdownVisible] = useState(false); // Control visibility of suggestions
   const [showModal, setShowModal] = useState(false);
@@ -179,7 +180,7 @@ export const Marketplace = () => {
       threshold: 0.3, // Adjust threshold for fuzziness (lower is stricter)
       keys: ['title', 'description'], // Fields to search in each listing
     };
-    return new Fuse(dummyData, options);
+    return new Fuse(listings, options);
   }, []);
 
   // Handle search input changes
@@ -238,7 +239,7 @@ export const Marketplace = () => {
   // Filter listings based on search query and active filters
   useEffect(() => {
     const filterListings = () => {
-      let filtered = dummyData;
+      let filtered = listings;
 
       // Apply filters from activeFilters (categories, type, ratings)
       filtered = applyFilters(filtered);
@@ -257,20 +258,33 @@ export const Marketplace = () => {
     filterListings();
   }, [searchQuery, activeFilters]);
 
-  // useEffect(() => {
-  //   // Fetch the most recent listings from the server
-  //   const fetchListings = async () => {
-  //     try {
-  //       const response = await fetch('http://localhost:8080/api/listings');
-  //       const data = await response.json();
-  //       setListings(data);
-  //     } catch (error) {
-  //       console.error('Error fetching listings:', error);
-  //     }
-  //   };
+  useEffect(() => {
+    // Fetch the most recent listings from the server
+    const fetchListings = async () => {
+      try {
+        const response = await fetch('http://localhost:8080/api/listings');
+        const rawData = await response.json();
+    
+        // Map the data to match the desired format
+        const formattedData = rawData.map(item => ({
+          id: item.listing_id,
+          title: item.name,
+          description: item.description,
+          category: item.category,
+          type: item.item_type,
+          rating: item.star_rating,
+          price: item.price,
+          image: item.image_url,
+        }));
+    
+        setListings(formattedData);
+      } catch (error) {
+        console.error('Error fetching listings:', error);
+      }
+    };
 
-  //   fetchListings();
-  // }, []);
+    fetchListings();
+  }, []);
 
   // Filter change handler (when filter options are selected or modified)
   const handleFilterChange = (filter) => {
@@ -285,7 +299,7 @@ export const Marketplace = () => {
     setShowModal(true);
   };
 
-  // Close modal
+  // Close modal for creating listing
   const handleCloseModal = () => {
     setShowModal(false);
   };
@@ -302,11 +316,13 @@ export const Marketplace = () => {
     navigate('/create-service-listing');
   };
 
+  // Handler when user clicks a listing
   const handleCardClick = (listing) => {
     setSelectedListing(listing);
     setShowListingModal(true);
   };
 
+  // Close modal for listing popup
   const handleCloseListingModal = () => {
     setShowListingModal(false);
     setSelectedListing(null);
