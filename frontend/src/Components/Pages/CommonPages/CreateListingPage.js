@@ -106,16 +106,18 @@ const CreateListingPage = () => {
     }
 
     const formDataToSubmit = new FormData();
-    Object.keys(formData).forEach(key => {
-      if (key === 'image' && formData[key]) {
-        formDataToSubmit.append('image', formData[key]);
-      } else {
-        formDataToSubmit.append(key, JSON.stringify(formData[key]));
-      }
-    });
+    formDataToSubmit.append('title', formData.title);
+    formDataToSubmit.append('description', formData.description);
+    formDataToSubmit.append('category', formData.category || 'General'); // Default category
+    formDataToSubmit.append('type', formData.type || 'item'); // Default type
+    formDataToSubmit.append('rating', formData.rating || 0); // Default rating
+    formDataToSubmit.append('price', formData.price);
+    if (formData.image) {
+      formDataToSubmit.append('image', formData.image);
+    }
 
     try {
-      const response = await fetch('http://localhost:8080/api/listings', {
+      const response = await fetch('http://localhost:8080/api/listings/create', {
         method: 'POST',
         body: formDataToSubmit,
       });
@@ -124,12 +126,14 @@ const CreateListingPage = () => {
         alert('Listing created successfully!');
         window.location.href = '/marketplace';
       } else {
-        alert('Failed to create listing.');
+        const error = await response.json();
+        alert(`Failed to create listing: ${error.error}`);
       }
     } catch (error) {
       console.error('Error creating listing:', error);
     }
   };
+
 
   return (
     <Container className={currentStyles.createListingPage}>
@@ -148,7 +152,7 @@ const CreateListingPage = () => {
                   <Form.Label>Description</Form.Label>
                   <Form.Control as="textarea" name="description" value={formData.description} onChange={handleChange} />
                 </Form.Group>
-                
+
                 {/* Appointment Based Toggle */}
                 <Form.Group controlId="appointmentBased">
                   <Form.Check
