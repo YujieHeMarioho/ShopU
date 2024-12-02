@@ -14,6 +14,7 @@ export const SocialCard = ({
   initialLikes = 0,
   initialShares = 0,
   itemDetails,
+  tags = [], // New prop for tags
 }) => {
   const navigate = useNavigate();
   const [likes, setLikes] = useState(initialLikes);
@@ -25,17 +26,16 @@ export const SocialCard = ({
 
   const handleLikeClick = () => {
     setIsLiked((prev) => !prev);
-    setLikes((prev) => (isLiked ? prev - 1 : prev + 1));
+    setLikes((prev) => (isLiked ? prev - 1 : prev + 1)); // Toggle like count
   };
 
   const handleShareClick = () => {
     setIsShared((prev) => !prev);
-    setShares((prev) => (isShared ? prev - 1 : prev + 1));
+    setShares((prev) => (isShared ? prev - 1 : prev + 1)); // Toggle share count
   };
 
   const handleFavoriteClick = async (e) => {
     e.stopPropagation();
-
     try {
       const action = isFavorited ? 'remove' : 'add';
       const success = await favoriteAPICall(itemDetails.id, action);
@@ -43,7 +43,6 @@ export const SocialCard = ({
       if (success) {
         setIsFavorited(!isFavorited);
         setAlertMessage(isFavorited ? 'Removed from favorites' : 'Added to favorites');
-
         setTimeout(() => setAlertMessage(null), 3000);
       }
     } catch (error) {
@@ -78,6 +77,17 @@ export const SocialCard = ({
         <p className={styles.description}>{description}</p>
       </div>
 
+      {/* Tags Section */}
+      {tags.length > 0 && (
+        <div className={styles.tagsContainer}>
+          {tags.map((tag, index) => (
+            <span key={index} className={styles.tag}>
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
+
       <div className={styles.footer}>
         <Button
           variant="light"
@@ -105,20 +115,12 @@ export const SocialCard = ({
         >
           {isFavorited ? <FaHeart /> : <FaRegHeart />}
         </Button>
-        <Button
-          variant="primary"
-          onClick={handleNavigateToItem}
-          className={styles.viewItemButton}
-        >
+        <Button variant="primary" onClick={handleNavigateToItem} className={styles.viewItemButton}>
           View Item
         </Button>
       </div>
 
-      {alertMessage && (
-        <div className={styles.alert}>
-          {alertMessage}
-        </div>
-      )}
+      {alertMessage && <div className={styles.alert}>{alertMessage}</div>}
     </div>
   );
 };

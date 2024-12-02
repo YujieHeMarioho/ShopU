@@ -39,11 +39,11 @@ export const CardGrid = ({ listings = [], variant = 'marketplace' }) => {
                   description={listing.description}
                   profilePic={listing.profilePic}
                   author={listing.author}
-                  likes={listing.likes}
+                  initialLikes={listing.likes}
+                  initialShares={listing.shares}
                   isLiked={listing.isLiked}
-                  onLike={() => toggleLike(listing)}
-                  onSave={() => savePost(listing)}
-                  onShare={() => sharePost(listing)}
+                  isShared={listing.isShared}
+                  tags={listing.tags}
                 />
               )}
             </Col>
@@ -61,16 +61,4 @@ const openListingDetails = (listing) => {
 
 const saveToFavorites = (listing) => {
   // Logic to save the item to favorites
-};
-
-const toggleLike = (post) => {
-  // Logic to toggle like on a post
-};
-
-const savePost = (post) => {
-  // Logic to save the post
-};
-
-const sharePost = (post) => {
-  // Logic to share the post
 };

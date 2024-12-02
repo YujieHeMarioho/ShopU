@@ -3,12 +3,36 @@
     border: none;
     border-radius: 16px;
     padding: 20px;
-    margin: 20px 0;
+    margin:5px 0;
     background: linear-gradient(135deg, #fdfbfb, #ebedee);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
   }
   
+  .tagsContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  
+  .tag {
+    background-color: #e0e0e0;
+    color: #333;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+  }
+  
+  .tag:hover {
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+  }
+  
+
   .socialCard:hover {
     transform: scale(1.02);
     box-shadow: 0 10px 15px rgba(0, 0, 0, 0.15), 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -45,11 +69,7 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
     transition: transform 0.2s ease-in-out;
   }
-  
-  .media:hover {
-    transform: scale(1.05);
-  }
-  
+
   /* Card Body */
   .body {
     margin-top: 10px;
@@ -135,4 +155,8 @@
     font-size: 14px;
     border-radius: 8px;
   }
+
+  
+
+
   

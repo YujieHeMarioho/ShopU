@@ -1,20 +1,77 @@
-.card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
-  padding: 20px;
+.postFooter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
-.create-post-button {
-  margin: 20px;
-  padding: 10px 20px;
+.likeButton,
+.shareButton {
+  margin-right: 10px;
+}
+
+.likesCount,
+.sharesCount {
+  margin-left: 5px;
+}
+
+/* Tag Container to group the tags */
+.tagContainer {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap; /* Ensure the tags wrap if they overflow */
+}
+
+.tagBadge {
+  margin: 5px 5px 0 0; /* Add spacing between the tags */
+  cursor: pointer;
   background-color: #007bff;
   color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 20px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  font-size: 0.9rem; /* Slightly smaller font */
+  text-align: center;
+  user-select: none; /* Prevent text selection on click */
 }
 
-.create-post-button:hover {
-  background-color: #0056b3;
+/* Hover effect specifically for tags */
+.tagBadge:hover {
+  background-color: #0056b3; /* Darker blue */
+  transform: scale(1.1); /* Enlarge slightly */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Subtle shadow */
 }
+
+.singlePostContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.singlePost {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 90%;
+  max-width: 600px;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.singlePostImage {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+.singlePostContent {
+  margin-top: 15px;
+  text-align: center;
+}
+
+.layoutToggleButton {
+  margin-bottom: 15px;
+}
+
