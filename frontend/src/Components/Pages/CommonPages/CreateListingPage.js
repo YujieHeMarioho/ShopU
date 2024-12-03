@@ -115,11 +115,18 @@ const CreateListingPage = () => {
     if (formData.image) {
       formDataToSubmit.append('image', formData.image);
     }
+    formDataToSubmit.append('condition', 'New'); // Needs to be added to the form defualting to new for now
 
+    
+    const jsonString = JSON.stringify(Object.fromEntries(formDataToSubmit.entries()));
+    console.log(jsonString)
     try {
       const response = await fetch('http://localhost:8080/api/listings/create', {
         method: 'POST',
-        body: formDataToSubmit,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonString,
       });
 
       if (response.ok) {
