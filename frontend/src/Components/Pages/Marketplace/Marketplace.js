@@ -173,6 +173,7 @@ export const Marketplace = () => {
   const [showListingModal, setShowListingModal] = useState(false);
   const [selectedListing, setSelectedListing] = useState(null);
 
+
   console.log(listings);
   // Fuse.js setup for fuzzy search
   const fuse = useMemo(() => {
@@ -191,7 +192,7 @@ export const Marketplace = () => {
 
     if (query.length > 0) {
       // Perform a fuzzy search for suggestions, apply filters first
-      const filteredData = applyFilters(dummyData);
+      const filteredData = applyFilters(listings);
       const results = fuse.search(query).filter(result => filteredData.includes(result.item));
       setSuggestions(results.slice(0, 5).map(result => result.item)); // Show top 5 suggestions
       setDropdownVisible(true);
@@ -220,9 +221,9 @@ export const Marketplace = () => {
       filtered = filtered.filter((listing) => {
         const rating = listing.rating || 0;
         return activeFilters.ratings.some((selectedRating) => {
-          if (selectedRating === '3 stars+') return rating >= 3;
-          if (selectedRating === '4 stars+') return rating >= 4;
-          if (selectedRating === '5 stars') return rating === 5;
+          if (selectedRating === '3 stars+') return rating >= 3.0;
+          if (selectedRating === '4 stars+') return rating >= 4.0;
+          if (selectedRating === '5 stars') return rating == 5.0;
           return false;
         });
       });
@@ -269,7 +270,7 @@ export const Marketplace = () => {
         // Map the data to match the desired format
         const formattedData = rawData.map(item => ({
           id: item.listing_id,
-          title: item.name,
+          title: item.title,
           description: item.description,
           category: item.category,
           type: item.item_type,
