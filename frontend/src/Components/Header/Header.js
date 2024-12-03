@@ -86,7 +86,7 @@ const Header = () => {
                     </div>
                 )}
 
-                <div className={styles.linksContainer}>
+      <div className={styles.linksContainer}>
                     <a href="/home" className={getActiveLinkClass('/home')}>Home</a>
                     <a href="/marketplace" className={getActiveLinkClass('/marketplace')}>Marketplace</a>
                     <a href="/feed" className={getActiveLinkClass('/feed')}>Feed</a>
@@ -94,8 +94,9 @@ const Header = () => {
                     <a href="/resources" className={getActiveLinkClass('/resources')}>Resources</a>
                     <a href="/become-a-seller" className={getActiveLinkClass('/become-a-seller')}>Become a Seller</a>
                     <a href="/contact" className={getActiveLinkClass('/contact')}>Contact</a>
+                    <a href="/friends" className={getActiveLinkClass('/friends')}>Friends</a>
                 </div>
-
+          
                 <div className={styles.contactPhoneAndText}>
                     <div className={styles.contactPhone}>Contact Us: (555) 123-4567</div>
                 </div>
