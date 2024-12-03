@@ -41,37 +41,6 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Subtle shadow */
 }
 
-.singlePostContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-}
-
-.singlePost {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 90%;
-  max-width: 600px;
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.singlePostImage {
-  width: 100%;
-  height: auto;
-  border-radius: 8px;
-}
-
-.singlePostContent {
-  margin-top: 15px;
-  text-align: center;
-}
-
 .layoutToggleButton {
   margin-bottom: 15px;
 }
-
