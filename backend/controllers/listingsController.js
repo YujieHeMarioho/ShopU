@@ -2,7 +2,22 @@ import pool from '../pool.js';
 
 //Endpoint for fetching rows
 export const getAllListings = async (req, res) => {
-    const query = 'SELECT * FROM public.listings';  
+    const query = `
+        SELECT
+          l.listing_id,
+          l.title,
+          l.description,
+          c.name AS category,  -- Get the category name
+          l.item_type,
+          l.star_rating,
+          l.price,
+          l.image_url
+        FROM
+          listings l
+        JOIN
+          categories c ON l.category_id = c.category_id;
+      `;
+ 
     try {
         const result = await pool.query(query);  
         res.status(200).json(result.rows); 
@@ -15,10 +30,7 @@ export const getAllListings = async (req, res) => {
 //Endpoint for create a listing
 export const createListing = async (req, res) => {
     try {
-        console.log('req body:', req.body)
         const { title, description, category, type, rating, price, condition} = req.body;
-        console.log('Title: ', title, 'description: ',description, 'type:', type, 'rating: ', rating, 'price', price)
-
         // Retrieve uploaded image path from multer or use a default placeholder if none provided
         const imagePath = req.file ? req.file.path : 'https://via.placeholder.com/300x200';
 

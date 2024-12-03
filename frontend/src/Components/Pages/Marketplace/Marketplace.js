@@ -6,160 +6,6 @@ import styles from './Marketplace.module.css'; // Import CSS module for styling
 import { useNavigate } from 'react-router-dom';
 import ListingModal from './Listings';
 
-// Dummy data for marketplace listings
-const dummyData = [
-  {
-    id: 1,
-    title: 'Vintage Chair',
-    description: 'A beautiful vintage chair, lightly used.',
-    category: 'Furniture',
-    type: 'item',
-    rating: 4,
-    price: 50,
-    image: 'https://via.placeholder.com/300x200',
-  },
-  {
-    id: 2,
-    title: 'Tutoring for Calculus',
-    description: 'Experienced tutor available for Calculus lessons.',
-    category: 'Education',
-    type: 'service',
-    rating: 5,
-    price: 100,
-    image: 'https://via.placeholder.com/300x200',
-  },
-  {
-    id: 3,
-    title: 'Gaming Laptop',
-    description: 'High-performance gaming laptop for sale.',
-    category: 'Electronics',
-    type: 'item',
-    rating: 4.5,
-    price: 1200,
-    image: 'https://via.placeholder.com/300x200',
-  },
-  {
-    id: 4,
-    title: 'Photography Session',
-    description: 'Offering professional photography sessions.',
-    category: 'Photography',
-    type: 'service',
-    rating: 3,
-    price: 150,
-    image: 'https://via.placeholder.com/300x200',
-  },
-  {
-    id: 5,
-    title: 'Yoga Mat',
-    description: 'Eco-friendly yoga mat, new condition.',
-    category: 'Fitness',
-    type: 'item',
-    rating: 4,
-    price: 20,
-    image: 'https://via.placeholder.com/300x200',
-  },
-  {
-    id: 6,
-    title: 'Dining Table Set',
-    description: 'Solid wood dining table set with 4 chairs.',
-    category: 'Furniture',
-    type: 'item',
-    rating: 5,
-    price: 350,
-    image: 'https://via.placeholder.com/300x200',
-  },
-  {
-    id: 7,
-    title: 'Guitar Lessons',
-    description: 'Learn guitar with an experienced instructor.',
-    category: 'Education',
-    type: 'service',
-    rating: 4.5,
-    price: 50,
-    image: 'https://via.placeholder.com/300x200',
-  },
-  {
-    id: 8,
-    title: 'Smartphone',
-    description: 'Latest model smartphone with 128GB storage.',
-    category: 'Electronics',
-    type: 'item',
-    rating: 4.2,
-    price: 800,
-    image: 'https://via.placeholder.com/300x200',
-  },
-  {
-    id: 9,
-    title: 'Video Editing Service',
-    description: 'Professional video editing for personal or business needs.',
-    category: 'Photography',
-    type: 'service',
-    rating: 5,
-    price: 200,
-    image: 'https://via.placeholder.com/300x200',
-  },
-  {
-    id: 10,
-    title: 'Fitness Training',
-    description: 'Personalized fitness training sessions.',
-    category: 'Fitness',
-    type: 'service',
-    rating: 4.8,
-    price: 80,
-    image: 'https://via.placeholder.com/300x200',
-  },
-  {
-    id: 11,
-    title: 'Office Chair',
-    description: 'Ergonomic office chair, excellent condition.',
-    category: 'Furniture',
-    type: 'item',
-    rating: 4.3,
-    price: 120,
-    image: 'https://via.placeholder.com/300x200',
-  },
-  {
-    id: 12,
-    title: 'Website Development',
-    description: 'Custom website development for small businesses.',
-    category: 'Services',
-    type: 'service',
-    rating: 4.7,
-    price: 1500,
-    image: 'https://via.placeholder.com/300x200',
-  },
-  {
-    id: 13,
-    title: 'Wrist Watch',
-    description: 'Luxury wrist watch, used but in good condition.',
-    category: 'Accessories',
-    type: 'item',
-    rating: 4.9,
-    price: 300,
-    image: 'https://via.placeholder.com/300x200',
-  },
-  {
-    id: 14,
-    title: 'Bicycle for Sale',
-    description: 'Mountain bike in excellent condition.',
-    category: 'Sports',
-    type: 'item',
-    rating: 4.2,
-    price: 250,
-    image: 'https://via.placeholder.com/300x200',
-  },
-  {
-    id: 15,
-    title: 'Art Supplies',
-    description: 'Set of high-quality art supplies for artists.',
-    category: 'Art',
-    type: 'item',
-    rating: 4.8,
-    price: 60,
-    image: 'https://via.placeholder.com/300x200',
-  },
-];
-
 export const Marketplace = () => {
   const [listings, setListings] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -173,8 +19,6 @@ export const Marketplace = () => {
   const [showListingModal, setShowListingModal] = useState(false);
   const [selectedListing, setSelectedListing] = useState(null);
 
-
-  console.log(listings);
   // Fuse.js setup for fuzzy search
   const fuse = useMemo(() => {
     const options = {
@@ -205,7 +49,6 @@ export const Marketplace = () => {
   // Apply filters before returning data for search
   const applyFilters = (data) => {
     let filtered = data;
-
     // Apply filters from activeFilters (categories, type, ratings)
     if (activeFilters.categories && activeFilters.categories.length > 0) {
       filtered = filtered.filter((listing) =>
@@ -244,7 +87,7 @@ export const Marketplace = () => {
       let filtered = applyFilters(listings);
 
       // Apply filters from activeFilters (categories, type, ratings)
-      filtered = applyFilters(filtered);
+      //filtered = applyFilters(filtered);
 
       // Apply fuzzy search after filters are applied
       if (searchQuery) {
