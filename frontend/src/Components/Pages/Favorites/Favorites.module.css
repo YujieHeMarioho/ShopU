@@ -1,0 +1,155 @@
+.favoritesContainer {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+  align-items: center; /* Center everything horizontally */
+}
+
+.my-4 {
+  position: relative; /* This ensures the dropdown aligns properly */
+  margin: 1rem 0;
+}
+
+
+.searchBar {
+  width: 30vw; /* Full width of the viewport */
+  max-width: 100%; /* Ensure it doesn't exceed the viewport width */
+  padding: 10px;
+  font-size: 1.1rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin-bottom: 20px; /* Space between search bar and listings */
+  box-sizing: border-box; /* Include padding and border in the element's total width */
+}
+
+.suggestionsDropdown {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 0px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #fff;
+  position: absolute;
+  width: 30%; /* Set width to 100% of the parent container */
+  z-index: 10; /* Ensure it's above other elements */
+}
+
+
+
+.suggestionsDropdown .list-group-item {
+  cursor: pointer;
+}
+
+.layoutContainer {
+  display: flex;
+  justify-content: center; /* Center the layout container */
+  gap: 20px;
+  width: 100%;
+  max-width: 2200px; /* Max width for the entire layout */
+  margin: 0 auto; /* Center content horizontally */
+}
+
+.filterSidebarContainer {
+  flex: 1;
+  min-width: 250px; /* Ensure sidebar has a minimum width */
+}
+
+.cardGridContainer {
+  flex: 10;
+  min-width: 600px; /* Ensure the card grid has enough space */
+  width: 100%; /* Take up full available space */
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Responsive grid with wider cards */
+  gap: 20px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.cardGridItem {
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.cardGridItem img {
+  width: 100%;
+  height: auto;
+  border-radius: 5px;
+  margin-bottom: 15px;
+}
+
+.cardGridItem .title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.cardGridItem .price {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #2ecc71; /* Green color for price */
+}
+
+.filterSidebar {
+  background-color: #f4f4f4;
+  padding: 15px;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.filterSidebar h3 {
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+}
+
+.filterSidebar .filterOption {
+  margin-bottom: 10px;
+}
+
+.filterSidebar .filterOption label {
+  font-size: 1rem;
+  margin-right: 10px;
+}
+
+.filterSidebar .filterOption select,
+.filterSidebar .filterOption input[type="checkbox"] {
+  margin-top: 5px;
+}
+
+.filterSidebar .filterOption select {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.filterSidebar .filterOption input[type="checkbox"] {
+  margin-right: 10px;
+}
+
+.filterSidebar .filterButton {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-top: 20px;
+  background-color: #3498db;
+  color: white;
+  font-size: 1rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.filterSidebar .filterButton:hover {
+  background-color: #2980b9;
+}
