@@ -173,6 +173,7 @@ export const Marketplace = () => {
   const [showListingModal, setShowListingModal] = useState(false);
   const [selectedListing, setSelectedListing] = useState(null);
 
+  console.log(listings);
   // Fuse.js setup for fuzzy search
   const fuse = useMemo(() => {
     const options = {
@@ -239,7 +240,7 @@ export const Marketplace = () => {
   // Filter listings based on search query and active filters
   useEffect(() => {
     const filterListings = () => {
-      let filtered = listings;
+      let filtered = applyFilters(listings);
 
       // Apply filters from activeFilters (categories, type, ratings)
       filtered = applyFilters(filtered);
@@ -256,7 +257,7 @@ export const Marketplace = () => {
     };
 
     filterListings();
-  }, [searchQuery, activeFilters]);
+  }, [listings, searchQuery, activeFilters]);
 
   useEffect(() => {
     // Fetch the most recent listings from the server
