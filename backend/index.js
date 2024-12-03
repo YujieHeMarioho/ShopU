@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import pkg from 'pg';
 import listings from './routes/listings.js';
 import filters from './routes/filters.js';
+import favorites from './routes/favorites.js';
 
 
 dotenv.config();
@@ -95,6 +96,8 @@ app.post('/api/users', async (req, res) => {
 // Mount the listing routes
 app.use('/api', listings);
 app.use('/api', filters);
+app.use('/api', favorites);
+
 
 // Start Server
 app.listen(port, () => {
