@@ -134,7 +134,6 @@ const CreateListingPage = () => {
     }
 
     const jsonString = JSON.stringify(Object.fromEntries(formDataToSubmit.entries()));
-    console.log(jsonString)
     try {
       const response = await fetch('http://localhost:8080/api/listings/create', {
         method: 'POST',

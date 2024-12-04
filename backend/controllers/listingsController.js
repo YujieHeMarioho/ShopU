@@ -42,7 +42,7 @@ export const createListing = async (req, res) => {
             RETURNING *;
         `;
         const values = [title, description, type, rating || 0, price, imagePath, condition, new Date().toISOString()];
-        console.log(values)
+        
         // Execute query
         const result = await pool.query(query, values);
         res.status(201).json(result.rows[0]);
