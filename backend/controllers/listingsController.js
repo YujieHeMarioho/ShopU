@@ -67,14 +67,14 @@ export const createListing = async (req, res) => {
         const imagePath = req.file ? req.file.path : 'http://localhost:3000/ShopULogo.png';
 
         //database call to get category id
-   
+
         const query = `
             INSERT INTO public.listings (title, description, category_id, item_type, star_rating, price, image_url, condition, date_posted, user_id)
             VALUES ($1, $2, 10, $3, $4, $5, $6, $7, $8, 1)
             RETURNING *;
         `;
         const values = [title, description, type, rating || 0, price, imagePath, condition, new Date().toISOString()];
-
+        
         // Execute query
         const result = await pool.query(query, values);
         res.status(201).json(result.rows[0]);

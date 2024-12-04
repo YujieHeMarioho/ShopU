@@ -106,20 +106,34 @@ const CreateListingPage = () => {
     }
 
     const formDataToSubmit = new FormData();
-    formDataToSubmit.append('title', formData.title);
-    formDataToSubmit.append('description', formData.description);
-    formDataToSubmit.append('category', formData.category || 'General'); // Default category
-    formDataToSubmit.append('type', formData.type || 'item'); // Default type
-    formDataToSubmit.append('rating', formData.rating || 0); // Default rating
-    formDataToSubmit.append('price', formData.price);
-    if (formData.image) {
-      formDataToSubmit.append('image', formData.image);
-    }
-    formDataToSubmit.append('condition', 'New'); // Needs to be added to the form defualting to new for now
 
-    
+    if (isServicePage){
+      formDataToSubmit.append('title', formData.businessName);
+      formDataToSubmit.append('description', formData.description);
+      formDataToSubmit.append('category', formData.category || 'General'); // Default category
+      formDataToSubmit.append('type', formData.type || 'service'); // Default type
+      formDataToSubmit.append('rating', formData.rating || 0); // Default rating
+      formDataToSubmit.append('price', formData.services[1].price);
+      if (formData.image) {
+        formDataToSubmit.append('image', formData.image);
+      }
+      formDataToSubmit.append('condition', 'New'); // Needs to be added to the form defualting to new for now
+    }
+    else{
+      formDataToSubmit.append('title', formData.title);
+      formDataToSubmit.append('description', formData.description);
+      formDataToSubmit.append('category', formData.category || 'General'); // Default category
+      formDataToSubmit.append('type', formData.type || 'item'); // Default type
+      formDataToSubmit.append('rating', formData.rating || 0); // Default rating
+      formDataToSubmit.append('price', formData.price);
+      if (formData.image) {
+        formDataToSubmit.append('image', formData.image);
+      }
+      formDataToSubmit.append('condition', 'New'); // Needs to be added to the form defualting to new for now
+  
+    }
+
     const jsonString = JSON.stringify(Object.fromEntries(formDataToSubmit.entries()));
-    console.log(jsonString)
     try {
       const response = await fetch('http://localhost:8080/api/listings/create', {
         method: 'POST',
