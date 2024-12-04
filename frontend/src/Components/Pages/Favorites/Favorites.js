@@ -1,21 +1,18 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Banner, CardGrid, FilterSidebar } from '../../Common';
-import { Form, ListGroup, Modal, Button } from 'react-bootstrap';
+import { CardGrid, FilterSidebar } from '../../Common';
+import { Form, ListGroup } from 'react-bootstrap';
 import Fuse from 'fuse.js';  // Import Fuse.js library
-import styles from './Marketplace.module.css'; // Import CSS module for styling
+import styles from './Favorites.module.css'; // Import CSS module for styling
 import { useNavigate } from 'react-router-dom';
-import ListingModal from './Listings';
+import ListingModal from './../Marketplace/Listings';
 
-export const Marketplace = () => {
+export const Favorites = () => {
   const [listings, setListings] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState({});
   const [filteredResults, setFilteredResults] = useState(listings);  // Default to show all listings
   const [suggestions, setSuggestions] = useState([]); // Store suggested search results
   const [isDropdownVisible, setDropdownVisible] = useState(false); // Control visibility of suggestions
-  const [showModal, setShowModal] = useState(false);
-  const navigate = useNavigate();
-
   const [showListingModal, setShowListingModal] = useState(false);
   const [selectedListing, setSelectedListing] = useState(null);
 
@@ -107,8 +104,11 @@ export const Marketplace = () => {
     // Fetch the most recent listings from the server
     const fetchListings = async () => {
       try {
-        const response = await fetch('http://localhost:8080/api/listings');
+        //hardcoding userId until we can implement it correctly
+        const userId = 1;
+        const response = await fetch(`http://localhost:8080/api/listings/favorites/${userId}`);
         const rawData = await response.json();
+        console.log(rawData);
     
         // Map the data to match the desired format
         const formattedData = rawData.map(item => ({
@@ -139,28 +139,6 @@ export const Marketplace = () => {
     }));
   };
 
-  // Open modal when "Create New Listing" button is clicked
-  const handleCreateListing = () => {
-    setShowModal(true);
-  };
-
-  // Close modal for creating listing
-  const handleCloseModal = () => {
-    setShowModal(false);
-  };
-
-  // Navigate to create item listing page
-  const handleNewItemListing = () => {
-    setShowModal(false);
-    navigate('/create-item-listing');
-  };
-
-  // Navigate to create service listing page
-  const handleNewServiceListing = () => {
-    setShowModal(false);
-    navigate('/create-service-listing');
-  };
-
   // Handler when user clicks a listing
   const handleCardClick = (listing) => {
     setSelectedListing(listing);
@@ -173,14 +151,13 @@ export const Marketplace = () => {
     setSelectedListing(null);
   };
 
-
   return (
-    <div className={styles.marketplaceContainer}>
+    <div className={styles.favoritesContainer}>
       {/* Search Bar */}
       <div className="my-4">
         <Form.Control
           type="text"
-          placeholder="Search listings..."
+          placeholder="Search favorited listings..."
           value={searchQuery}
           onChange={handleSearchChange}
           className={styles.searchBar}
@@ -200,30 +177,6 @@ export const Marketplace = () => {
             ))}
           </ListGroup>
         )}
-
-        {/* Create New Listing Button */}
-        <div className="my-4">
-          <Button className="create-listing-button" onClick={handleCreateListing}>
-            Create New Listing
-          </Button>
-        </div>
-
-        {/* Modal for Additional Options */}
-        <Modal show={showModal} onHide={handleCloseModal} centered>
-          <Modal.Header closeButton>
-            <Modal.Title style={{ color: 'black' }}>Select Listing Type</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <div className="d-grid gap-2">
-              <Button variant="primary" onClick={handleNewItemListing}>
-                Create New Item Listing
-              </Button>
-              <Button variant="secondary" onClick={handleNewServiceListing}>
-                Create New Service Listing
-              </Button>
-            </div>
-          </Modal.Body>
-        </Modal>
       </div>
 
       {/* Layout container for the filter sidebar and card grid */}
@@ -246,7 +199,6 @@ export const Marketplace = () => {
       <ListingModal show={showListingModal} onHide={handleCloseListingModal} listing={selectedListing} />
     </div>
   );
-
 };
 
-export default Marketplace;
+export default Favorites;

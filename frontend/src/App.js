@@ -6,6 +6,7 @@ import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Header from './Components/Header/Header';
 import Footer from './Components/Footer/Footer';
+import Favorites from './Components/Pages/Favorites/Favorites';
 import Marketplace from './Components/Pages/Marketplace/Marketplace';
 import Banner from './Components/Common/Banner';
 import Statistics from './Components/Common/Statistics';
@@ -15,6 +16,8 @@ import Profile from './Components/Pages/Profile/Profile';
 import SocialFeed from './Components/Pages/Feed/SocialFeed';
 import PrivateRoute from './Components/Common/PrivateRoute';
 import Auth0ProviderWithHistory from './auth0Provider';
+import CreateListingPage from './Components/Pages/CommonPages/CreateListingPage';
+import Friends from './Components/Pages/Friends/Friends';
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -32,9 +35,13 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/home" element={<Home />} />
+          <Route path="/favorites" element={<Favorites />} />
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/resources" element={<Resources />} />
           <Route path="/feed" element={<SocialFeed/>}/>
+          <Route path="/create-item-listing" element={<CreateListingPage />} />
+          <Route path="/create-service-listing" element={<CreateListingPage />} />
+          <Route path="/friends" element={<Friends />} />
           {/* Protected Route */}
           <Route
             path="/profile"

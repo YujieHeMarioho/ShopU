@@ -53,7 +53,6 @@ export const CardGrid = ({ listings = [], variant = 'marketplace' }) => {
     </Container>
   );
 };
-
 // Example functions (define these in your component or context)
 const openListingDetails = (listing) => {
   // Logic to open a modal or navigate to a details page

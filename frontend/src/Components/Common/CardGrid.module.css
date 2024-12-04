@@ -1,0 +1,18 @@
+.cardGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Adjust based on card size */
+    gap: 20px; /* Space between cards */
+    justify-items: center; /* Center align cards within each grid cell */
+    padding: 0; /* Remove any unwanted padding from the container */
+  }
+  
+  .cardWrapper {
+    width: 100%; /* Ensure the card takes up full width of the column */
+  }
+  
+  .card {
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Ensure the cards have the same height */
+  }
+  
