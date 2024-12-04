@@ -30,7 +30,6 @@ export const getAllListings = async (req, res) => {
 //Endpoint for fetching rows
 export const getFavoritedListings = async (req, res) => {
     const { userId } = req.params;
-    console.log('userId:', userId);
     const query = `
         SELECT
           l.listing_id,

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Banner, CardGrid, FilterSidebar } from '../../Common';
-import { Form, ListGroup, Modal, Button } from 'react-bootstrap';
+import { CardGrid, FilterSidebar } from '../../Common';
+import { Form, ListGroup } from 'react-bootstrap';
 import Fuse from 'fuse.js';  // Import Fuse.js library
 import styles from './Favorites.module.css'; // Import CSS module for styling
 import { useNavigate } from 'react-router-dom';
@@ -13,9 +13,6 @@ export const Favorites = () => {
   const [filteredResults, setFilteredResults] = useState(listings);  // Default to show all listings
   const [suggestions, setSuggestions] = useState([]); // Store suggested search results
   const [isDropdownVisible, setDropdownVisible] = useState(false); // Control visibility of suggestions
-  const [showModal, setShowModal] = useState(false);
-  const navigate = useNavigate();
-
   const [showListingModal, setShowListingModal] = useState(false);
   const [selectedListing, setSelectedListing] = useState(null);
 
