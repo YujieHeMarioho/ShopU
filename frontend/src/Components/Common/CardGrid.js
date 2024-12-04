@@ -1,28 +1,51 @@
 import React from 'react';
 import { Container, Row, Col } from 'react-bootstrap';
 import { CardComponent } from './Card';
-import styles from './CardGrid.module.css';
+import SocialCard from './SocialCard';
 
-export const CardGrid = ({ listings = [], openListingDetails }) => {
+export const CardGrid = ({ listings = [], variant = 'marketplace' }) => {
   return (
     <Container>
-      <Row className={styles.cardGrid}>
+      <Row>
         {listings.length === 0 ? (
           <Col xs={12}>
             <p>No listings available.</p>
           </Col>
         ) : (
           listings.map((listing, index) => (
-            <Col key={index} xs={12} sm={6} md={4} lg={3} className={styles.cardWrapper}>
-              <CardComponent
-                image={listing.image}
-                title={listing.title}
-                description={listing.description}
-                price={listing.price}
-                listingId={listing.id}
-                onListingClick={() => openListingDetails(listing)}
-                onFavoriteClick={() => saveToFavorites(listing)}
-              />
+            <Col
+              key={index}
+              xs={12}
+              sm={6}
+              md={variant === 'marketplace' ? 4 : 6}
+              lg={variant === 'marketplace' ? 3 : 4}
+            >
+              {variant === 'marketplace' ? (
+                // Marketplace Card
+                <CardComponent
+                  image={listing.image}
+                  title={listing.title}
+                  description={listing.description}
+                  price={listing.price}
+                  onCardClick={() => openListingDetails(listing)}
+                  onFavoriteClick={() => saveToFavorites(listing)}
+                />
+              ) : (
+                // Social Feed Card
+                <SocialCard
+                  image={listing.image}
+                  video={listing.video}
+                  title={listing.title}
+                  description={listing.description}
+                  profilePic={listing.profilePic}
+                  author={listing.author}
+                  initialLikes={listing.likes}
+                  initialShares={listing.shares}
+                  isLiked={listing.isLiked}
+                  isShared={listing.isShared}
+                  tags={listing.tags}
+                />
+              )}
             </Col>
           ))
         )}
