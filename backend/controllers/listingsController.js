@@ -27,12 +27,44 @@ export const getAllListings = async (req, res) => {
     }
 };
 
+//Endpoint for fetching rows
+export const getFavoritedListings = async (req, res) => {
+    const { userId } = req.params;
+    const query = `
+        SELECT
+          l.listing_id,
+          l.title,
+          l.description,
+          c.name AS category,  -- Get the category name
+          l.item_type,
+          l.star_rating,
+          l.price,
+          l.image_url
+        FROM
+          listings l
+        JOIN
+          categories c ON l.category_id = c.category_id
+        JOIN
+          favorites f ON l.listing_id = f.listing_id
+        WHERE
+          f.user_id = $1; 
+        `;
+    
+    try {
+        const result = await pool.query(query, [userId]);  
+        res.status(200).json(result.rows); 
+    } catch (err) {
+        console.error('Error running query:', err);  
+        res.status(500).json({ error: 'Database error' });  
+    }
+};
+
 //Endpoint for create a listing
 export const createListing = async (req, res) => {
     try {
         const { title, description, category, type, rating, price, condition} = req.body;
         // Retrieve uploaded image path from multer or use a default placeholder if none provided
-        const imagePath = req.file ? req.file.path : 'https://via.placeholder.com/300x200';
+        const imagePath = req.file ? req.file.path : 'http://localhost:3000/ShopULogo.png';
 
         //database call to get category id
 

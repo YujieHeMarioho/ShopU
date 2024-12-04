@@ -11,15 +11,34 @@ export const getAllFavorites = async (req, res) => {
     }
 };
 
+export const getFavoriteStatus = async (req, res) => {
+    const { listing_id } = req.params;
+    const { userId } = req.query;
+    const query = 'SELECT * FROM public.favorites WHERE user_id = $1 AND listing_id = $2';
+
+    try {
+    const result = await pool.query(query, [userId, listing_id]);
+    if(result.rowCount > 0 ){
+        res.status(200).json({isFavorited:  true});
+    }
+    else {
+        res.status(200).json({isFavorited:  false});
+    }
+    } catch (err) {
+        console.error('Error running query:', err);
+        res.status(500).json({ error: 'Database error' });
+    }
+};
+
+
 // Endpoint to add a new favorited item 
 export const favoriteItem = async (req, res) => {
     const { listing_id } = req.params;
-    // Grab user_id from auth0 once it's available
-    const user_id = req.oidc.user.sub;
+    const { userId } = req.body;
 
     // Check if all required fields are provided
-    if (!user_id || !listing_id) {
-        return res.status(400).json({ error: 'Missing required fields', fields: { user_id, listing_id}});
+    if (!userId || !listing_id) {
+        return res.status(400).json({ error: 'Missing required fields', fields: { userId, listing_id}});
     }
 
     // Generate the favorited_at timestamp
@@ -29,7 +48,7 @@ export const favoriteItem = async (req, res) => {
         // Insert new favorite into the database
         const result = await pool.query(
             'INSERT INTO favorites (user_id, listing_id, favorited_at) VALUES ($1, $2, $3)',
-            [user_id, listing_id, favorited_at]
+            [userId, listing_id, favorited_at]
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
@@ -40,19 +59,18 @@ export const favoriteItem = async (req, res) => {
 
 // Endpoint to add a new favorited item 
 export const unfavoriteItem = async (req, res) => {
-    // Grab user_id from auth0 once it's available
-    const user_id = req.oidc.user.sub;
     const { listing_id } = req.params;  
+    const { userId } = req.body;
 
     // Check if all required fields are provided
-    if (!user_id || !listing_id) {
-        return res.status(400).json({ error: 'Missing required fields', fields: { user_id, listing_id} });
+    if (!userId || !listing_id) {
+        return res.status(400).json({ error: 'Missing required fields', fields: { userId, listing_id} });
     }
     try {
         // Insert new favorite into the database
         const result = await pool.query(
             'DELETE FROM favorites WHERE user_id = $1 AND listing_ID = $2 RETURNING *',
-            [user_id, listing_id]
+            [userId, listing_id]
         );
         if (result.rowCount === 0) {
             return res.status(404).json({ error: 'Favorite item not found' });

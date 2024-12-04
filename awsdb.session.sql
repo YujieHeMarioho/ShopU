@@ -1,7 +1,1 @@
-
-
-SELECT * FROM public.listings;
-
-SELECT * FROM public.categories;
-
-UPDATE 
+delete from favorites where user_id = 1

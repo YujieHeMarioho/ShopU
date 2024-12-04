@@ -19,6 +19,7 @@ export const CardGrid = ({ listings = [], openListingDetails }) => {
                 title={listing.title}
                 description={listing.description}
                 price={listing.price}
+                listingId={listing.id}
                 onListingClick={() => openListingDetails(listing)}
                 onFavoriteClick={() => saveToFavorites(listing)}
               />
