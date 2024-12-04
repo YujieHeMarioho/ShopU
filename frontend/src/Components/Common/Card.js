@@ -2,19 +2,19 @@ import React, { act, useState } from 'react';
 import { Card, Button, Alert } from 'react-bootstrap';
 import styles from './Card.module.css';
 
-export const CardComponent = ({ image, title, description, price, listingId}) => {
+export const CardComponent = ({ image, title, description, price, onListingClick, listingId }) => {
   const [isFavorited, setIsFavorited] = useState(false);
   const [alertMessage, setAlertMessage] = useState(null);
 
   const handleFavoriteClick = async (e) => {
     e.stopPropagation(); // Prevents triggering the onCardClick if you have it
 
-    try{
+    try {
       const action = isFavorited ? 'remove' : 'add';
       const success = await favoriteAPICall(listingId, action);
       console.error('In the try');
-   
-      if(success){
+
+      if (success) {
         setIsFavorited(!isFavorited);
         setAlertMessage(isFavorited ? "Item was removed from favorites list" : "Item was added to favorites list");
 
@@ -22,7 +22,7 @@ export const CardComponent = ({ image, title, description, price, listingId}) =>
         setTimeout(() => setAlertMessage(null), 3000);
 
       }
-    } catch(error){
+    } catch (error) {
       console.error('Error:', error);
       setAlertMessage('Failed to update favorite. Please try again later.')
       setTimeout(() => setAlertMessage(null), 3000);
@@ -37,8 +37,8 @@ export const CardComponent = ({ image, title, description, price, listingId}) =>
           {alertMessage}
         </Alert>
       )}
-      
-      <Card className={styles.card}>
+
+      <Card className={styles.card} onClick={onListingClick}>
         <div className={styles.imageContainer}>
           <Card.Img variant="top" src={image} alt={title} className={styles.cardImage} />
           <Button
@@ -72,16 +72,16 @@ const favoriteAPICall = async (listingId, action) => {
         'Content-Type': 'application/json',
       }
     });
-    
-    if (response.ok){
-      return true; 
-    } 
+
+    if (response.ok) {
+      return true;
+    }
     else {
       const errorData = await response.json();
       throw new Error(errorData.error || 'Something went wrong');
     }
   }
-  catch(error) {
+  catch (error) {
     throw error;
   }
 };

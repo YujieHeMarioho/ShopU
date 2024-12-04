@@ -3,6 +3,9 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import pkg from 'pg';
+import listings from './routes/listings.js';
+import filters from './routes/filters.js';
+
 
 // import routes
 import favoritesRoutes from './routes/favorites.js';
@@ -43,6 +46,10 @@ app.use('/api', friendsRoutes)
 app.use('/api', privacyPolicies)
 
 
+
+// Mount the listing routes
+app.use('/api', listings);
+app.use('/api', filters);
 
 // Start Server
 app.listen(port, () => {

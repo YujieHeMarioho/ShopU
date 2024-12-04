@@ -106,30 +106,55 @@ const CreateListingPage = () => {
     }
 
     const formDataToSubmit = new FormData();
-    Object.keys(formData).forEach(key => {
-      if (key === 'image' && formData[key]) {
-        formDataToSubmit.append('image', formData[key]);
-      } else {
-        formDataToSubmit.append(key, JSON.stringify(formData[key]));
-      }
-    });
 
+    if (isServicePage){
+      formDataToSubmit.append('title', formData.businessName);
+      formDataToSubmit.append('description', formData.description);
+      formDataToSubmit.append('category', formData.category || 'General'); // Default category
+      formDataToSubmit.append('type', formData.type || 'service'); // Default type
+      formDataToSubmit.append('rating', formData.rating || 0); // Default rating
+      formDataToSubmit.append('price', formData.services[1].price);
+      if (formData.image) {
+        formDataToSubmit.append('image', formData.image);
+      }
+      formDataToSubmit.append('condition', 'New'); // Needs to be added to the form defualting to new for now
+    }
+    else{
+      formDataToSubmit.append('title', formData.title);
+      formDataToSubmit.append('description', formData.description);
+      formDataToSubmit.append('category', formData.category || 'General'); // Default category
+      formDataToSubmit.append('type', formData.type || 'item'); // Default type
+      formDataToSubmit.append('rating', formData.rating || 0); // Default rating
+      formDataToSubmit.append('price', formData.price);
+      if (formData.image) {
+        formDataToSubmit.append('image', formData.image);
+      }
+      formDataToSubmit.append('condition', 'New'); // Needs to be added to the form defualting to new for now
+  
+    }
+
+    const jsonString = JSON.stringify(Object.fromEntries(formDataToSubmit.entries()));
     try {
-      const response = await fetch('http://localhost:8080/api/listings', {
+      const response = await fetch('http://localhost:8080/api/listings/create', {
         method: 'POST',
-        body: formDataToSubmit,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonString,
       });
 
       if (response.ok) {
         alert('Listing created successfully!');
         window.location.href = '/marketplace';
       } else {
-        alert('Failed to create listing.');
+        const error = await response.json();
+        alert(`Failed to create listing: ${error.error}`);
       }
     } catch (error) {
       console.error('Error creating listing:', error);
     }
   };
+
 
   return (
     <Container className={currentStyles.createListingPage}>
@@ -148,7 +173,7 @@ const CreateListingPage = () => {
                   <Form.Label>Description</Form.Label>
                   <Form.Control as="textarea" name="description" value={formData.description} onChange={handleChange} />
                 </Form.Group>
-                
+
                 {/* Appointment Based Toggle */}
                 <Form.Group controlId="appointmentBased">
                   <Form.Check

@@ -1,14 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Form, ButtonGroup } from 'react-bootstrap';
 import styles from './FilterSidebar.module.css';
 
-const FilterSidebar = () => {
+const FilterSidebar = ({ onFilterChange }) => {
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedType, setSelectedType] = useState(''); // Initially no selection
   const [selectedRatings, setSelectedRatings] = useState([]); // Multiple ratings selection
+  const [categories, setCategories] = useState([]); // State to store categories fetched from the API
 
-  const categories = ['Electronics', 'Furniture', 'Clothing', 'Accessories', 'Books', 'Sports', 'Toys', 'Free Stuff', 'Tickets'];
+  // Fetch the most recent listings from the server
+  const fetchFilters = async () => {
+    try {
+      const response = await fetch('http://localhost:8080/api/filters');
+      const rawData = await response.json();
+      
+      // set all the filters with what gets returned
+      setCategories(rawData.categories || []);
+      //ratings = rawData('ratings');
+      //types = rawData('types');
+
+    } catch (error) {
+      console.error('Error fetching filters:', error);
+    }
+  };
+
   const ratings = ['3 stars+', '4 stars+', '5 stars'];
+
+
+  // Call fetchFilters when the component is mounted
+  useEffect(() => {
+    fetchFilters();
+  }, []); // Empty dependency array ensures this runs only once when the component mounts
+
 
   const handleCategoryChange = (e) => {
     const category = e.target.value;
@@ -28,9 +51,14 @@ const FilterSidebar = () => {
     );
   };
 
+  // Call the parent component's filter change handler with the current filters
   const handleApplyFilters = () => {
-    // Apply filter logic here
-    console.log('Filters applied:', { selectedCategories, selectedType, selectedRatings });
+    const filters = {
+      categories: selectedCategories,
+      type: selectedType,
+      ratings: selectedRatings,
+    };
+    onFilterChange(filters);
   };
 
   return (
