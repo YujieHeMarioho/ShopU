@@ -17,9 +17,17 @@
 # https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/Getting-Started.gitlab-ci.yml
 
 stages:          # List of stages for jobs, and their order of execution
+  - pre-build
   - build
   - test
   - deploy
+
+job_medium:
+  stage: pre-build
+  tags:
+    - docker-runner
+  script:
+    - echo "This job runs on the medium Linux x86-64 instance"
 
 build-job:       # This job runs in the build stage, which runs first.
   stage: build
