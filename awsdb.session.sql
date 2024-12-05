@@ -1,1 +1,2 @@
-SELECT * FROM listings;
+DELETE FROM public.listings WHERE title = 'a';
+
