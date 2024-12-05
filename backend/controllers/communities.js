@@ -11,7 +11,7 @@ export const getAllCommunities = async (req, res) => {
             community_id: row.community_id,
             name: row.name,
             description: row.description,
-            friended_at: row.friended_at,
+            joined_at: row.joined_at,
           }));
 
         res.status(200).json(communities);

@@ -159,6 +159,7 @@ const Communities = () => {
                   <div className="community-info">
                       <h3>{community.name || `Community ${community.community_id}`}</h3>
                       <p>Joined At: {new Date(community.joined_at).toLocaleString()}</p>
+                      {/*<p>Joined At: {new Date(community.joined_at).toLocaleString()}</p>*/}
                   </div>
                   <button className="leave-button" onClick={() => leaveCommunity(community.community_id)}>
                       Leave
