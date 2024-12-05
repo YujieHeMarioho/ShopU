@@ -1,1 +1,1 @@
-delete from favorites where user_id = 1
+SELECT * FROM listings;
