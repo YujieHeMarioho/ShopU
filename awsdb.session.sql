@@ -1,1 +1,2 @@
-delete from favorites where user_id = 1
+DELETE FROM public.listings WHERE title = 'a';
+

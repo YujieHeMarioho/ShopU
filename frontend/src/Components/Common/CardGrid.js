@@ -3,7 +3,7 @@ import { Container, Row, Col } from 'react-bootstrap';
 import { CardComponent } from './Card';
 import SocialCard from './SocialCard';
 
-export const CardGrid = ({ listings = [], variant = 'marketplace' }) => {
+export const CardGrid = ({ listings = [], variant = 'marketplace', openListingDetails}) => {
   return (
     <Container>
       <Row>
@@ -28,7 +28,7 @@ export const CardGrid = ({ listings = [], variant = 'marketplace' }) => {
                   description={listing.description}
                   price={listing.price}
                   listingId={listing.id}
-                  onCardClick={() => openListingDetails(listing)}
+                  onListingClick={() => openListingDetails(listing)}
                   onFavoriteClick={() => saveToFavorites(listing)}
                 />
               ) : (
