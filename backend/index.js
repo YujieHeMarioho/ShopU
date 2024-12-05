@@ -8,6 +8,7 @@ import pkg from 'pg';
 import favoritesRoutes from './routes/favorites.js';
 import userRoutes from './routes/users.js';
 import friendsRoutes from './routes/friends.js';
+import communityRoutes from './routes/communities.js'
 import privacyPolicies from './routes/privacyPolicies.js';
 
 dotenv.config();
@@ -38,6 +39,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api', favoritesRoutes)
+app.use('/api', communityRoutes)
 app.use('/api', userRoutes)
 app.use('/api', friendsRoutes)
 app.use('/api', privacyPolicies)

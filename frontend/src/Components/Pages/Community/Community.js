@@ -1,35 +1,34 @@
 import { Banner, CommunityCardGrid} from '../../Common';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useLayoutEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import axios from 'axios';
+import './Community.css';
 
 const Communities = () => {
 
 // Fetch user info and their friends
 
-  const { user, isLoading: authLoading } = useAuth0();
+  /*const { user, isLoading: authLoading } = useAuth0();*/
   const [userInfo, setUserInfo] = useState(null);
   const [communities, setCommunities] = useState([]);
   const [newCommunityId, setNewCommunityId] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    if (!authLoading && user) {
+  const user_id = 32
+  const user_email = "u1275258@utah.edu"
+
+  useLayoutEffect(() => {
+    if (isLoading) {
         const fetchUserInfo = async () => {
             try {
                 // Get the current user's ID from the backend
-                const userResponse = await axios.get(`http://localhost:8080/api/user-id/${user.email}`);
-                setUserInfo(userResponse.data);
+                //const userResponse = await axios.get(`http://localhost:8080/api/user-id/${user_email}`);
+                //setUserInfo(userResponse.data);
 
                 // Fetch communities for the current user
-                const communityResponse = await axios.get(`http://localhost:8080/api/communities/${userResponse.data.user_id}`);
-                const communityDetails = await Promise.all(
-                    communityResponse.data.map(async (community) => {
-                        const communityResponse = await axios.get(`http://localhost:8080/api/community/${community.community_id}`);
-                        return { ...community, ...communityResponse.data }; // Merge community data with community details
-                    })
-                );
-                setCommunities(communityDetails);
+                const communityResponse = await axios.get(`http://localhost:8080/api/communities/${user_id}`);
+
+                setCommunities(communityResponse.data);
             } catch (error) {
                 console.error('Error fetching user info or communities:', error);
             } finally {
@@ -39,7 +38,7 @@ const Communities = () => {
 
         fetchUserInfo();
     }
-  }, [authLoading, user]);
+  }, [isLoading]);
 
 
   // Add a community
@@ -48,31 +47,23 @@ const Communities = () => {
       alert('Please enter a valid Community ID.');
       return;
     }
-
     // Prevent adding the same community twice in the frontend
-    if (communities.some(community => community.community_id === parseInt(newCommunityId))) {
+    if (communities.some(community => community.community_id === newCommunityId)) {
       alert('Community Already Joined.');
       setNewCommunityId(''); // Clear input field
       return;
     }
-
     try {
       const response = await axios.post('http://localhost:8080/api/communities', {
-        user_id: userInfo.user_id,
-        community_id: parseInt(newCommunityId),
+        user_id: user_id,
+        community_id: newCommunityId,
       });
-      alert(response.data.message); // Success message
+      alert("Community added successfully"); // Success message
       setNewCommunityId(''); // Clear input field
 
       // Fetch the updated communities list with details
-      const communityResponse = await axios.get(`http://localhost:8080/api/communities/${userInfo.user_id}`);
-      const communityDetails = await Promise.all(
-      communityResponse.data.map(async (community) => {
-        const communityResponse = await axios.get(`http://localhost:8080/api/community/${community.community_id}`);
-        return { ...community, ...communityResponse.data }; // Merge community data with community details
-        })
-      );
-      setCommunities(communityDetails); // Update state with full details
+      const communityResponse = await axios.get(`http://localhost:8080/api/communities/${user_id}`);
+      setCommunities(communityResponse.data); // Update state with full details
     } catch (error) {
       console.error('Error adding community:', error);
       alert('Error adding community.');
@@ -83,18 +74,12 @@ const Communities = () => {
   // Remove a community
   const leaveCommunity = async (communityId) => {
     try {
-      const response = await axios.delete(`http://localhost:8080/api/communities/${userInfo.user_id}/${communityId}`);
+      const response = await axios.delete(`http://localhost:8080/api/communities/${user_id}/${communityId}`);
       alert(response.data.message);
   
       // Fetch the updated communities list with details
-      const communityResponse = await axios.get(`http://localhost:8080/api/communities/${userInfo.user_id}`);
-      const communityDetails = await Promise.all(
-      communityResponse.data.map(async (community) => {
-        const communityResponse = await axios.get(`http://localhost:8080/api/community/${community.community_id}`);
-        return { ...community, ...communityResponse.data }; // Merge community data with community details
-        })
-      );
-      setCommunities(communityDetails); // Update state with full details
+      const communityResponse = await axios.get(`http://localhost:8080/api/communities/${user_id}`);
+      setCommunities(communityResponse.data); // Update state with full details
     } catch (error) {
       console.error('Error removing community:', error);
       alert('Error removing community.');
@@ -130,13 +115,13 @@ const Communities = () => {
     },
   ];
 
-  if (isLoading) {
+  /*if (isLoading) {
     return <div className="loading">Loading user information...</div>;
-  }
+  }*/
 
-  if (!userInfo) {
+  /*if (!userInfo) {
     return <div className="error">Error: Unable to load user information.</div>;
-  }
+  }*/
 
   return (
     <div>

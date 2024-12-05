@@ -1,11 +1,1 @@
-CREATE TABLE communities (
-  community_id BIGINT,
-  name VARCHAR(255),
-  description VARCHAR(255)
-);
-
-CREATE TABLE community_members (
-  community_id BIGINT,
-  user_id INT,
-  joined_at TIMESTAMP
-);
+SELECT * FROM public.communities AS comms JOIN public.community_members AS mems ON comms.community_id = mems.community_id WHERE mems.user_id = 32

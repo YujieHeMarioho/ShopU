@@ -1,11 +1,13 @@
 import express from 'express';
-import { getAllFavorites, favoriteItem, unfavoriteItem } from '../controllers/favorites.js';  
+import { getAllCommunities, joinCommunity, leaveCommunity } from '../controllers/communities.js';  
 
 const router = express.Router();
 
 // Define routes
-router.get('/communities', getAllCommunities);  
-router.post('/communities/:community_id', joinCommunity);  
-router.delete('/communities/:community_id', leaveCommunity);  
+router.get('/communities/:user_id', getAllCommunities)
+router.post('/communities', joinCommunity)
+router.delete('/communities/:user_id/:community_id', leaveCommunity)
+
+//router.get('/community/:community_id', );  
 
 export default router;

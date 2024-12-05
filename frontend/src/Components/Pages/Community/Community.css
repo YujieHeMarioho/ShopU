@@ -14,8 +14,7 @@
     font-size: 28px;
   }
   
-  .current-user-card,
-  .friend-card {
+  .your-community-card {
     display: flex;
     align-items: center;
     background: #fff;
@@ -27,8 +26,7 @@
     color: #000; /* Ensure text inside cards is black */
   }
   
-  .current-user-avatar,
-  .friend-avatar {
+  .community-image {
     width: 100px;
     height: 100px;
     border-radius: 50%;
@@ -36,28 +34,27 @@
     object-fit: cover;
   }
   
-  .current-user-info,
-  .friend-info {
+  .community-info {
     flex: 1;
     color: #000; /* Ensure text is black */
   }
   
-  .add-friend-section {
+  .add-community-section {
     margin-top: 20px;
   }
   
-  .add-friend-form {
+  .add-community-form {
     display: flex;
     gap: 10px;
   }
   
-  .add-friend-form input {
+  .add-community-form input {
     border: 1px solid #ddd;
     border-radius: 4px;
     padding: 8px;
   }
   
-  .add-friend-form button {
+  .add-community-form button {
     background: #28a745; /* Green background for the "Add Friend" button */
     color: white;
     border: none;
@@ -66,11 +63,11 @@
     cursor: pointer;
   }
   
-  .add-friend-form button:hover {
+  .add-community-form button:hover {
     background: #218838; /* Darker green on hover */
   }
   
-  .delete-button {
+  .leave-button {
     background: #e74c3c; /* Red background for the "Remove Friend" button */
     color: white;
     border: none;
@@ -79,7 +76,7 @@
     cursor: pointer;
   }
   
-  .delete-button:hover {
+  .leave-button:hover {
     background: #c0392b; /* Darker red on hover */
   }
   
