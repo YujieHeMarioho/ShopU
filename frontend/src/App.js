@@ -14,8 +14,10 @@ import Statistics from './Components/Common/Statistics';
 import Home from './Components/Pages/Home/Home';
 import Resources from './Components/Pages/Resources/Resources';
 import Profile from './Components/Pages/Profile/Profile';
+import SocialFeed from './Components/Pages/Feed/SocialFeed';
 import PrivateRoute from './Components/Common/PrivateRoute';
 import Auth0ProviderWithHistory from './auth0Provider';
+import CreateListingPage from './Components/Pages/CommonPages/CreateListingPage';
 import Friends from './Components/Pages/Friends/Friends';
 
 function App() {
@@ -37,6 +39,9 @@ function App() {
           <Route path="/favorites" element={<Favorites />} />
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/resources" element={<Resources />} />
+          <Route path="/feed" element={<SocialFeed/>}/>
+          <Route path="/create-item-listing" element={<CreateListingPage />} />
+          <Route path="/create-service-listing" element={<CreateListingPage />} />
           <Route path="/friends" element={<Friends />} />
           <Route path="/community" element={<Communities />} />
           {/* Protected Route */}
