@@ -7,6 +7,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import Header from './Components/Header/Header';
 import Footer from './Components/Footer/Footer';
 import Favorites from './Components/Pages/Favorites/Favorites';
+import Communities from './Components/Pages/Community/Community';
 import Marketplace from './Components/Pages/Marketplace/Marketplace';
 import Banner from './Components/Common/Banner';
 import Statistics from './Components/Common/Statistics';
@@ -42,6 +43,7 @@ function App() {
           <Route path="/create-item-listing" element={<CreateListingPage />} />
           <Route path="/create-service-listing" element={<CreateListingPage />} />
           <Route path="/friends" element={<Friends />} />
+          <Route path="/community" element={<Communities />} />
           {/* Protected Route */}
           <Route
             path="/profile"

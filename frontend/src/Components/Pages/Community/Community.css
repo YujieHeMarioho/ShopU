@@ -1,0 +1,89 @@
+.friends-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    color: #000; /* Change text color to black */
+    background-color: #f5f5f5; /* Add a light background for contrast */
+  }
+  
+  .page-title {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 28px;
+  }
+  
+  .your-community-card {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    color: #000; /* Ensure text inside cards is black */
+  }
+  
+  .community-image {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    margin-right: 20px;
+    object-fit: cover;
+  }
+  
+  .community-info {
+    flex: 1;
+    color: #000; /* Ensure text is black */
+  }
+  
+  .add-community-section {
+    margin-top: 20px;
+  }
+  
+  .add-community-form {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .add-community-form input {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 8px;
+  }
+  
+  .add-community-form button {
+    background: #28a745; /* Green background for the "Add Friend" button */
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .add-community-form button:hover {
+    background: #218838; /* Darker green on hover */
+  }
+  
+  .leave-button {
+    background: #e74c3c; /* Red background for the "Remove Friend" button */
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .leave-button:hover {
+    background: #c0392b; /* Darker red on hover */
+  }
+  
+  .loading,
+  .error {
+    text-align: center;
+    font-size: 18px;
+    color: #333; /* Dark text for error/loading messages */
+  }
+  

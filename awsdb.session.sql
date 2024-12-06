@@ -1,2 +1,1 @@
-DELETE FROM public.listings WHERE title = 'a';
-
+SELECT * FROM public.communities AS comms JOIN public.community_members AS mems ON comms.community_id = mems.community_id WHERE mems.user_id = 32
