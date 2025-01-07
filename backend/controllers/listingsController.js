@@ -1,4 +1,5 @@
 import pool from '../pool.js';
+import { jwtDecode } from "jwt-decode";
 
 //Endpoint for fetching rows
 export const getAllListings = async (req, res) => {
@@ -29,7 +30,16 @@ export const getAllListings = async (req, res) => {
 
 //Endpoint for fetching rows
 export const getFavoritedListings = async (req, res) => {
-    const { userId } = req.params;
+  let userId;
+  const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+  try {
+      const decodedToken = jwtDecode(token); // Decode the token
+      userId = decodedToken.sub;
+  } catch (err) {
+      console.error('Error decoding token:', err);
+      return res.status(401).json({ message: 'Invalid token' });
+  }
+
     const query = `
         SELECT
           l.listing_id,
@@ -66,14 +76,24 @@ export const createListing = async (req, res) => {
         // Retrieve uploaded image path from multer or use a default placeholder if none provided
         const imagePath = req.file ? req.file.path : 'http://localhost:3000/ShopULogo.png';
 
+        let userId;
+        const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+        try {
+            const decodedToken = jwtDecode(token); // Decode the token
+            userId = decodedToken.sub;
+        } catch (err) {
+            console.error('Error decoding token:', err);
+            return res.status(401).json({ message: 'Invalid token' });
+        }
+      
         //database call to get category id
 
         const query = `
             INSERT INTO public.listings (title, description, category_id, item_type, star_rating, price, image_url, condition, date_posted, user_id)
-            VALUES ($1, $2, 10, $3, $4, $5, $6, $7, $8, 1)
+            VALUES ($1, $2, 63, $3, $4, $5, $6, $7, $8, $9)
             RETURNING *;
         `;
-        const values = [title, description, type, rating || 0, price, imagePath, condition, new Date().toISOString()];
+        const values = [title, description, type, rating || 0, price, imagePath, condition, new Date().toISOString(), userId];
         
         // Execute query
         const result = await pool.query(query, values);
@@ -83,3 +103,5 @@ export const createListing = async (req, res) => {
         res.status(500).json({ error: 'Database error' });
     }
 };
+
+export default {createListing, getFavoritedListings, getAllListings };

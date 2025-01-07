@@ -19,8 +19,12 @@ import PrivateRoute from './Components/Common/PrivateRoute';
 import Auth0ProviderWithHistory from './auth0Provider';
 import CreateListingPage from './Components/Pages/CommonPages/CreateListingPage';
 import Friends from './Components/Pages/Friends/Friends';
+import { AuthenticationGuard } from "./Components/authentication-guard";
+import { useAuth0 } from '@auth0/auth0-react';
 
 function App() {
+  const {loginWithRedirect, logout, user, isAuthenticated} = useAuth0;
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const toggleSidebar = () => {
@@ -36,21 +40,19 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/home" element={<Home />} />
-          <Route path="/favorites" element={<Favorites />} />
-          <Route path="/marketplace" element={<Marketplace />} />
+          <Route path="/favorites" element={< AuthenticationGuard component= {Favorites} />} />
+          <Route path="/marketplace" element={< AuthenticationGuard component= {Marketplace} />} />
           <Route path="/resources" element={<Resources />} />
-          <Route path="/feed" element={<SocialFeed/>}/>
+          <Route path="/feed" element={<AuthenticationGuard component= {SocialFeed} />}/>
           <Route path="/create-item-listing" element={<CreateListingPage />} />
           <Route path="/create-service-listing" element={<CreateListingPage />} />
-          <Route path="/friends" element={<Friends />} />
-          <Route path="/community" element={<Communities />} />
+          <Route path="/friends" element={< AuthenticationGuard component= {Friends} />} />
+          <Route path="/community" element={< AuthenticationGuard component= {Communities} />} />
           {/* Protected Route */}
           <Route
             path="/profile"
             element={
-              <PrivateRoute>
-                <Profile />
-              </PrivateRoute>
+              <AuthenticationGuard component= {Profile} />
             }
           />
           {/* Add more routes as needed */}

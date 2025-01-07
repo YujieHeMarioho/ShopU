@@ -5,7 +5,7 @@ import { FaEnvelope, FaUser, FaEdit } from 'react-icons/fa';
 import './Profile.module.css'; // Optional: Custom CSS
 
 const Profile = () => {
-  const { user } = useAuth0();
+  const { user, getAccessTokenSilently } = useAuth0();  
   const { name, picture, email, updated_at, created_at } = user;
 
     const [formData, setFormData] = useState({
@@ -26,13 +26,15 @@ const Profile = () => {
     // Save changes to the backend
     const handleSaveChanges = async () => {
       try {
+        const token = await getAccessTokenSilently();
+        
         const response = await fetch('http://localhost:8080/api/users', {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
           },
           body: JSON.stringify({
-            userId: user.sub,
             email: formData.email,
             name: formData.name,
             picture: formData.picture

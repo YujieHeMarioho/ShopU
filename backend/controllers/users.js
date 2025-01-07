@@ -1,23 +1,13 @@
 import pool from '../pool.js';
 import axios from 'axios';
 import qs from 'qs';
+import { jwtDecode } from "jwt-decode";
 
 // Your Auth0 domain and client credentials
 const auth0URL = process.env.AUTH0_ISSUER_BASE_URL;
 const clientId = process.env.AUTH0_CLIENT_ID;
 const clientSecret = process.env.AUTH0_CLIENT_SECRET;
 const audience = process.env.AUTH0_AUDIENCE;
-
-// Get All Users
-export const getAllUsers = async (req, res) => {
-    try {
-      const result = await pool.query('SELECT * FROM users;');
-      res.status(200).json(result.rows);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      res.status(500).json({ message: 'Error fetching users', error });
-    }
-};
 
 // Get All Users
 export const getAllAuth0Users = async (req, res) => {
@@ -39,36 +29,47 @@ export const getAllAuth0Users = async (req, res) => {
       }
 };
   
+export const getUserInfo =  async (req, res) => {
+  const { user_id } = req.params;
 
-// Get All Users
-export const getAuth0User = async (req, res) => {
-    const { user_id } = req.params;
-
-    try {
-        console.log('getAuth0User called:'); 
-        const accessToken = await getManagementApiAccessToken();
-        const response = await axios.get(
-          `${audience}users/${user_id}`,
-        {
-          headers: {
-              'Authorization': `Bearer ${accessToken}`,
-          }
-        });
-        res.status(200).json(response.data);
-      } catch (error) {
-        console.error('Error fetching users:', error);
-        res.status(500).json({ message: 'Error fetching users', error });
+  try {
+    const accessToken = await getManagementApiAccessToken();
+    const response = await axios.get(
+      `${audience}users/${user_id}`,
+    {
+      headers: {
+          'Authorization': `Bearer ${accessToken}`,
       }
+    });
+
+    if (response.rowCount === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.status(200).json(response.data);
+  } catch (error) {
+    console.error('Error fetching user details:', error);
+    res.status(500).json({ message: 'Error fetching user details', error });
+  }
 };
   
 // Save or Update user
 export const updateUser =  async (req, res) => {
-    const { userId, email, name, picture } = req.body;
+    const { email, name, picture } = req.body;
     const updatedDataJson = { email, name, picture }; // This is the data to update
 
+    let userId;
+    const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
     try {
-        const accessToken = await getManagementApiAccessToken();
-    
+        const decodedToken = jwtDecode(token); // Decode the token
+        userId = decodedToken.sub;
+    } catch (err) {
+        console.error('Error decoding token:', err);
+        return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    try {
+      const accessToken = await getManagementApiAccessToken();
+
       // You can now use this token to make further API requests to Auth0's Management API
       const response = ManagementApiUpdateUser(accessToken, userId, updatedDataJson); 
   
@@ -81,11 +82,11 @@ export const updateUser =  async (req, res) => {
   
 // Save or Update user
 export const createUser =  async (req, res) => {
-    const { user_id, email, name } = req.body;
+    const { user_id} = req.body;
 
     try {
         const result = await pool.query(
-            'SELECT * FROM users WHERE auth0_id = $1', [user_id]);
+            'SELECT * FROM users WHERE user_id = $1', [user_id]);
         if (result.rowCount > 0) {
             return res.status(200).json({ message: 'User already exists', user: result.rows[0]});
         }
@@ -95,8 +96,8 @@ export const createUser =  async (req, res) => {
         // Generate the created_at timestamp
         const created_at = new Date().toISOString(); // Current timestamp in ISO format
         const newUser = await pool.query(
-            'INSERT INTO users (edu_email, create_date, name, auth0_id) VALUES ($1, $2, $3, $4) RETURNING *',
-            [email, created_at, name, user_id]
+            'INSERT INTO users (create_date, user_id) VALUES ($1, $2) RETURNING *',
+            [created_at, user_id]
           );
 
         res.status(201).json({ message: 'User created successfully', user: newUser.rows[0] });
@@ -123,7 +124,6 @@ async function getManagementApiAccessToken() {
         'Content-Type': 'application/x-www-form-urlencoded',
       }
     });
-
     return response.data.access_token; 
   } catch (error) {
     console.error('Error getting access token:', error);
@@ -151,4 +151,4 @@ async function ManagementApiUpdateUser(accessToken, userId, updatedDataJson) {
     }
   }
 
-export default {getAllUsers, updateUser, getAuth0User, getAllAuth0Users, createUser};
+export default {updateUser, getAllAuth0Users, createUser, getUserInfo};

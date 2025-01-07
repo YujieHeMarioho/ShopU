@@ -1,17 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Form, ButtonGroup } from 'react-bootstrap';
 import styles from './FilterSidebar.module.css';
+import { useAuth0 } from '@auth0/auth0-react';
 
 const FilterSidebar = ({ onFilterChange }) => {
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [selectedType, setSelectedType] = useState(''); // Initially no selection
   const [selectedRatings, setSelectedRatings] = useState([]); // Multiple ratings selection
   const [categories, setCategories] = useState([]); // State to store categories fetched from the API
+  const { getAccessTokenSilently } = useAuth0();  
 
   // Fetch the most recent listings from the server
   const fetchFilters = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/filters');
+      const token = await getAccessTokenSilently();
+      const response = await fetch('http://localhost:8080/api/filters',
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        }
+      );
       const rawData = await response.json();
       
       // set all the filters with what gets returned
