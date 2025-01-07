@@ -1,7 +1,16 @@
 import pool from '../pool.js';
+import { jwtDecode } from "jwt-decode";
 
 export const getFriends = async (req, res) => {
-  const { user_id } = req.params;
+  let user_id;
+  const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+  try {
+      const decodedToken = jwtDecode(token); // Decode the token
+      user_id = decodedToken.sub;
+  } catch (err) {
+      console.error('Error decoding token:', err);
+      return res.status(401).json({ message: 'Invalid token' });
+  }
 
   try {
     const result = await pool.query(
@@ -26,7 +35,17 @@ export const getFriends = async (req, res) => {
 
 export const addFriend = async (req, res) => {
   try {
-    const { user_id, friend_id } = req.body;
+    const { friend_id } = req.body;
+
+    let user_id;
+    const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+    try {
+        const decodedToken = jwtDecode(token); // Decode the token
+        user_id = decodedToken.sub;
+    } catch (err) {
+        console.error('Error decoding token:', err);
+        return res.status(401).json({ message: 'Invalid token' });
+    }
 
     // Check if the friendship already exists
     const existingFriendship = await pool.query(
@@ -55,13 +74,18 @@ export const addFriend = async (req, res) => {
   }
 };
 
-
-
-
-
-
 export const deleteFriend = async (req, res) => {
-  const { user_id, friend_id } = req.params;
+  const { friend_id } = req.params;
+
+  let user_id;
+  const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+  try {
+      const decodedToken = jwtDecode(token); // Decode the token
+      user_id = decodedToken.sub;
+  } catch (err) {
+      console.error('Error decoding token:', err);
+      return res.status(401).json({ message: 'Invalid token' });
+  }
 
   try {
     const result = await pool.query(

@@ -3,6 +3,7 @@ import { Button } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { FaThumbsUp, FaShare, FaHeart, FaRegHeart } from 'react-icons/fa';
 import styles from './SocialCard.module.css';
+import { useAuth0 } from '@auth0/auth0-react';
 
 export const SocialCard = ({
   image,
@@ -16,6 +17,7 @@ export const SocialCard = ({
   itemDetails,
   tags = [], // New prop for tags
 }) => {
+  const { getAccessTokenSilently } = useAuth0();
   const navigate = useNavigate();
   const [likes, setLikes] = useState(initialLikes);
   const [shares, setShares] = useState(initialShares);
@@ -37,8 +39,9 @@ export const SocialCard = ({
   const handleFavoriteClick = async (e) => {
     e.stopPropagation();
     try {
+      const token = await getAccessTokenSilently();
       const action = isFavorited ? 'remove' : 'add';
-      const success = await favoriteAPICall(itemDetails.id, action);
+      const success = await favoriteAPICall(itemDetails.id, action, token);
 
       if (success) {
         setIsFavorited(!isFavorited);
@@ -125,7 +128,7 @@ export const SocialCard = ({
   );
 };
 
-const favoriteAPICall = async (listingId, action) => {
+const favoriteAPICall = async (listingId, action, token) => {
   try {
     const URL = `http://localhost:8080/api/favorite/${listingId}`;
     const method = action === 'add' ? 'POST' : 'DELETE';
@@ -133,6 +136,7 @@ const favoriteAPICall = async (listingId, action) => {
       method,
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       },
     });
 

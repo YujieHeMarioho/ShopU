@@ -5,36 +5,32 @@ import { useAuth0 } from '@auth0/auth0-react';
 
 
 export const CardComponent = ({ image, title, description, price, onListingClick, listingId }) => {
-  const { user } = useAuth0();
+  const {getAccessTokenSilently } = useAuth0();
   const [isFavorited, setIsFavorited] = useState(false);
   const [alertMessage, setAlertMessage] = useState(null);
 
     // Fetch the current favorite status when the component loads
     useEffect(() => {
       const fetchFavoriteStatus = async () => {
-        //if (user) {
           try {
-            // for now hardcoding userid to 1 should be switched to user.sub once auth is fully implemented
-            const tempUserId = 1;
-            const response = await fetchFavoriteStatusAPI(tempUserId, listingId);
+            const token = await getAccessTokenSilently();
+            const response = await fetchFavoriteStatusAPI(listingId, token);
             setIsFavorited(response.isFavorited);
           } catch (error) {
             console.error('Error fetching favorite status:', error);
           }
-        //}
       };
   
       fetchFavoriteStatus();
-    }, [user, listingId]);
+    }, [listingId]);
 
   const handleFavoriteClick = async (e) => {
     e.stopPropagation(); // Prevents triggering the onCardClick if you have it
 
     try {
+      const token = await getAccessTokenSilently();
       const action = isFavorited ? 'remove' : 'add';
-      // hard coding user id to be 1 until user.sub is working from authentication
-      const tempUserId = 1;
-      const success = await favoriteAPICall(tempUserId, listingId, action);
+      const success = await favoriteAPICall( listingId, action, token);
 
 
       if (success) {
@@ -84,20 +80,16 @@ export const CardComponent = ({ image, title, description, price, onListingClick
   );
 };
 
-const favoriteAPICall = async (userId, listingId, action) => {
+const favoriteAPICall = async (listingId, action, token) => {
   try {    
-    userId = 1;
     const URL = `http://localhost:8080/api/favorite/${listingId}`;
     const method = action === 'add' ? 'POST' : 'DELETE';
-    console.log('id', userId);
     const response = await fetch(URL, {
       method: method,
       headers: {
         'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        userId
-      }),
+        'Authorization': `Bearer ${token}`,
+      }
     });
 
     if (response.ok) {
@@ -113,13 +105,14 @@ const favoriteAPICall = async (userId, listingId, action) => {
   }
 };
 
-const fetchFavoriteStatusAPI = async (userId, listingId) => {
+const fetchFavoriteStatusAPI = async (listingId, token) => {
   try {
-    const URL = `http://localhost:8080/api/favorite/status/${listingId}?userId=${userId}`;
+    const URL = `http://localhost:8080/api/favorite/status/${listingId}`;
     const response = await fetch(URL, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       }
     });
 

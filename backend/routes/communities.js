@@ -4,9 +4,9 @@ import { getAllCommunities, joinCommunity, leaveCommunity } from '../controllers
 const router = express.Router();
 
 // Define routes
-router.get('/communities/:user_id', getAllCommunities)
+router.get('/communities', getAllCommunities)
 router.post('/communities', joinCommunity)
-router.delete('/communities/:user_id/:community_id', leaveCommunity)
+router.delete('/communities/:community_id', leaveCommunity)
 
 //router.get('/community/:community_id', );  
 

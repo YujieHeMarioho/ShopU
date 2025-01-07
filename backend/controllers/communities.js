@@ -1,11 +1,20 @@
 import pool from '../pool.js';
+import { jwtDecode } from "jwt-decode";
 
 export const getAllCommunities = async (req, res) => {
-    const { user_id } = req.params.user_id;
-    const query = 'SELECT * FROM public.communities AS comms JOIN public.community_members AS mems ON comms.community_id = mems.community_id WHERE mems.user_id = 32';
+    const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+    let user_id;
     try {
-        const result = await pool.query(query);
+        const decodedToken = jwtDecode(token); // Decode the token
+        user_id = decodedToken.sub;
+    } catch (err) {
+        console.error('Error decoding token:', err);
+        return res.status(401).json({ message: 'Invalid token' });
+    }
 
+    const query = 'SELECT * FROM public.communities AS comms JOIN public.community_members AS mems ON comms.community_id = mems.community_id WHERE mems.user_id = $1';
+    try {
+        const result = await pool.query(query, [user_id]);
         const communities = result.rows.map(row => ({
             user_id: row.user_id,
             community_id: row.community_id,
@@ -23,8 +32,18 @@ export const getAllCommunities = async (req, res) => {
 
 // Endpoint to join a community
 export const joinCommunity = async (req, res) => {
-    const user_id = req.body.user_id;
     const community_id = req.body.community_id;
+
+    const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+    let user_id;
+
+    try {
+        const decodedToken = jwtDecode(token); // Decode the token
+        user_id = decodedToken.sub;
+    } catch (err) {
+        console.error('Error decoding token:', err);
+        return res.status(401).json({ message: 'Invalid token' });
+    }
 
     // Check if all required fields are provided
     if (!user_id || !community_id) {
@@ -49,7 +68,18 @@ export const joinCommunity = async (req, res) => {
 
 // Endpoint to leave a community
 export const leaveCommunity = async (req, res) => {
-    const { user_id, community_id } = req.params;  
+    const { community_id } = req.params;  
+
+    const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+    let user_id;
+
+    try {
+        const decodedToken = jwtDecode(token); // Decode the token
+        user_id = decodedToken.sub;
+    } catch (err) {
+        console.error('Error decoding token:', err);
+        return res.status(401).json({ message: 'Invalid token' });
+    }
 
     // Check if all required fields are provided
     if (!user_id || !community_id) {

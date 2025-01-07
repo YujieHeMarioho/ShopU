@@ -4,6 +4,7 @@ import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import itemStyles from './CreateItemListingPage.module.css';
 import serviceStyles from './CreateServiceListingPage.module.css';
+import { useAuth0 } from '@auth0/auth0-react';
 
 const CreateListingPage = () => {
   const [formData, setFormData] = useState({
@@ -22,6 +23,7 @@ const CreateListingPage = () => {
   });
 
   const [isServicePage, setIsServicePage] = useState(false);
+  const { getAccessTokenSilently } = useAuth0();  
 
   useEffect(() => {
     const currentPath = window.location.pathname;
@@ -135,10 +137,12 @@ const CreateListingPage = () => {
 
     const jsonString = JSON.stringify(Object.fromEntries(formDataToSubmit.entries()));
     try {
+      const token = await getAccessTokenSilently();
       const response = await fetch('http://localhost:8080/api/listings/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: jsonString,
       });

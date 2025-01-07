@@ -5,6 +5,7 @@ import Fuse from 'fuse.js';  // Import Fuse.js library
 import styles from './Marketplace.module.css'; // Import CSS module for styling
 import { useNavigate } from 'react-router-dom';
 import ListingModal from './Listings';
+import { useAuth0 } from '@auth0/auth0-react';
 
 export const Marketplace = () => {
   const [listings, setListings] = useState([]);
@@ -15,6 +16,8 @@ export const Marketplace = () => {
   const [isDropdownVisible, setDropdownVisible] = useState(false); // Control visibility of suggestions
   const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
+  const { getAccessTokenSilently } = useAuth0();  
+
 
   const [showListingModal, setShowListingModal] = useState(false);
   const [selectedListing, setSelectedListing] = useState(null);
@@ -107,7 +110,14 @@ export const Marketplace = () => {
     // Fetch the most recent listings from the server
     const fetchListings = async () => {
       try {
-        const response = await fetch('http://localhost:8080/api/listings');
+        const token = await getAccessTokenSilently();
+
+        const response = await fetch('http://localhost:8080/api/listings', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
         const rawData = await response.json();
     
         // Map the data to match the desired format

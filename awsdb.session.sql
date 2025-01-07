@@ -1,1 +1,7 @@
-SELECT * FROM public.communities AS comms JOIN public.community_members AS mems ON comms.community_id = mems.community_id WHERE mems.user_id = 32
+INSERT INTO categories (category_id, parent_category_id, name) 
+VALUES (DEFAULT, 2, 'Sample Category');
+
+INSERT INTO public.categories (category_id, parent_category_id, name) 
+VALUES (DEFAULT, 2, 'Sample Category 1'),
+       (DEFAULT, 3, 'Sample Category 2'),
+       (DEFAULT, 4, 'Sample Category 3');
