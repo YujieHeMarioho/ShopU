@@ -89,9 +89,13 @@ CREATE TABLE listings(
     user_id VARCHAR(255) NOT NULL, 
     category_id INT NOT NULL, 
     description TEXT,
-    price INT NOT NULL, 
+    title VARCHAR(255) NOT NULL,
+    item_type VARCHAR(255) NOT NULL,
+    star_rating INT,
+    price DECIMAL(10, 2) NOT NULL, 
     date_posted DATE DEFAULT CURRENT_DATE,
     condition condition_type NOT NULL,
+    image_url VARCHAR(255) NOT NULL, 
 
     FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE ON UPDATE CASCADE,
     FOREIGN KEY (category_id) REFERENCES categories (category_id)

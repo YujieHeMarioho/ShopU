@@ -90,7 +90,7 @@ export const createListing = async (req, res) => {
 
         const query = `
             INSERT INTO public.listings (title, description, category_id, item_type, star_rating, price, image_url, condition, date_posted, user_id)
-            VALUES ($1, $2, 63, $3, $4, $5, $6, $7, $8, $9)
+            VALUES ($1, $2, 1, $3, $4, $5, $6, $7, $8, $9)
             RETURNING *;
         `;
         const values = [title, description, type, rating || 0, price, imagePath, condition, new Date().toISOString(), userId];
