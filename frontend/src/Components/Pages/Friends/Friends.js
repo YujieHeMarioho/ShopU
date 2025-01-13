@@ -9,33 +9,25 @@ const Friends = () => {
   const [newFriendId, setNewFriendId] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch user info and their friends
   useEffect(() => {
     if (!authLoading && user) {
       const fetchUserInfo = async () => {
         try {
           const token = await getAccessTokenSilently();
-          // Fetch friends for the current user
-          const friendsResponse = await axios.get(`http://localhost:8080/api/friends`,
-            {
-              headers: {
-                'Authorization': `Bearer ${token}`,
-              }
-            }
-          );
+          const friendsResponse = await axios.get(`http://localhost:8080/api/friends`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
           const friendDetails = await Promise.all(
             friendsResponse.data.map(async (friend) => {
-
-              const friendResponse = await axios.get(`http://localhost:8080/api/user/${friend.friend_id}`,
-                {
-                  headers: {
-                    'Authorization': `Bearer ${token}`,
-                  }
-                }
+              const friendResponse = await axios.get(
+                `http://localhost:8080/api/user/${friend.friend_id}`,
+                { headers: { Authorization: `Bearer ${token}` } }
               );
-              return { ...friend, ...friendResponse.data }; // Merge friend data with profile details
+              return { ...friend, ...friendResponse.data };
             })
           );
+
           setFriends(friendDetails);
         } catch (error) {
           console.error('Error fetching user info or friends:', error);
@@ -46,103 +38,78 @@ const Friends = () => {
 
       fetchUserInfo();
     }
-  }, [authLoading, user]);
+  }, [authLoading, user, getAccessTokenSilently]);
 
-
-  // Add a friend
   const addFriend = async () => {
     if (!newFriendId) {
       alert('Please enter a valid Friend ID.');
       return;
     }
 
-    // Prevent adding the same friend twice in the frontend
-    if (friends.some(friend => friend.user_id === newFriendId)) {
+    // Prevent adding a friend that already exists in the state
+    if (friends.some((friend) => friend.user_id === newFriendId)) {
       alert('Friendship already exists.');
-      setNewFriendId(''); // Clear input field
+      setNewFriendId('');
       return;
     }
 
     try {
       const token = await getAccessTokenSilently();
-      const response = await axios.post(`http://localhost:8080/api/friends`,
-        {
-          friend_id: newFriendId,
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          }
-        }
+      const response = await axios.post(
+        `http://localhost:8080/api/friends`,
+        { friend_id: newFriendId },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      alert(response.data.message); // Success message
-      setNewFriendId(''); // Clear input field
+      alert(response.data.message);
+      setNewFriendId('');
 
-      // Fetch the updated friends list with profile details
-      const friendsResponse = await axios.get(`http://localhost:8080/api/friends`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          }
-        }
-      );
+      // Re-fetch the updated friend list
+      const updatedFriendsResponse = await axios.get(`http://localhost:8080/api/friends`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       const friendDetails = await Promise.all(
-        friendsResponse.data.map(async (friend) => {
-          const token = await getAccessTokenSilently();
-          const friendResponse = await axios.get(`http://localhost:8080/api/user/${friend.user_id}`,
-            {
-              headers: {
-                'Authorization': `Bearer ${token}`,
-              }
-            }
+        updatedFriendsResponse.data.map(async (friend) => {
+          const friendResponse = await axios.get(
+            `http://localhost:8080/api/user/${friend.user_id}`,
+            { headers: { Authorization: `Bearer ${token}` } }
           );
           return { ...friend, ...friendResponse.data };
         })
       );
-      setFriends(friendDetails); // Update state with full details
+      setFriends(friendDetails);
     } catch (error) {
       console.error('Error adding friend:', error);
       alert('Error adding friend.');
     }
   };
 
-
-  // Remove a friend
   const removeFriend = async (friendId) => {
     try {
       const token = await getAccessTokenSilently();
-      const response = await axios.delete(`http://localhost:8080/api/friends/${friendId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          }
-        }
+      const response = await axios.delete(
+        `http://localhost:8080/api/friends/${friendId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       alert(response.data.message);
 
-      // Fetch the updated friends list with profile details
-      const friendsResponse = await axios.get(`http://localhost:8080/api/friends`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          }
-        }
-      );
+      // Re-fetch updated friend list
+      const updatedFriendsResponse = await axios.get(`http://localhost:8080/api/friends`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
       const friendDetails = await Promise.all(
-        friendsResponse.data.map(async (friend) => {
-          const friendResponse = await axios.get(`http://localhost:8080/api/user/${friend.user_id}`,
-            {
-              headers: {
-                'Authorization': `Bearer ${token}`,
-              }
-            }
+        updatedFriendsResponse.data.map(async (friend) => {
+          const friendResponse = await axios.get(
+            `http://localhost:8080/api/user/${friend.user_id}`,
+            { headers: { Authorization: `Bearer ${token}` } }
           );
           return { ...friend, ...friendResponse.data };
         })
       );
-      setFriends(friendDetails); // Update state with full details
+
+      setFriends(friendDetails);
     } catch (error) {
       console.error('Error removing friend:', error);
       alert('Error removing friend.');
@@ -159,12 +126,12 @@ const Friends = () => {
 
   return (
     <div className="friends-container">
-      <h1 className="page-title">Friends Management</h1>
+      <h1 className="page-title">Friends</h1>
 
       {/* Display Current User Info */}
       <div className="current-user-card">
         <img
-          src={user.profile_picture || 'https://via.placeholder.com/150'}
+          src={user.picture || 'https://via.placeholder.com/150'}
           alt="Profile"
           className="current-user-avatar"
         />
@@ -177,7 +144,7 @@ const Friends = () => {
 
       {/* Add Friend Section */}
       <div className="add-friend-section">
-        <h2>Add a New Friend</h2>
+        <h2>Add a Friend</h2>
         <div className="add-friend-form">
           <input
             type="text"
@@ -190,31 +157,32 @@ const Friends = () => {
       </div>
 
       {/* Friends List */}
-      <div className="friends-grid">
+      <div className="friends-list-section">
         <h2>Your Friends</h2>
         {friends.length === 0 ? (
-          <p>You have no friends yet. Add some friends to get started!</p>
+          <p className="no-friends">You have no friends yet. Add some friends to get started!</p>
         ) : (
-          friends.map((friend) => (
-            <div key={friend.user_id} className="friend-card">
-              <img
-                src={friend.profile_picture || 'https://via.placeholder.com/100'}
-                alt={friend.user_id}
-                className="friend-avatar"
-              />
-              <div className="friend-info">
-                <h3>{friend.name || `User ${friend.user_id}`}</h3>
-                <p><strong>Email:</strong> {friend.email}</p>
-                <p>Friended At: {new Date(friend.friended_at).toLocaleString()}</p>
+          <div className="friends-grid">
+            {friends.map((friend) => (
+              <div key={friend.user_id} className="friend-card">
+                <img
+                  src={friend.profile_picture || 'https://via.placeholder.com/100'}
+                  alt={friend.user_id}
+                  className="friend-avatar"
+                />
+                <div className="friend-info">
+                  <h3>{friend.name || `User ${friend.user_id}`}</h3>
+                  <p><strong>Email:</strong> {friend.email}</p>
+                  <p><strong>Friended At:</strong> {new Date(friend.friended_at).toLocaleString()}</p>
+                </div>
+                <button className="delete-button" onClick={() => removeFriend(friend.friend_id)}>
+                  Remove
+                </button>
               </div>
-              <button className="delete-button" onClick={() => removeFriend(friend.friend_id)}>
-                Remove Friend
-              </button>
-            </div>
-          ))
+            ))}
+          </div>
         )}
       </div>
-
     </div>
   );
 };
