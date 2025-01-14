@@ -1,0 +1,78 @@
+-- Insert into categories
+
+-- First, insert the top-level categories
+INSERT INTO categories (category_id, parent_category_id, name)
+VALUES 
+  (DEFAULT, NULL, 'Electronics'),
+  (DEFAULT, NULL, 'Furniture'),
+  (DEFAULT, NULL, 'Clothing'),
+  (DEFAULT, NULL, 'Toys & Games'),
+  (DEFAULT, NULL, 'Books & Media'),
+  (DEFAULT, NULL, 'Home Appliances'),
+  (DEFAULT, NULL, 'Sports & Outdoors'),
+  (DEFAULT, NULL, 'Vehicles'),
+  (DEFAULT, NULL, 'Pets & Animals'),
+  (DEFAULT, NULL, 'Real Estate');
+
+INSERT INTO categories (category_id, parent_category_id, name)
+VALUES
+  (DEFAULT, 1, 'Mobile Phones'),          -- Parent: Electronics
+  (DEFAULT, 1, 'Laptops & Computers'),    -- Parent: Electronics
+  (DEFAULT, 1, 'TVs & Home Entertainment'), -- Parent: Electronics
+  
+  (DEFAULT, 2, 'Living Room Furniture'),  -- Parent: Furniture
+  (DEFAULT, 2, 'Bedroom Furniture'),      -- Parent: Furniture
+  (DEFAULT, 2, 'Office Furniture'),       -- Parent: Furniture
+  
+  (DEFAULT, 3, 'Men\''s Clothing'),        -- Parent: Clothing
+  (DEFAULT, 3, 'Women\''s Clothing'),      -- Parent: Clothing
+  (DEFAULT, 3, 'Children\''s Clothing'),   -- Parent: Clothing
+  
+  (DEFAULT, 4, 'Board Games'),           -- Parent: Toys & Games
+  (DEFAULT, 4, 'Action Figures'),        -- Parent: Toys & Games
+  (DEFAULT, 4, 'Outdoor Toys'),          -- Parent: Toys & Games
+  
+  (DEFAULT, 5, 'Books'),                 -- Parent: Books & Media
+  (DEFAULT, 5, 'Movies & TV Shows'),     -- Parent: Books & Media
+  (DEFAULT, 5, 'Music'),                 -- Parent: Books & Media
+  
+  (DEFAULT, 6, 'Kitchen Appliances'),    -- Parent: Home Appliances
+  (DEFAULT, 6, 'Cleaning Appliances'),   -- Parent: Home Appliances
+  (DEFAULT, 6, 'Air Conditioning & Heating'), -- Parent: Home Appliances
+  
+  (DEFAULT, 7, 'Bicycles & Cycling'),    -- Parent: Sports & Outdoors
+  (DEFAULT, 7, 'Camping & Hiking'),      -- Parent: Sports & Outdoors
+  (DEFAULT, 7, 'Fitness Equipment'),     -- Parent: Sports & Outdoors
+  
+  (DEFAULT, 8, 'Cars'),                  -- Parent: Vehicles
+  (DEFAULT, 8, 'Motorcycles'),           -- Parent: Vehicles
+  (DEFAULT, 8, 'Bikes & Scooters'),      -- Parent: Vehicles
+  
+  (DEFAULT, 9, 'Dogs'),                  -- Parent: Pets & Animals
+  (DEFAULT, 9, 'Cats'),                  -- Parent: Pets & Animals
+  (DEFAULT, 9, 'Fish & Aquariums'),      -- Parent: Pets & Animals
+  
+  (DEFAULT, 10, 'Apartments & Houses'),  -- Parent: Real Estate
+  (DEFAULT, 10, 'Commercial Properties'), -- Parent: Real Estate
+  (DEFAULT, 10, 'Land & Plots');         -- Parent: Real Estate
+
+-- Insert into users
+
+INSERT INTO users (user_id, create_date)
+VALUES ('auth0|6732a542a7138ffd776005e0', '11/10/2024');
+
+-- Insert into communities
+
+INSERT INTO communities (community_id, created_by, name, description, created_at, member_count)
+VALUES
+  (DEFAULT, 'auth0|6732a542a7138ffd776005e0', 'Tech Enthusiasts', 'Join a group of tech lovers where we discuss the latest gadgets, tech trends, and sell/ trade new or used tech items.', '2025-01-07 15:30:00', DEFAULT),
+  (DEFAULT, 'auth0|6732a542a7138ffd776005e0', 'Cat lovers', 'A community dedicated to cats.', '2025-01-07 15:30:00', DEFAULT),
+  (DEFAULT, 'auth0|6732a542a7138ffd776005e0', 'Car Parts Exchange', 'A community for car owners and mechanics to buy and sell car parts, tools, and accessories. Great deals for car enthusiasts!', '2025-01-07 15:30:00', DEFAULT),
+  (DEFAULT, 'auth0|6732a542a7138ffd776005e0', 'Fashion Lovers: Buy and Sell', 'A space for fashionistas to exchange gently used clothes and accessories. Discover your next great look!', '2025-01-07 15:30:00', DEFAULT),
+  (DEFAULT, 'auth0|6732a542a7138ffd776005e0', 'Pet Adoption and Supplies', 'For pet lovers! Adopt pets or buy/sell pet supplies in this community. Connect with other pet owners and animal lovers.', '2025-01-07 15:30:00', DEFAULT),
+  (DEFAULT, 'auth0|6732a542a7138ffd776005e0', 'Home Improvement Trades & Tools', 'A community for home improvement enthusiasts to exchange tools, materials, and tips for home renovation projects.', '2025-01-07 15:30:00', DEFAULT),
+  (DEFAULT, 'auth0|6732a542a7138ffd776005e0', 'Eco-Friendly Products Swap', 'Join a group of eco-conscious individuals who buy, sell, and trade sustainable products. Be part of the zero waste movement!', '2025-01-07 15:30:00', DEFAULT),
+  (DEFAULT, 'auth0|6732a542a7138ffd776005e0', 'Art Lovers & Collectors', 'An art community where enthusiasts can buy, sell, and trade artwork, as well as discuss the latest trends in the art world.', '2025-01-07 15:30:00', DEFAULT),
+  (DEFAULT, 'auth0|6732a542a7138ffd776005e0', 'Vintage Collectibles Marketplace', 'For collectors of vintage items, antiques, and memorabilia. Connect with other enthusiasts and find your next treasure!', '2025-01-07 15:30:00', DEFAULT),
+  (DEFAULT, 'auth0|6732a542a7138ffd776005e0', 'Bakers and Cooks Marketplace', 'A community for cooking and baking enthusiasts to buy, sell, and trade kitchen supplies, recipes, and tips!', '2025-01-07 15:30:00', DEFAULT),
+  (DEFAULT, 'auth0|6732a542a7138ffd776005e0', 'DIY Crafts & Materials', 'A community for DIY lovers to buy, sell, and exchange craft materials, handmade goods, and project ideas.', '2025-01-07 15:30:00', DEFAULT);

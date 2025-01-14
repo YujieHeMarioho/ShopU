@@ -7,7 +7,7 @@
                 }
             },
             "previewLimit": 50,
-            "server": "database-3.c7qvzrjj511x.us-east-1.rds.amazonaws.com",
+            "server": "database-1.co06mgtiow0c.us-east-1.rds.amazonaws.com",
             "port": 5432,
             "askForPassword": true,
             "driver": "PostgreSQL",
