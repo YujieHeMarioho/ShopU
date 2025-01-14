@@ -73,7 +73,7 @@ export const getFavoritedListings = async (req, res) => {
 export const createListing = async (req, res) => {
     try {
         const { title, description, category, type, rating, price, condition} = req.body;
-        // Retrieve uploaded image path from multer or use a default placeholder if none provided
+
         const imagePath = req.file ? req.file.path : 'http://localhost:3000/ShopULogo.png';
 
         let userId;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Form, Row, Col, Container, Card } from 'react-bootstrap';
+import { Button, Form, Row, Col, Container, Card, Carousel } from 'react-bootstrap';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import itemStyles from './CreateItemListingPage.module.css';
@@ -14,7 +14,7 @@ const CreateListingPage = () => {
     tags: '',
     location: '',
     deliveryType: 'Pickup',
-    image: null,
+    images: [],
     businessName: '',
     services: [{ name: '', estimatedTime: '', price: '' }],
     contactDetails: { phone: '', email: '' },
@@ -23,7 +23,7 @@ const CreateListingPage = () => {
   });
 
   const [isServicePage, setIsServicePage] = useState(false);
-  const { getAccessTokenSilently } = useAuth0();  
+  const { getAccessTokenSilently } = useAuth0();
 
   useEffect(() => {
     const currentPath = window.location.pathname;
@@ -69,11 +69,27 @@ const CreateListingPage = () => {
     setFormData((prevData) => ({ ...prevData, availability: date }));
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData((prevData) => ({ ...prevData, image: URL.createObjectURL(file) }));
+  const handleImagesChange = (e) => {
+    const validImageFormats = ["image/jpeg", "image/png", "image/jpg", "image/gif"]
+    const files = Array.from(e.target.files);
+    const validFiles = files.filter((file) => validImageFormats.includes(file.type));
+
+    if (validFiles.length < files.length){
+      alert("Certain files were not added because they are not in a supported format (JPEG, PNG, JPG, GIF)");
     }
+
+    const fileURLs = validFiles.map((file) => URL.createObjectURL(file));
+    setFormData((prevData) => ({
+      ...prevData,
+      images: [...prevData.images, ...fileURLs],
+    }));
+  };
+
+  const handleRemoveImage = (index) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      images: prevData.images.filter((_, i) => i !== index),
+    }));
   };
 
   const validateForm = () => {
@@ -94,7 +110,7 @@ const CreateListingPage = () => {
       return false;
     }
 
-    if (!formData.image) {
+    if (formData.images.length == 0) {
       return false;
     }
 
@@ -103,36 +119,40 @@ const CreateListingPage = () => {
 
   const handleSubmit = async () => {
     if (!validateForm()) {
-      alert("Please fill in all required fields, including uploading an image.");
+      alert("Please fill in all required fields, including uploading an images.");
+
       return;
     }
 
     const formDataToSubmit = new FormData();
 
-    if (isServicePage){
+    if (isServicePage) {
       formDataToSubmit.append('title', formData.businessName);
       formDataToSubmit.append('description', formData.description);
       formDataToSubmit.append('category', formData.category || 'General'); // Default category
       formDataToSubmit.append('type', formData.type || 'service'); // Default type
       formDataToSubmit.append('rating', formData.rating || 0); // Default rating
       formDataToSubmit.append('price', formData.services[1].price);
-      if (formData.image) {
-        formDataToSubmit.append('image', formData.image);
-      }
+
+      formData.images.forEach((image, index) => {
+        formDataToSubmit.append(`images[${index}]`, image);
+      });
       formDataToSubmit.append('condition', 'New'); // Needs to be added to the form defualting to new for now
     }
-    else{
+    else {
       formDataToSubmit.append('title', formData.title);
       formDataToSubmit.append('description', formData.description);
       formDataToSubmit.append('category', formData.category || 'General'); // Default category
       formDataToSubmit.append('type', formData.type || 'item'); // Default type
       formDataToSubmit.append('rating', formData.rating || 0); // Default rating
       formDataToSubmit.append('price', formData.price);
-      if (formData.image) {
-        formDataToSubmit.append('image', formData.image);
-      }
+
+      formData.images.forEach((image, index) => {
+        formDataToSubmit.append(`images[${index}]`, image);
+      });
+
       formDataToSubmit.append('condition', 'New'); // Needs to be added to the form defualting to new for now
-  
+
     }
 
     const jsonString = JSON.stringify(Object.fromEntries(formDataToSubmit.entries()));
@@ -272,37 +292,62 @@ const CreateListingPage = () => {
                 </Form.Group>
               </>
             )}
-            <Form.Group controlId="image">
-              <Form.Label>Upload Image</Form.Label>
-              <Form.Control type="file" onChange={handleImageChange} />
+            <Form.Group controlId="images">
+              <Form.Label>Upload Images</Form.Label>
+              <Form.Control type="file" multiple onChange={handleImagesChange} accept="image/jpeg, image/png, image/jpg, image/gif"/>
             </Form.Group>
             {/* Create Listing Button */}
             <Button variant="primary" onClick={handleSubmit}>Create Listing</Button>
           </Form>
         </Col>
-
-        {/* Preview Section */}
         <Col md={6}>
           <h3>Preview</h3>
           <Card className="mb-3">
-            {formData.image && (
-              <Card.Img variant="top" src={formData.image} alt="Preview" />
+            {formData.images.length > 0 && (
+              <Carousel>
+                {formData.images.map((image, index) => (
+                  <Carousel.Item key={index}>
+                    <div className="position-relative">
+                      <img
+                        className="d-block w-100"
+                        src={image}
+                        alt={`Preview ${index}`}
+                      />
+                      <Button
+                        variant="danger"
+                        className="position-absolute"
+                        style={{ top: '10px', right: '10px', zIndex: '10' }}
+                        onClick={(event) => {
+                          event.stopPropagation(); // Prevent the carousel navigation
+                          handleRemoveImage(index);
+                        }}
+                      >
+                        X
+                      </Button>
+                    </div>
+                  </Carousel.Item>
+                ))}
+              </Carousel>
             )}
             <Card.Body>
               {isServicePage ? (
                 <>
                   <Card.Title>{formData.businessName}</Card.Title>
-                  <Card.Text><strong>Description:</strong> {formData.description}</Card.Text>
+                  <Card.Text>
+                    <strong>Description:</strong> {formData.description}
+                  </Card.Text>
                   <Card.Text><strong>Offered Services:</strong></Card.Text>
                   {formData.services.map((service, index) => (
                     <Card.Text key={index}>
-                      {service.name} - {formData.appointmentBased ? `${service.estimatedTime} hrs, ` : ''}${service.price}
+                      {service.name} - {formData.appointmentBased ? `${service.estimatedTime} hrs, ` : ''}{service.price}
                     </Card.Text>
                   ))}
                   {formData.appointmentBased && (
                     <Card.Text><strong>Availability:</strong> {formData.availability.toLocaleDateString()}</Card.Text>
                   )}
-                  <Card.Text><strong>Contact:</strong> {formData.contactDetails.phone}, {formData.contactDetails.email}</Card.Text>
+                  <Card.Text>
+                    <strong>Contact:</strong> {formData.contactDetails.phone}, {formData.contactDetails.email}
+                  </Card.Text>
                 </>
               ) : (
                 <>
