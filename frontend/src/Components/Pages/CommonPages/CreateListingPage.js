@@ -122,6 +122,11 @@ const CreateListingPage = () => {
       // Appending files to formData
       images.forEach((image) => formData.append('images', image));
       
+      // Log the contents of formData by iterating through its entries
+      formData.forEach((value, key) => {
+        console.log(key, value);  // key will be 'images', value will be the file
+      });
+      
       const token = await getAccessTokenSilently();
       const response = await fetch('http://localhost:8080/api/listings/uploadImages', {
         method: 'POST',
@@ -136,8 +141,7 @@ const CreateListingPage = () => {
       }
   
       const data = await response.json();
-
-      return data.files; // Assuming the backend returns an array of URLs
+      return data.fileUrls; // Assuming the backend returns an array of URLs
     } catch (error) {
       console.error('Error uploading images:', error);
       return [];
