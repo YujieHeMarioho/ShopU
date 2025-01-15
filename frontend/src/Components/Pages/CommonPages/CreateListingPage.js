@@ -92,6 +92,39 @@ const CreateListingPage = () => {
     }));
   };
 
+  const uploadImages = async (images) => {
+    try {
+      const formData = new FormData();
+
+      // Appending files to formData
+      images.forEach((image) => formData.append('images', image));
+      
+      // Log the contents of formData by iterating through its entries
+      formData.forEach((value, key) => {
+        console.log(key, value);  // key will be 'images', value will be the file
+      });
+      
+      const token = await getAccessTokenSilently();
+      const response = await fetch('http://localhost:8080/api/listings/uploadImages', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Failed to upload images: ${response.statusText}`);
+      }
+  
+      const data = await response.json();
+      return data.fileUrls; // Assuming the backend returns an array of URLs
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      return [];
+    }
+  };
+
   const validateForm = () => {
     const requiredFields = isServicePage
       ? ['businessName', 'description', 'contactDetails.phone', 'contactDetails.email']
@@ -110,7 +143,7 @@ const CreateListingPage = () => {
       return false;
     }
 
-    if (formData.images.length == 0) {
+    if (formData.images.length === 0) {
       return false;
     }
 
@@ -126,6 +159,24 @@ const CreateListingPage = () => {
 
     const formDataToSubmit = new FormData();
 
+    try { 
+      const uploadedImageUrls = await uploadImages(formData.images);
+      console.log(uploadedImageUrls.lengt);
+
+      if (uploadedImageUrls.length === 0){
+        alert('Failed to upload image(s). Please Try Again');
+        return
+      }
+      else{
+        uploadedImageUrls.forEach((image, index) => {
+          formDataToSubmit.append(`images[${index}]`, image);
+        });
+      }
+    } catch (error) {
+      console.error('Failed to upload image(s)', error);
+    }
+
+
     if (isServicePage) {
       formDataToSubmit.append('title', formData.businessName);
       formDataToSubmit.append('description', formData.description);
@@ -133,10 +184,6 @@ const CreateListingPage = () => {
       formDataToSubmit.append('type', formData.type || 'service'); // Default type
       formDataToSubmit.append('rating', formData.rating || 0); // Default rating
       formDataToSubmit.append('price', formData.services[1].price);
-
-      formData.images.forEach((image, index) => {
-        formDataToSubmit.append(`images[${index}]`, image);
-      });
       formDataToSubmit.append('condition', 'New'); // Needs to be added to the form defualting to new for now
     }
     else {
@@ -146,13 +193,7 @@ const CreateListingPage = () => {
       formDataToSubmit.append('type', formData.type || 'item'); // Default type
       formDataToSubmit.append('rating', formData.rating || 0); // Default rating
       formDataToSubmit.append('price', formData.price);
-
-      formData.images.forEach((image, index) => {
-        formDataToSubmit.append(`images[${index}]`, image);
-      });
-
       formDataToSubmit.append('condition', 'New'); // Needs to be added to the form defualting to new for now
-
     }
 
     const jsonString = JSON.stringify(Object.fromEntries(formDataToSubmit.entries()));

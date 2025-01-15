@@ -3,9 +3,6 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import pkg from 'pg';
-import listings from './routes/listings.js';
-import filters from './routes/filters.js';
-import favorites from './routes/favorites.js';
 import authMiddleware from './middleware/auth.js'; 
 
 // import routes
@@ -14,6 +11,9 @@ import userRoutes from './routes/users.js';
 import friendsRoutes from './routes/friends.js';
 import communityRoutes from './routes/communities.js'
 import privacyPolicies from './routes/privacyPolicies.js';
+import listings from './routes/listings.js';
+import filters from './routes/filters.js';
+import favorites from './routes/favorites.js';
 
 dotenv.config();
 
