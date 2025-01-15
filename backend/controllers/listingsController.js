@@ -1,5 +1,12 @@
 import pool from '../pool.js';
 import { jwtDecode } from "jwt-decode";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { v4 as uuidv4 } from "uuid"; 
+
+const s3 = new S3Client({
+  region: process.env.BUCKET_REGION,
+  credentials: null
+});
 
 //Endpoint for fetching rows
 export const getAllListings = async (req, res) => {
@@ -104,4 +111,41 @@ export const createListing = async (req, res) => {
     }
 };
 
-export default {createListing, getFavoritedListings, getAllListings };
+export const uploadImages = async (req, res) => {
+  console.log('Reached backend api, this is the amount of files: ' + req.files.length);
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: "No files uploaded" });
+    }
+
+    const uploadedFiles = [];
+
+    for (const file of req.files) {
+      console.log(file);
+      const fileKey = `${uuidv4()}-${file.originalname}`;
+      const params = {
+        Bucket: process.env.BUCKET_NAME,
+        Key: fileKey,
+        Body: file.buffer,
+        ContentType: file.mimetype,
+      };
+
+      // Upload to S3
+      await s3.send(new PutObjectCommand(params));
+
+      // Store the S3 URL in the response
+      const fileUrl = `https://${process.env.BUCKET_NAME}.s3.${process.env.BUCKET_REGION}.amazonaws.com/${fileKey}`;
+      uploadedFiles.push(fileUrl);
+    }
+
+    res.status(200).json({
+      message: "Files uploaded successfully",
+      files: uploadedFiles,
+    });
+  } catch (err) {
+    console.error("Error uploading images:", err);
+    res.status(500).json({ message: "Error uploading files", error: err });
+  }
+};
+
+export default {createListing, getFavoritedListings, getAllListings, uploadImages};
