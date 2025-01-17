@@ -3,8 +3,8 @@ import { CardGrid, FilterSidebar } from '../../Common';
 import { Form, ListGroup } from 'react-bootstrap';
 import Fuse from 'fuse.js';  // Import Fuse.js library
 import styles from './Favorites.module.css'; // Import CSS module for styling
-import { useNavigate } from 'react-router-dom';
 import ListingModal from './../Marketplace/Listings';
+import { useAuth0 } from "@auth0/auth0-react";
 
 export const Favorites = () => {
   const [listings, setListings] = useState([]);
@@ -16,8 +16,13 @@ export const Favorites = () => {
   const [showListingModal, setShowListingModal] = useState(false);
   const [selectedListing, setSelectedListing] = useState(null);
 
+  const { user, getAccessTokenSilently } = useAuth0();  
+
   // Fuse.js setup for fuzzy search
   const fuse = useMemo(() => {
+    if (!user) {
+      return;
+    }
     const options = {
       includeScore: true,
       threshold: 0.3, // Adjust threshold for fuzziness (lower is stricter)
@@ -80,6 +85,9 @@ export const Favorites = () => {
 
   // Filter listings based on search query and active filters
   useEffect(() => {
+    if (!user) {
+      return;
+    }
     const filterListings = () => {
       let filtered = applyFilters(listings);
 
@@ -98,17 +106,23 @@ export const Favorites = () => {
     };
 
     filterListings();
-  }, [listings, searchQuery, activeFilters]);
+  }, [user, listings, searchQuery, activeFilters]);
 
   useEffect(() => {
+    if (!user) {
+      return;
+    }
     // Fetch the most recent listings from the server
     const fetchListings = async () => {
       try {
-        //hardcoding userId until we can implement it correctly
-        const userId = 1;
-        const response = await fetch(`http://localhost:8080/api/listings/favorites/${userId}`);
+        const token = await getAccessTokenSilently();
+        const response = await fetch(`http://localhost:8080/api/listings/favorites/`,{
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });       
         const rawData = await response.json();
-        console.log(rawData);
     
         // Map the data to match the desired format
         const formattedData = rawData.map(item => ({
@@ -129,7 +143,7 @@ export const Favorites = () => {
     };
 
     fetchListings();
-  }, []);
+  }, [user]);
 
   // Filter change handler (when filter options are selected or modified)
   const handleFilterChange = (filter) => {
@@ -150,6 +164,10 @@ export const Favorites = () => {
     setShowListingModal(false);
     setSelectedListing(null);
   };
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className={styles.favoritesContainer}>

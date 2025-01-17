@@ -6,7 +6,7 @@ import pkg from 'pg';
 import listings from './routes/listings.js';
 import filters from './routes/filters.js';
 import favorites from './routes/favorites.js';
-
+import authMiddleware from './middleware/auth.js'; 
 
 // import routes
 import favoritesRoutes from './routes/favorites.js';
@@ -17,9 +17,16 @@ import privacyPolicies from './routes/privacyPolicies.js';
 
 dotenv.config();
 
+if (!(process.env.PORT && process.env.CLIENT_ORIGIN_URL)) {
+  throw new Error(
+    "Missing required environment variables."
+  );
+}
+
+
 const { Pool } = pkg;
 const app = express();
-const port = 8080;
+const port = parseInt(process.env.PORT, 10);
 
 // Database Connection
 const pool = new Pool({
@@ -35,6 +42,16 @@ const pool = new Pool({
 
 // Middleware
 app.use(cors());
+
+// app.use(
+//   cors({
+//     origin: CLIENT_ORIGIN_URL,
+//     methods: ["GET"],
+//     allowedHeaders: ["Authorization", "Content-Type"],
+//     maxAge: 86400,
+//   })
+// );
+
 app.use(bodyParser.json());
 
 // Basic Route
@@ -42,19 +59,27 @@ app.get('/', (req, res) => {
   res.send('Hello from backend!');
 });
 
+// enforce on all endpoints to validate the signed in user
+app.use(authMiddleware);
+
 app.use('/api', favoritesRoutes)
 app.use('/api', communityRoutes)
 app.use('/api', userRoutes)
 app.use('/api', friendsRoutes)
 app.use('/api', privacyPolicies)
 
-
-
 // Mount the listing routes
 app.use('/api', listings);
 app.use('/api', filters);
 app.use('/api', favorites);
 
+// Error handling for unauthorized access
+app.use((err, req, res, next) => {
+  if (err.name === 'UnauthorizedError') {
+    return res.status(401).send('Invalid or missing token');
+  }
+  next(err);
+});
 
 // Start Server
 app.listen(port, () => {

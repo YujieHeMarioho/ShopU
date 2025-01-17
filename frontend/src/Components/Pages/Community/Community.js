@@ -16,17 +16,25 @@ const Communities = () => {
 
   const user_id = 32
   const user_email = "u1275258@utah.edu"
+  const { getAccessTokenSilently } = useAuth0();  
 
   useLayoutEffect(() => {
     if (isLoading) {
         const fetchUserInfo = async () => {
             try {
+              const token = await getAccessTokenSilently();
                 // Get the current user's ID from the backend
                 //const userResponse = await axios.get(`http://localhost:8080/api/user-id/${user_email}`);
                 //setUserInfo(userResponse.data);
 
                 // Fetch communities for the current user
-                const communityResponse = await axios.get(`http://localhost:8080/api/communities/${user_id}`);
+                const communityResponse = await axios.get(`http://localhost:8080/api/communities`,
+                  {
+                    headers: {
+                      'Authorization': `Bearer ${token}`,
+                    }
+                  }
+                );
 
                 setCommunities(communityResponse.data);
             } catch (error) {
@@ -54,15 +62,27 @@ const Communities = () => {
       return;
     }
     try {
+      const token = await getAccessTokenSilently();
       const response = await axios.post('http://localhost:8080/api/communities', {
-        user_id: user_id,
-        community_id: newCommunityId,
-      });
+        community_id: newCommunityId
+      }, 
+      {    
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      }
+    );
       alert("Community added successfully"); // Success message
       setNewCommunityId(''); // Clear input field
 
       // Fetch the updated communities list with details
-      const communityResponse = await axios.get(`http://localhost:8080/api/communities/${user_id}`);
+      const communityResponse = await axios.get(`http://localhost:8080/api/communities`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        }
+      );
       setCommunities(communityResponse.data); // Update state with full details
     } catch (error) {
       console.error('Error adding community:', error);
@@ -74,11 +94,24 @@ const Communities = () => {
   // Remove a community
   const leaveCommunity = async (communityId) => {
     try {
-      const response = await axios.delete(`http://localhost:8080/api/communities/${user_id}/${communityId}`);
+      const token = await getAccessTokenSilently();
+      const response = await axios.delete(`http://localhost:8080/api/communities/${communityId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        }
+      );
       alert(response.data.message);
   
       // Fetch the updated communities list with details
-      const communityResponse = await axios.get(`http://localhost:8080/api/communities/${user_id}`);
+      const communityResponse = await axios.get(`http://localhost:8080/api/communities`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        }
+      );
       setCommunities(communityResponse.data); // Update state with full details
     } catch (error) {
       console.error('Error removing community:', error);

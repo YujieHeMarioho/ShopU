@@ -1,8 +1,11 @@
 import React, { act, useState } from 'react';
 import { Card, Button, Alert } from 'react-bootstrap';
 import styles from './CommunityCard.module.css';
+import { useAuth0 } from '@auth0/auth0-react';
 
 export const CommunityCardComponent = ({ image, title, description, communityId}) => {
+  const { getAccessTokenSilently } = useAuth0();
+
   const [isJoined, setIsJoined] = useState(false);
   const [alertMessage, setAlertMessage] = useState(null);
 
@@ -10,6 +13,7 @@ export const CommunityCardComponent = ({ image, title, description, communityId}
     e.stopPropagation(); // Prevents triggering the onCardClick if you have it
 
     try{
+      const token = await getAccessTokenSilently();
       const action = isJoined ? 'remove' : 'add';
       const success = await joinAPICall(communityId, action);
       console.error('In the try');
@@ -58,7 +62,7 @@ export const CommunityCardComponent = ({ image, title, description, communityId}
   );
 };
 
-const joinAPICall = async (communityId, action) => {
+const joinAPICall = async (communityId, action, token) => {
   try {
     communityId = 1;
     const URL = `http://localhost:8080/api/communities/${communityId}`;
@@ -67,6 +71,7 @@ const joinAPICall = async (communityId, action) => {
       method: method,
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
       }
     });
     
