@@ -32,5 +32,4 @@ router.post('/feed/:postId/share', shareFeedPost);
 // Like a post
 router.post('/feed/:id/like', likeFeedPost);
 
-
 export default router;

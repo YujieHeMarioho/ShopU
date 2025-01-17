@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { FaThumbsUp, FaShare } from 'react-icons/fa';
@@ -17,7 +17,7 @@ export const SocialCard = ({
   initialShares = 0,
   tags = [],             // Tags for the post
 }) => {
-  const { getAccessTokenSilently } = useAuth0();
+  const { user, getAccessTokenSilently } = useAuth0();
   const navigate = useNavigate();
   const [likes, setLikes] = useState(initialLikes);
   const [shares, setShares] = useState(initialShares);
@@ -25,56 +25,46 @@ export const SocialCard = ({
   const [isShared, setIsShared] = useState(false);
   const [alertMessage, setAlertMessage] = useState(null);
 
-  // Handle like button click
+  useEffect(() => {
+    if (user) {
+      console.log('User ID:', user.sub); // Access the user ID (sub) here
+    }
+  }, [user]);
+
   const handleLikeClick = async () => {
     const newLikeStatus = !isLiked;
     setIsLiked(newLikeStatus);
-
+  
     try {
-      console.log('Attempting to update like for post:', post_id);
-      console.log('New Like Status:', newLikeStatus);
-
       const token = await getAccessTokenSilently();
-      console.log('Access Token:', token);  // Log the token to check if it's correct
-
-      const response = await likeAPICall(post_id, newLikeStatus, token);
-
-      console.log('Response from like API:', response);
-
+      const response = await likeAPICall(post_id, newLikeStatus, token, user.sub); // Pass user.sub
+  
       if (response.success) {
-        setLikes((prev) => (newLikeStatus ? prev + 1 : prev - 1));
+        setLikes(response.likeCount);  // Use the updated like count from the backend
       }
     } catch (error) {
-      console.error('Error:', error);
       setAlertMessage('Failed to update like. Please try again later.');
       setTimeout(() => setAlertMessage(null), 3000);
     }
   };
+  
+  
 
-  // Handle share button click
   const handleShareClick = async () => {
     try {
-      console.log('Attempting to share post:', post_id);
-
       const token = await getAccessTokenSilently();
-      console.log('Access Token:', token);  // Log the token to check if it's correct
-
-      const response = await shareAPICall(post_id, token);
-
-      console.log('Response from share API:', response);
+      const response = await shareAPICall(post_id, token, user.sub); // Pass user.sub
 
       if (response.success) {
         setAlertMessage('Item shared successfully!');
         setTimeout(() => setAlertMessage(null), 3000);
       }
     } catch (error) {
-      console.error('Error:', error);
       setAlertMessage('Failed to share item. Please try again later.');
       setTimeout(() => setAlertMessage(null), 3000);
     }
   };
 
-  // Navigate to the detailed view of the post
   const handleNavigateToItem = () => {
     navigate(`/item/${post_id}`);
   };
@@ -100,7 +90,6 @@ export const SocialCard = ({
         <p className={styles.description}>{description}</p>
       </div>
 
-      {/* Tags Section */}
       {tags.length > 0 && (
         <div className={styles.tagsContainer}>
           {tags.map((tag, index) => (
@@ -140,52 +129,51 @@ export const SocialCard = ({
   );
 };
 
-// API calls for Like and Share
-const likeAPICall = async (post_id, isLiked, token) => {
+const likeAPICall = async (post_id, isLiked, token, userId) => {
   try {
     const URL = `http://localhost:8080/api/feed/${post_id}/like`;
-    const method = isLiked ? 'POST' : 'DELETE'; // POST for like, DELETE for removing like
+    const method = isLiked ? 'POST' : 'POST'; // Keep it POST for both like/unlike
     const response = await fetch(URL, {
       method,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
+        'User-ID': userId, // Pass user ID as a custom header if needed
       },
     });
 
-    if (response.ok) {
-      return await response.json(); // Assume the API sends back success
-    } else {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Something went wrong');
+    if (!response.ok) {
+      const errorData = await response.text();
+      throw new Error(errorData || 'Something went wrong');
     }
+
+    return await response.json();
   } catch (error) {
     console.error('API Error:', error);
     throw error;
   }
 };
 
-const shareAPICall = async (post_id, token) => {
+
+const shareAPICall = async (post_id, token, userId) => {
   try {
-    const URL = `http://localhost:8080/api/feed/${post_id}/share`; // Adjusted route to match backend
+    const URL = `http://localhost:8080/api/feed/${post_id}/share`;
     const response = await fetch(URL, {
-      method: 'POST', // Assuming POST for sharing action
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
+        'User-ID': userId, // Pass user ID as a custom header if needed
       },
     });
 
-    if (response.ok) {
-      return await response.json(); // Assume the API sends back success
-    } else {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Something went wrong');
+    if (!response.ok) {
+      throw new Error('Error sharing post.');
     }
+
+    return await response.json();
   } catch (error) {
-    console.error('API Error:', error);
+    console.error('Error:', error);
     throw error;
   }
 };
-
-export default SocialCard;

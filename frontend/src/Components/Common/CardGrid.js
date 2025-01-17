@@ -1,9 +1,9 @@
 import React from 'react';
 import { Container, Row, Col } from 'react-bootstrap';
 import { CardComponent } from './Card';
-import SocialCard from './SocialCard';
+import {SocialCard} from '../Common';
 
-export const CardGrid = ({ listings = [], variant = 'marketplace', openListingDetails}) => {
+export const CardGrid = ({ listings = [], variant = 'marketplace', openListingDetails }) => {
   return (
     <Container>
       <Row>
@@ -34,6 +34,8 @@ export const CardGrid = ({ listings = [], variant = 'marketplace', openListingDe
               ) : (
                 // Social Feed Card
                 <SocialCard
+                  key={listing.id} // Ensure unique key for each SocialCard
+                  post_id={listing.id}
                   image={listing.image}
                   video={listing.video}
                   title={listing.title}
@@ -45,6 +47,9 @@ export const CardGrid = ({ listings = [], variant = 'marketplace', openListingDe
                   isLiked={listing.isLiked}
                   isShared={listing.isShared}
                   tags={listing.tags}
+                  onDelete={() => deleteFeedPost(listing.id)} // Example function, replace as needed
+                  onEdit={() => setEditPost(listing)} // Example function, replace as needed
+                  onShare={() => shareFeedPost(listing.id)} // Example function, replace as needed
                 />
               )}
             </Col>
@@ -54,6 +59,7 @@ export const CardGrid = ({ listings = [], variant = 'marketplace', openListingDe
     </Container>
   );
 };
+
 // Example functions (define these in your component or context)
 const openListingDetails = (listing) => {
   // Logic to open a modal or navigate to a details page
@@ -61,4 +67,16 @@ const openListingDetails = (listing) => {
 
 const saveToFavorites = (listing) => {
   // Logic to save the item to favorites
+};
+
+const deleteFeedPost = (postId) => {
+  // Logic to delete the post from the feed
+};
+
+const setEditPost = (post) => {
+  // Logic to set the post for editing
+};
+
+const shareFeedPost = (postId) => {
+  // Logic to share the post
 };
