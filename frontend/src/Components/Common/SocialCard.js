@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { Button } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import { FaThumbsUp, FaShare, FaHeart, FaRegHeart } from 'react-icons/fa';
+import { FaThumbsUp, FaShare } from 'react-icons/fa';
 import styles from './SocialCard.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
 
 export const SocialCard = ({
+  post_id,               // Directly passed post_id
   image,
   video,
   title,
@@ -14,8 +15,7 @@ export const SocialCard = ({
   author,
   initialLikes = 0,
   initialShares = 0,
-  itemDetails,
-  tags = [], // New prop for tags
+  tags = [],             // Tags for the post
 }) => {
   const { getAccessTokenSilently } = useAuth0();
   const navigate = useNavigate();
@@ -23,40 +23,60 @@ export const SocialCard = ({
   const [shares, setShares] = useState(initialShares);
   const [isLiked, setIsLiked] = useState(false);
   const [isShared, setIsShared] = useState(false);
-  const [isFavorited, setIsFavorited] = useState(false);
   const [alertMessage, setAlertMessage] = useState(null);
 
-  const handleLikeClick = () => {
-    setIsLiked((prev) => !prev);
-    setLikes((prev) => (isLiked ? prev - 1 : prev + 1)); // Toggle like count
-  };
+  // Handle like button click
+  const handleLikeClick = async () => {
+    const newLikeStatus = !isLiked;
+    setIsLiked(newLikeStatus);
 
-  const handleShareClick = () => {
-    setIsShared((prev) => !prev);
-    setShares((prev) => (isShared ? prev - 1 : prev + 1)); // Toggle share count
-  };
-
-  const handleFavoriteClick = async (e) => {
-    e.stopPropagation();
     try {
-      const token = await getAccessTokenSilently();
-      const action = isFavorited ? 'remove' : 'add';
-      const success = await favoriteAPICall(itemDetails.id, action, token);
+      console.log('Attempting to update like for post:', post_id);
+      console.log('New Like Status:', newLikeStatus);
 
-      if (success) {
-        setIsFavorited(!isFavorited);
-        setAlertMessage(isFavorited ? 'Removed from favorites' : 'Added to favorites');
-        setTimeout(() => setAlertMessage(null), 3000);
+      const token = await getAccessTokenSilently();
+      console.log('Access Token:', token);  // Log the token to check if it's correct
+
+      const response = await likeAPICall(post_id, newLikeStatus, token);
+
+      console.log('Response from like API:', response);
+
+      if (response.success) {
+        setLikes((prev) => (newLikeStatus ? prev + 1 : prev - 1));
       }
     } catch (error) {
       console.error('Error:', error);
-      setAlertMessage('Failed to update favorite. Please try again later.');
+      setAlertMessage('Failed to update like. Please try again later.');
       setTimeout(() => setAlertMessage(null), 3000);
     }
   };
 
+  // Handle share button click
+  const handleShareClick = async () => {
+    try {
+      console.log('Attempting to share post:', post_id);
+
+      const token = await getAccessTokenSilently();
+      console.log('Access Token:', token);  // Log the token to check if it's correct
+
+      const response = await shareAPICall(post_id, token);
+
+      console.log('Response from share API:', response);
+
+      if (response.success) {
+        setAlertMessage('Item shared successfully!');
+        setTimeout(() => setAlertMessage(null), 3000);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      setAlertMessage('Failed to share item. Please try again later.');
+      setTimeout(() => setAlertMessage(null), 3000);
+    }
+  };
+
+  // Navigate to the detailed view of the post
   const handleNavigateToItem = () => {
-    navigate(`/item/${itemDetails.id}`, { state: itemDetails });
+    navigate(`/item/${post_id}`);
   };
 
   return (
@@ -110,14 +130,6 @@ export const SocialCard = ({
           <FaShare style={{ marginRight: '5px' }} />
           {shares}
         </Button>
-        <Button
-          variant="light"
-          onClick={handleFavoriteClick}
-          className={styles.button}
-          style={{ color: isFavorited ? 'red' : 'gray' }}
-        >
-          {isFavorited ? <FaHeart /> : <FaRegHeart />}
-        </Button>
         <Button variant="primary" onClick={handleNavigateToItem} className={styles.viewItemButton}>
           View Item
         </Button>
@@ -128,10 +140,11 @@ export const SocialCard = ({
   );
 };
 
-const favoriteAPICall = async (listingId, action, token) => {
+// API calls for Like and Share
+const likeAPICall = async (post_id, isLiked, token) => {
   try {
-    const URL = `http://localhost:8080/api/favorite/${listingId}`;
-    const method = action === 'add' ? 'POST' : 'DELETE';
+    const URL = `http://localhost:8080/api/feed/${post_id}/like`;
+    const method = isLiked ? 'POST' : 'DELETE'; // POST for like, DELETE for removing like
     const response = await fetch(URL, {
       method,
       headers: {
@@ -141,7 +154,30 @@ const favoriteAPICall = async (listingId, action, token) => {
     });
 
     if (response.ok) {
-      return true;
+      return await response.json(); // Assume the API sends back success
+    } else {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Something went wrong');
+    }
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
+};
+
+const shareAPICall = async (post_id, token) => {
+  try {
+    const URL = `http://localhost:8080/api/feed/${post_id}/share`; // Adjusted route to match backend
+    const response = await fetch(URL, {
+      method: 'POST', // Assuming POST for sharing action
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (response.ok) {
+      return await response.json(); // Assume the API sends back success
     } else {
       const errorData = await response.json();
       throw new Error(errorData.error || 'Something went wrong');

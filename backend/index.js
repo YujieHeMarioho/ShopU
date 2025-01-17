@@ -14,6 +14,7 @@ import userRoutes from './routes/users.js';
 import friendsRoutes from './routes/friends.js';
 import communityRoutes from './routes/communities.js'
 import privacyPolicies from './routes/privacyPolicies.js';
+import feed from './routes/feed.js';
 
 dotenv.config();
 
@@ -58,6 +59,8 @@ app.use(bodyParser.json());
 app.get('/', (req, res) => {
   res.send('Hello from backend!');
 });
+
+app.use('/api', feed);
 
 // enforce on all endpoints to validate the signed in user
 app.use(authMiddleware);
