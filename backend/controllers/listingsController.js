@@ -2,10 +2,21 @@ import pool from '../pool.js';
 import { jwtDecode } from "jwt-decode";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid"; 
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const bucketName = process.env.BUCKET_NAME
+const bucketRegion = process.env.BUCKET_REGION
+const accessKey = process.env.BUCKET_ACCESS_KEY
+const secretAccessKey = process.env.BUCKET_SECRET_KEY
 
 const s3 = new S3Client({
-  region: process.env.BUCKET_REGION,
-  credentials: null
+  region: bucketRegion,
+  credentials: {
+    accessKeyId: accessKey,
+    secretAccessKey: secretAccessKey
+  } 
 });
 
 //Endpoint for fetching rows
@@ -124,7 +135,7 @@ export const uploadImages = async (req, res) => {
       console.log(file);
       const fileKey = `${uuidv4()}-${file.originalname}`;
       const params = {
-        Bucket: process.env.BUCKET_NAME,
+        Bucket: bucketName,
         Key: fileKey,
         Body: file.buffer,
         ContentType: file.mimetype,
