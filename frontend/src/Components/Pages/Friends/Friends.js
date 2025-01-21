@@ -14,10 +14,14 @@ const Friends = () => {
       const fetchUserInfo = async () => {
         try {
           const token = await getAccessTokenSilently();
-          const friendsResponse = await axios.get(`http://localhost:8080/api/friends`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-
+          const friendsResponse = await axios.get(
+            `http://localhost:8080/api/friends`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+              params: { user_id: user.sub }, // Pass user_id explicitly
+            }
+          );
+  
           const friendDetails = await Promise.all(
             friendsResponse.data.map(async (friend) => {
               const friendResponse = await axios.get(
@@ -27,7 +31,7 @@ const Friends = () => {
               return { ...friend, ...friendResponse.data };
             })
           );
-
+  
           setFriends(friendDetails);
         } catch (error) {
           console.error('Error fetching user info or friends:', error);
@@ -35,69 +39,89 @@ const Friends = () => {
           setIsLoading(false);
         }
       };
-
+  
       fetchUserInfo();
     }
   }, [authLoading, user, getAccessTokenSilently]);
+  
+  
+
+
+
+
+
+
+
+
 
   const addFriend = async () => {
-    if (!newFriendId) {
-      alert('Please enter a valid Friend ID.');
-      return;
-    }
-  
-    if (friends.some((friend) => friend.user_id === newFriendId)) {
-      alert('Friendship already exists.');
-      setNewFriendId('');
-      return;
-    }
-  
-    try {
-      const token = await getAccessTokenSilently();
-      const response = await axios.post(
-        `http://localhost:8080/api/friends`,
-        { friend_id: newFriendId },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-  
-      alert(response.data.message);
-      setNewFriendId('');
-  
-      // Fetch the new friend's details and add to the state
-      const friendResponse = await axios.get(
-        `http://localhost:8080/api/user/${newFriendId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-  
-      setFriends((prevFriends) => [
-        ...prevFriends,
-        { ...friendResponse.data, friend_id: newFriendId },
-      ]);
-    } catch (error) {
-      console.error('Error adding friend:', error);
-      alert('Error adding friend.');
-    }
-  };
-  
-  
+  if (!newFriendId) {
+    alert('Please enter a valid Friend ID.');
+    return;
+  }
 
-  const removeFriend = async (friendId) => {
-    try {
-      const token = await getAccessTokenSilently();
-      const response = await axios.delete(
-        `http://localhost:8080/api/friends/${friendId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-  
-      alert(response.data.message);
-  
-      // Update the state by filtering out the removed friend
-      setFriends((prevFriends) => prevFriends.filter((friend) => friend.user_id !== friendId));
-    } catch (error) {
-      console.error('Error removing friend:', error);
-      alert('Error removing friend.');
-    }
-  };
+  if (friends.some((friend) => friend.user_id === newFriendId)) {
+    alert('Friendship already exists.');
+    setNewFriendId('');
+    return;
+  }
+
+  try {
+    const token = await getAccessTokenSilently();
+    const response = await axios.post(
+      `http://localhost:8080/api/friends`,
+      { friend_id: newFriendId },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    alert(response.data.message);
+    setNewFriendId('');
+
+    // Fetch the new friend's details and add to the state
+    const friendResponse = await axios.get(
+      `http://localhost:8080/api/user/${newFriendId}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    setFriends((prevFriends) => [
+      ...prevFriends,
+      { ...friendResponse.data, friend_id: newFriendId },
+    ]);
+  } catch (error) {
+    console.error('Error adding friend:', error);
+    alert('Error adding friend.');
+  }
+};
+
+const removeFriend = async (friendId) => {
+  const confirmDelete = window.confirm(
+    "Are you sure you want to delete this friend? This action cannot be undone."
+  );
+
+  // If the user cancels, exit the function
+  if (!confirmDelete) {
+    return;
+  }
+  try {
+    console.log('Removing Friend ID:', friendId); // Debugging
+
+
+    const token = await getAccessTokenSilently();
+    const response = await axios.delete(
+      `http://localhost:8080/api/friends/${friendId}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    alert(response.data.message);
+
+    // Update the state by filtering out the removed friend
+    setFriends((prevFriends) => prevFriends.filter((friend) => friend.user_id !== friendId));
+  } catch (error) {
+    console.error('Error removing friend:', error);
+    alert('Error removing friend.');
+  }
+};
+
   
 
 
@@ -163,9 +187,20 @@ const Friends = () => {
                   <p><strong>Email:</strong> {friend.email}</p>
                   <p><strong>Friended At:</strong> {new Date(friend.friended_at).toLocaleString()}</p>
                 </div>
-                <button className="delete-button" onClick={() => removeFriend(friend.friend_id)}>
-                  Remove
-                </button>
+                <div className="friend-actions">
+                  <button
+                    className="message-button"
+                    onClick={() => alert(`Message ${friend.name || friend.user_id}`)}
+                  >
+                    Message
+                  </button>
+                  <button
+                    className="delete-button"
+                    onClick={() => removeFriend(friend.friend_id)}
+                  >
+                    Remove
+                  </button>
+                </div>
               </div>
             ))}
           </div>
