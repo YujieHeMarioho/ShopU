@@ -70,25 +70,17 @@ const CreateListingPage = () => {
   };
 
   const handleImagesChange = (e) => {
-    const validImageFormats = ["image/jpeg", "image/png", "image/jpg", "image/gif"]
+    const validImageFormats = ["image/jpeg", "image/png", "image/jpg", "image/gif"];
     const files = Array.from(e.target.files);
     const validFiles = files.filter((file) => validImageFormats.includes(file.type));
-
+  
     if (validFiles.length < files.length){
       alert("Certain files were not added because they are not in a supported format (JPEG, PNG, JPG, GIF)");
     }
-
-    const fileURLs = validFiles.map((file) => URL.createObjectURL(file));
+  
     setFormData((prevData) => ({
       ...prevData,
-      images: [...prevData.images, ...fileURLs],
-    }));
-  };
-
-  const handleRemoveImage = (index) => {
-    setFormData((prevData) => ({
-      ...prevData,
-      images: prevData.images.filter((_, i) => i !== index),
+      images: validFiles, // Set the images to the new selection, replacing the previous ones
     }));
   };
 
@@ -354,17 +346,6 @@ const CreateListingPage = () => {
                         src={image}
                         alt={`Preview ${index}`}
                       />
-                      <Button
-                        variant="danger"
-                        className="position-absolute"
-                        style={{ top: '10px', right: '10px', zIndex: '10' }}
-                        onClick={(event) => {
-                          event.stopPropagation(); // Prevent the carousel navigation
-                          handleRemoveImage(index);
-                        }}
-                      >
-                        X
-                      </Button>
                     </div>
                   </Carousel.Item>
                 ))}

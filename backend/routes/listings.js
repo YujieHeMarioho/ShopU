@@ -13,6 +13,6 @@ router.get('/listings/favorites', getFavoritedListings);  // get all favorited l
 router.post('/listings/create', createListing);
 
 //route to upload images to S3
-router.post('/listings/uploadImages', upload.array('images', 10), uploadImages);
+router.post('/listings/uploadImages', upload.array('images', 5), uploadImages);
 
 export default router;
