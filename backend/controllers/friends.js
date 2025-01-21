@@ -6,7 +6,7 @@ export const getFriends = async (req, res) => {
   const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
   try {
       const decodedToken = jwtDecode(token); // Decode the token
-      user_id = decodedToken.sub;
+      user_id = decodedToken.sub; // Auth0 ID
   } catch (err) {
       console.error('Error decoding token:', err);
       return res.status(401).json({ message: 'Invalid token' });
@@ -19,8 +19,8 @@ export const getFriends = async (req, res) => {
     );
 
     const friends = result.rows.map(row => ({
-      user_id: row.user_id === parseInt(user_id, 10) ? row.friend_id : row.user_id,
-      friend_id: row.user_id === parseInt(user_id, 10) ? row.user_id : row.friend_id,
+      user_id: row.user_id === user_id ? row.friend_id : row.user_id, // Correctly assign the friend's ID
+      friend_id: user_id, // The current user ID
       friended_at: row.friended_at,
     }));
 
@@ -30,6 +30,7 @@ export const getFriends = async (req, res) => {
     res.status(500).json({ message: 'Error getting friends', error });
   }
 };
+
 
 
 
