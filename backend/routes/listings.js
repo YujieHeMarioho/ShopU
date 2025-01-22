@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAllListings, createListing,getFavoritedListings, uploadImages } from '../controllers/listingsController.js';
+import { getAllListings, createListing, createServiceListing ,getFavoritedListings, uploadImages } from '../controllers/listingsController.js';
 import upload from '../middleware/multer.js';
 
 const router = express.Router();
@@ -9,7 +9,12 @@ router.get('/listings', getAllListings);  // When a GET request is made to /api/
 
 router.get('/listings/favorites', getFavoritedListings);  // get all favorited listings for a specific user
 
-//route to create a listing
+//route to create a service listing
+//router.post('/listings/create/service', createItemListing);
+
+//route to create an item  listing
+router.post('/listings/create/item', createServiceListing);
+
 router.post('/listings/create', createListing);
 
 //route to upload images to S3

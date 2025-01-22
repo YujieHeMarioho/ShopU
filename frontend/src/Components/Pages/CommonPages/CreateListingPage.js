@@ -69,7 +69,7 @@ const CreateListingPage = () => {
     setFormData((prevData) => ({ ...prevData, availability: date }));
   };
 
-  const handleImagesChange = (e) => {
+  const handleImages = (e) => {
     const validImageFormats = ["image/jpeg", "image/png", "image/jpg", "image/gif"];
     const files = Array.from(e.target.files);
     const validFiles = files.filter((file) => validImageFormats.includes(file.type));
@@ -91,11 +91,6 @@ const CreateListingPage = () => {
       // Appending files to formData
       images.forEach((image) => formData.append('images', image));
       
-      // Log the contents of formData by iterating through its entries
-      formData.forEach((value, key) => {
-        console.log(key, value);  // key will be 'images', value will be the file
-      });
-      
       const token = await getAccessTokenSilently();
       const response = await fetch('http://localhost:8080/api/listings/uploadImages', {
         method: 'POST',
@@ -110,7 +105,8 @@ const CreateListingPage = () => {
       }
   
       const data = await response.json();
-      return data.fileUrls; // Assuming the backend returns an array of URLs
+      console.log('Files uploaded: ' + JSON.stringify(data.files));
+      return data.files; // Assuming the backend returns an array of URLs
     } catch (error) {
       console.error('Error uploading images:', error);
       return [];
@@ -152,18 +148,14 @@ const CreateListingPage = () => {
     const formDataToSubmit = new FormData();
 
     try { 
-      const uploadedImageUrls = await uploadImages(formData.images);
-      console.log(uploadedImageUrls.lengt);
+      const uploadedImages = await uploadImages(formData.images);
 
-      if (uploadedImageUrls.length === 0){
+      if (uploadedImages.length === 0){
         alert('Failed to upload image(s). Please Try Again');
         return
       }
-      else{
-        uploadedImageUrls.forEach((image, index) => {
-          formDataToSubmit.append(`images[${index}]`, image);
-        });
-      }
+
+      formDataToSubmit.append('images', JSON.stringify(uploadedImages));
     } catch (error) {
       console.error('Failed to upload image(s)', error);
     }
@@ -189,6 +181,7 @@ const CreateListingPage = () => {
     }
 
     const jsonString = JSON.stringify(Object.fromEntries(formDataToSubmit.entries()));
+    console.log(jsonString);
     try {
       const token = await getAccessTokenSilently();
       const response = await fetch('http://localhost:8080/api/listings/create', {
@@ -327,7 +320,7 @@ const CreateListingPage = () => {
             )}
             <Form.Group controlId="images">
               <Form.Label>Upload Images</Form.Label>
-              <Form.Control type="file" multiple onChange={handleImagesChange} accept="image/jpeg, image/png, image/jpg, image/gif"/>
+              <Form.Control type="file" multiple onChange={handleImages} accept="image/jpeg, image/png, image/jpg, image/gif"/>
             </Form.Group>
             {/* Create Listing Button */}
             <Button variant="primary" onClick={handleSubmit}>Create Listing</Button>
@@ -338,17 +331,20 @@ const CreateListingPage = () => {
           <Card className="mb-3">
             {formData.images.length > 0 && (
               <Carousel>
-                {formData.images.map((image, index) => (
-                  <Carousel.Item key={index}>
-                    <div className="position-relative">
-                      <img
-                        className="d-block w-100"
-                        src={image}
-                        alt={`Preview ${index}`}
-                      />
-                    </div>
-                  </Carousel.Item>
-                ))}
+                {formData.images.map((image, index) => {
+                  const fileURL = typeof image === 'string' ? image : URL.createObjectURL(image);
+                  return (
+                    <Carousel.Item key={index}>
+                      <div className="position-relative">
+                        <img
+                          className="d-block w-100"
+                          src={fileURL} // Use the generated or provided URL
+                          alt={`Preview ${index}`}
+                        />
+                      </div>
+                    </Carousel.Item>
+                  );
+                })}
               </Carousel>
             )}
             <Card.Body>
