@@ -1,7 +1,8 @@
 import pool from '../pool.js';
 import { jwtDecode } from "jwt-decode";
 
-export const getAllCommunities = async (req, res) => {
+//get communities for user
+export const getUserCommunities = async (req, res) => {
     const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
     let user_id;
     try {
@@ -21,6 +22,35 @@ export const getAllCommunities = async (req, res) => {
             name: row.name,
             description: row.description,
             joined_at: row.joined_at,
+          }));
+
+        res.status(200).json(communities);
+    } catch (err) {
+        console.error('Error running query:', err);
+        res.status(500).json({ error: 'Database error' });
+    }
+};
+
+//get all communities
+export const getAllCommunities = async (req, res) => {
+    const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+    let user_id;
+    try {
+        const decodedToken = jwtDecode(token); // Decode the token
+        user_id = decodedToken.sub;
+    } catch (err) {
+        console.error('Error decoding token:', err);
+        return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    //const query = 'SELECT comms.community_id, comms.name, comms.description FROM public.communities AS comms LEFT JOIN public.community_members AS mems ON comms.community_id = mems.community_id WHERE mems.user_id != $1';
+    const query = 'SELECT comms.community_id, comms.name, description FROM public.communities as comms LEFT JOIN public.community_members AS mems ON comms.community_id = mems.community_id WHERE mems.user_id != $1'
+    try {
+        const result = await pool.query(query, [user_id]); //user_id
+        const communities = result.rows.map(row => ({
+            community_id: row.community_id,
+            name: row.name,
+            description: row.description,
           }));
 
         res.status(200).json(communities);

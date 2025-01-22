@@ -11,11 +11,10 @@ const Communities = () => {
   /*const { user, isLoading: authLoading } = useAuth0();*/
   const [userInfo, setUserInfo] = useState(null);
   const [communities, setCommunities] = useState([]);
+  const [otherCommunities, setOtherCommunities] = useState([]);
   const [newCommunityId, setNewCommunityId] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
-  const user_id = 32
-  const user_email = "u1275258@utah.edu"
   const { getAccessTokenSilently } = useAuth0();  
 
   useLayoutEffect(() => {
@@ -35,13 +34,23 @@ const Communities = () => {
                     }
                   }
                 );
+                const otherCommunityResponse = await axios.get(`http://localhost:8080/api/communities/all`,
+                  {
+                    headers: {
+                      'Authorization': `Bearer ${token}`,
+                    }
+                  }
+                );
 
                 setCommunities(communityResponse.data);
+                setOtherCommunities(otherCommunityResponse.data);
+
             } catch (error) {
                 console.error('Error fetching user info or communities:', error);
             } finally {
                 setIsLoading(false);
             }
+
         };
 
         fetchUserInfo();
@@ -120,6 +129,15 @@ const Communities = () => {
   };
 
   // Sample Community data
+
+
+  // Map the data to match the desired format
+  const formattedOtherCommunities = otherCommunities.map(comm => ({
+    title: comm.name,
+    description: comm.description,
+    image: "https://via.placeholder.com/300x200",
+  }));
+
   const communities_data = [
     {
       image: 'https://via.placeholder.com/300x200',
@@ -202,7 +220,7 @@ const Communities = () => {
       )}
       </div>
         {/* Render CardGrid with listings */}
-        <CommunityCardGrid communities={communities_data} />
+        <CommunityCardGrid communities={formattedOtherCommunities} />
     </div>
 
     

@@ -1,10 +1,11 @@
 import express from 'express';
-import { getAllCommunities, joinCommunity, leaveCommunity } from '../controllers/communities.js';  
+import { getUserCommunities, getAllCommunities, joinCommunity, leaveCommunity } from '../controllers/communities.js';  
 
 const router = express.Router();
 
 // Define routes
-router.get('/communities', getAllCommunities)
+router.get('/communities', getUserCommunities)
+router.get('/communities/all', getAllCommunities)
 router.post('/communities', joinCommunity)
 router.delete('/communities/:community_id', leaveCommunity)
 
