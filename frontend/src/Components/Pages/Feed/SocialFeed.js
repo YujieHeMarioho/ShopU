@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styles from './SocialFeed.module.css';
+import { Button } from 'react-bootstrap';
 import { SocialCard } from '../../Common'; // Import the SocialCard component
 
 const SocialFeed = ({ userId }) => {
@@ -10,6 +11,7 @@ const SocialFeed = ({ userId }) => {
     const [newPost, setNewPost] = useState({ title: '', content: '', imageUrl: '' });
     const [editPost, setEditPost] = useState(null);
     const [isPostLoading, setIsPostLoading] = useState(false);
+    const [isGridLayout, setIsGridLayout] = useState(true); // State to toggle layout
 
     const fetchFeed = async () => {
         try {
@@ -91,6 +93,10 @@ const SocialFeed = ({ userId }) => {
         }
     };
 
+    const toggleLayout = () => {
+        setIsGridLayout((prev) => !prev); // Toggle between grid and scroll view
+    };
+
     useEffect(() => {
         fetchFeed();
         fetchUserFeed();
@@ -100,50 +106,45 @@ const SocialFeed = ({ userId }) => {
     if (error) return <p>{error}</p>;
 
     return (
-        <div>
+        <div className={styles.socialFeedContainer}>
             <h2>Social Feed</h2>
-            <div className={styles.feedContainer}>
+            
+            {/* Toggle Layout Button */}
+            <div className={styles.layoutToggleButton}>
+                <Button
+                    onClick={toggleLayout}
+                    variant="outline-primary"
+                >
+                    {isGridLayout ? 'Switch to Scrolling Layout' : 'Switch to Grid Layout'}
+                </Button>
+            </div>
+
+            {/* Display the feed */}
+            <div className={`${styles.feedContainer} ${isGridLayout ? styles.gridView : styles.scrollView}`}>
                 {feed.length === 0 ? (
                     <p>No posts available.</p>
                 ) : (
                     feed.map((post) => (
-                        <SocialCard
-                            key={post.post_id}
-                            post_id={post.post_id}
-                            image={post.image_url}
-                            video={post.video_url}
-                            title={post.title}
-                            description={post.content}
-                            profilePic={post.author_profile_pic}
-                            author={post.author}
-                            initialLikes={post.likes_count}
-                            initialShares={post.shares_count}
-                            tags={post.tags}
-                            onDelete={() => handlePostOperation(post.post_id, 'DELETE')}
-                            onEdit={() => setEditPost(post)}
-                            onShare={() => shareFeedPost(post.post_id)}
-                        />
+                        <div key={post.post_id} className={styles.gridItem}>
+                            <SocialCard
+                                post_id={post.post_id}
+                                image={post.image_url}
+                                title={post.title}
+                                description={post.content}
+                                profilePic={post.profile_pic_url}
+                                author={post.author}
+                                likes={post.likes}
+                                shares={post.shares}
+                                isLiked={post.is_liked}
+                                isShared={post.is_shared}
+                                tags={post.tags}
+                                onLike={() => handlePostOperation(post.post_id, 'PUT', { is_liked: !post.is_liked })}
+                                onShare={() => shareFeedPost(post.post_id)}
+                            />
+                        </div>
                     ))
                 )}
             </div>
-
-            {editPost && (
-                <div>
-                    <h3>Edit Post</h3>
-                    <input
-                        type="text"
-                        value={editPost.title}
-                        onChange={(e) => setEditPost({ ...editPost, title: e.target.value })}
-                    />
-                    <textarea
-                        value={editPost.content}
-                        onChange={(e) => setEditPost({ ...editPost, content: e.target.value })}
-                    ></textarea>
-                    <button onClick={() => handlePostOperation(editPost.post_id, 'PUT', editPost)} disabled={isPostLoading}>
-                        Save
-                    </button>
-                </div>
-            )}
         </div>
     );
 };

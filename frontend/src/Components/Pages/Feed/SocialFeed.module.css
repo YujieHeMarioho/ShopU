@@ -1,46 +1,244 @@
-.postFooter {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+/* Social Feed Container */
+.socialFeedContainer {
+  padding: 20px;
 }
 
-.likeButton,
-.shareButton {
-  margin-right: 10px;
-}
-
-.likesCount,
-.sharesCount {
-  margin-left: 5px;
-}
-
-/* Tag Container to group the tags */
-.tagContainer {
-  margin-top: 10px;
-  display: flex;
-  flex-wrap: wrap; /* Ensure the tags wrap if they overflow */
-}
-
-.tagBadge {
-  margin: 5px 5px 0 0; /* Add spacing between the tags */
-  cursor: pointer;
-  background-color: #007bff;
+h2 {
+  text-align: center;
+  margin-bottom: 20px;
   color: white;
+}
+
+/* Layout Toggle Button */
+.layoutToggleButton {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Feed Container */
+.feedContainer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 20px;
+  transition: all 0.3s ease;
+}
+
+/* Instagram-style Scroll View (for phone) */
+.scrollView {
+  display: block;
+}
+
+.scrollView .gridItem {
+  margin-bottom: 20px;
+  width: 100%; /* Full width in scroll view */
+  transition: transform 0.3s ease;
+}
+
+/* Disable hover effect in scroll view */
+.scrollView .gridItem:hover {
+  transform: none;  /* Remove the hover transform */
+  box-shadow: none;  /* Remove the hover box-shadow */
+}
+
+/* Pinterest-style Grid View */
+.gridView {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+/* Responsive Layout for Grid View */
+@media (min-width: 1200px) {
+  .gridView {
+    grid-template-columns: repeat(8, 1fr); /* 8 columns for large screens */
+  }
+}
+
+@media (max-width: 1199px) and (min-width: 992px) {
+  .gridView {
+    grid-template-columns: repeat(4, 1fr); /* 4 columns for medium screens */
+  }
+}
+
+@media (max-width: 991px) {
+  .gridView {
+    grid-template-columns: 1fr; /* Single column for smaller screens */
+  }
+  .scrollView {
+    display: block; /* Ensure scroll view on smaller screens (phones) */
+  }
+}
+
+/* Social Card (for each post) */
+.gridItem {
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.gridItem:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Card Container */
+.socialCard {
+  border: none;
+  border-radius: 16px;
+  padding: 20px;
+  margin: 5px 0;
+  background: linear-gradient(135deg, #fdfbfb, #ebedee);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Tags */
+.tagsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.tag {
+  background-color: #e0e0e0;
+  color: #333;
   padding: 6px 12px;
   border-radius: 20px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
-  font-size: 0.9rem; /* Slightly smaller font */
-  text-align: center;
-  user-select: none; /* Prevent text selection on click */
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
 }
 
-/* Hover effect specifically for tags */
-.tagBadge:hover {
-  background-color: #0056b3; /* Darker blue */
-  transform: scale(1.1); /* Enlarge slightly */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Subtle shadow */
+.tag:hover {
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
 }
 
-.layoutToggleButton {
-  margin-bottom: 15px;
+/* Social Card Hover Effect */
+.socialCard:hover {
+  transform: scale(1.02);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.15), 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.profilePic {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 2px solid #ddd;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-right: 16px;
+}
+
+.author {
+  font-weight: bold;
+  font-size: 18px;
+  color: #333;
+}
+
+/* Media Section */
+.media {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease-in-out;
+}
+
+/* Card Body */
+.body {
+  margin-top: 10px;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 12px;
+  color: #333;
+}
+
+.description {
+  font-size: 16px;
+  color: #555;
+  line-height: 1.6;
+}
+
+/* Footer Buttons */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+.button {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  color: #666;
+  transition: background 0.3s ease, color 0.3s ease, transform 0.2s ease;
+  cursor: pointer;
+}
+
+.button:hover {
+  background: #f5f5f5;
+  color: #333;
+  transform: scale(1.05);
+}
+
+.button[style*="blue"] {
+  color: #007bff !important;
+  background: rgba(0, 123, 255, 0.1);
+}
+
+.button[style*="green"] {
+  color: #28a745 !important;
+  background: rgba(40, 167, 69, 0.1);
+}
+
+.button[style*="red"] {
+  color: #dc3545 !important;
+  background: rgba(220, 53, 69, 0.1);
+}
+
+.viewItemButton {
+  background: linear-gradient(90deg, #6a11cb, #2575fc);
+  color: white;
+  font-weight: bold;
+  padding: 8px 20px;
+  transition: background 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.viewItemButton:hover {
+  background: linear-gradient(90deg, #2575fc, #6a11cb);
+  transform: scale(1.05);
+}
+
+/* Alert */
+.alert {
+  margin-top: 15px;
+  padding: 10px;
+  background: #e3fcef;
+  border-left: 4px solid #28a745;
+  color: #155724;
+  font-size: 14px;
+  border-radius: 8px;
 }
