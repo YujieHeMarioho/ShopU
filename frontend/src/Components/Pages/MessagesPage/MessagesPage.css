@@ -38,10 +38,11 @@
     border-radius: 6px;
     background-color: #ffffff;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s ease, color 0.2s ease;
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
+    color: #000000; /* Set text color to black for inactive conversations */
 }
 
 .history li:hover {
@@ -50,13 +51,14 @@
 
 .history li.active {
     background-color: #2563eb;
-    color: white;
+    color: #ffffff; /* White text for active conversations */
 }
 
 .history li p {
     margin: 0;
     font-weight: bold;
     font-size: 1rem;
+    color: inherit; /* Inherit color from parent (.history li) */
 }
 
 .history li small {
@@ -137,6 +139,8 @@
     border: 1px solid #ddd;
     border-radius: 6px;
     font-size: 1rem;
+    color: #000000; /* Ensure input text is black */
+    background-color: #ffffff; /* White background for input */
 }
 
 .message-input button {
