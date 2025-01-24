@@ -1,7 +1,7 @@
 // frontend/src/Components/Header/Header.js
 
 import React, { useState } from 'react';
-import { FaSearch, FaShoppingCart, FaHeart, FaBars, FaUser, FaTimes } from 'react-icons/fa';
+import { FaSearch, FaShoppingCart, FaHeart, FaBars, FaUser, FaTimes, FaEnvelope } from 'react-icons/fa';
 import { useLocation, useNavigate } from 'react-router-dom';
 import styles from './Header.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
@@ -58,6 +58,13 @@ const Header = () => {
                     </div>
                     <div className={styles.icon} onClick={() => navigate('/favorites')}>
                         <FaHeart />
+                    </div>
+
+                    {/* **Message Icon (Envelope Icon)** */}
+                    <div className={styles.icon} onClick={() => navigate('/messages')}>
+                        <FaEnvelope />
+                        {/* Optional Unread Message Count */}
+                        {/* <span className={styles.unreadCount}>5</span> */}
                     </div>
                     <div className={styles.icon} onClick={handleAuthAction}>
                         <FaUser />

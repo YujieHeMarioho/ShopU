@@ -14,6 +14,8 @@ import userRoutes from './routes/users.js';
 import friendsRoutes from './routes/friends.js';
 import communityRoutes from './routes/communities.js'
 import privacyPolicies from './routes/privacyPolicies.js';
+import messagesRoutes from './routes/messages.js';
+import conversationsRoutes from './routes/conversations.js';
 
 dotenv.config();
 
@@ -72,6 +74,13 @@ app.use('/api', privacyPolicies)
 app.use('/api', listings);
 app.use('/api', filters);
 app.use('/api', favorites);
+
+app.use('/api/messages', messagesRoutes);
+
+app.use('/api/conversations', (req, res, next) => {
+  console.log('Conversations route hit');
+  next();
+}, conversationsRoutes);
 
 // Error handling for unauthorized access
 app.use((err, req, res, next) => {
