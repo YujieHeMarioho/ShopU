@@ -1,3 +1,5 @@
+// MessagesPage.js
+
 import React, { useEffect, useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import axios from 'axios';
@@ -9,25 +11,31 @@ const MessagesPage = () => {
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [error, setError] = useState(null); // New state for errors
 
-  // Fetch dummy conversations
+  const BACKEND_URL = 'http://localhost:8080'; // Update this if your backend runs elsewhere
+
+  // Fetch conversations
   useEffect(() => {
     const fetchConversations = async () => {
       try {
         const token = await getAccessTokenSilently();
         const response = await axios.get(
-          `/api/messages/conversations/${user.sub}`,
+          `${BACKEND_URL}/api/messages/conversations/${encodeURIComponent(user.sub)}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setConversations(response.data);
+        setError(null); // Reset error on success
       } catch (error) {
         console.error('Error fetching conversations:', error);
+        setError('Failed to load conversations. Please try again later.');
       }
     };
-  
-    fetchConversations();
+
+    if (user && user.sub) {
+      fetchConversations();
+    }
   }, [user, getAccessTokenSilently]);
-  
 
   // Fetch messages for selected conversation
   useEffect(() => {
@@ -37,12 +45,13 @@ const MessagesPage = () => {
       try {
         const token = await getAccessTokenSilently();
         const response = await axios.get(
-          `/api/messages/${selectedConversation.conversation_id}/messages`,
+          `${BACKEND_URL}/api/messages/${encodeURIComponent(selectedConversation.conversation_id)}/messages`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setMessages(response.data);
       } catch (error) {
         console.error('Error fetching messages:', error);
+        setError('Failed to load messages. Please try again later.');
       }
     };
 
@@ -55,7 +64,7 @@ const MessagesPage = () => {
     try {
       const token = await getAccessTokenSilently();
       const response = await axios.post(
-        `/api/messages/${selectedConversation.conversation_id}/messages`,
+        `${BACKEND_URL}/api/messages/${encodeURIComponent(selectedConversation.conversation_id)}/messages`,
         { senderId: user.sub, content: newMessage },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -63,6 +72,7 @@ const MessagesPage = () => {
       setNewMessage(''); // Clear input
     } catch (error) {
       console.error('Error sending message:', error);
+      setError('Failed to send message. Please try again.');
     }
   };
 
@@ -71,6 +81,7 @@ const MessagesPage = () => {
       {/* Left: Conversations */}
       <div className="history">
         <h3>Conversations</h3>
+        {error && <p className="error-message">{error}</p>}
         <ul>
           {conversations.map((conversation) => (
             <li
@@ -97,7 +108,9 @@ const MessagesPage = () => {
       <div className="main-content">
         {selectedConversation ? (
           <>
-            <h3>Chat with {selectedConversation.user2_name || selectedConversation.user2_id}</h3>
+            <h3>
+              Chat with {selectedConversation.user2_name || selectedConversation.user2_id}
+            </h3>
             <div className="messages">
               {messages.map((message) => (
                 <div
@@ -114,6 +127,12 @@ const MessagesPage = () => {
                 placeholder="Type a message..."
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
               />
               <button onClick={handleSendMessage}>Send</button>
             </div>
