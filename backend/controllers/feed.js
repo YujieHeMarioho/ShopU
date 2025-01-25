@@ -6,10 +6,15 @@ const extractUserIdFromToken = (req) => {
   const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
   let user_id;
   
+  if (!token) {
+    throw new Error('Token is missing from the authorization header');
+  }
+
   try {
     const decodedToken = jwtDecode(token);
-    user_id = decodedToken.sub; // Assuming the 'sub' is the user_id
+    user_id = decodedToken.sub; // Assuming 'sub' is the user_id
   } catch (err) {
+    console.error('Error decoding token:', err); // Log the error for debugging
     throw new Error('Invalid token');
   }
 
@@ -18,35 +23,41 @@ const extractUserIdFromToken = (req) => {
 
 // Fetch all feed posts
 export const getAllFeedPosts = async (req, res) => {
-  const query = `
-    SELECT
-      f.post_id,
-      f.title,
-      f.content,
-      f.image_url,
-      f.date_created,
-      u.user_id AS author,
-      COALESCE(like_count, 0) AS like_count  -- Added like count
-    FROM
-      feed_posts f
-    JOIN
-      users u ON f.user_id = u.user_id
-    LEFT JOIN (
-      SELECT post_id, COUNT(*) AS like_count
-      FROM post_likes
-      GROUP BY post_id
-    ) l ON f.post_id = l.post_id
-    ORDER BY f.date_created DESC;
-  `;
-
   try {
+    const query = `
+      SELECT
+        f.post_id,
+        f.title,
+        f.content,
+        f.image_url,
+        f.date_created,
+        u.user_id AS author,
+        f.likes_count
+      FROM
+        feed_posts f
+      JOIN
+        users u ON f.user_id = u.user_id
+      ORDER BY
+        f.date_created DESC;
+    `;
+
+    // Execute the query
     const result = await pool.query(query);
+
+    if (result.rowCount === 0) {
+      console.log('No feed posts found.');
+    }
+
+    // Respond with the results
     res.status(200).json(result.rows);
   } catch (err) {
-    console.error('Error fetching feed posts:', err);
-    res.status(500).json({ error: 'Database error' });
+    console.error('Error fetching feed posts:', err.message); // Log specific error message
+    res.status(500).json({ error: err.message || 'Database error' });
   }
 };
+
+
+
 
 export const likeFeedPost = async (req, res) => {
   const { id } = req.params;
@@ -94,9 +105,6 @@ export const likeFeedPost = async (req, res) => {
     res.status(500).json({ error: 'Failed to toggle like status' });
   }
 };
-
-
-
 
 
 // Fetch feed posts for a specific user
@@ -194,29 +202,54 @@ export const updateFeedPost = async (req, res) => {
   }
 };
 
-// Share a feed post by ID
 export const shareFeedPost = async (req, res) => {
-  const { postId } = req.params;
+  const { postId } = req.params; // ID of the post being shared
+  const { receiverId } = req.body; // ID of the user to receive the shared post
 
   try {
-    const userId = extractUserIdFromToken(req); // Extract user_id from token
+    // Extract the sender's user ID from the token
+    const senderId = extractUserIdFromToken(req);
 
-    const query = `
-      INSERT INTO feed_posts (title, content, image_url, user_id, date_created)
-      SELECT title, content, image_url, $1, NOW()
-      FROM feed_posts
-      WHERE post_id = $2
+    // Transaction to ensure atomicity
+    await pool.query('BEGIN');
+
+    // Step 1: Insert into the messages or notifications table
+    const insertMessageQuery = `
+      INSERT INTO messages (sender_id, receiver_id, content, message_type, created_at)
+      VALUES ($1, $2, $3, 'post_share', NOW())
       RETURNING *;
     `;
 
-    const result = await pool.query(query, [userId, postId]);
-    if (result.rowCount === 0) {
-      res.status(404).json({ error: 'Post not found' });
-    } else {
-      res.status(201).json(result.rows[0]);
+    const postLink = `/posts/${postId}`; // Link to the shared post
+    const messageResult = await pool.query(insertMessageQuery, [senderId, receiverId, postLink]);
+
+    // Step 2: Update the share count of the post
+    const updateShareCountQuery = `
+      UPDATE feed_posts
+      SET share_count = share_count + 1
+      WHERE post_id = $1
+      RETURNING *;
+    `;
+
+    const postResult = await pool.query(updateShareCountQuery, [postId]);
+
+    if (postResult.rowCount === 0) {
+      throw new Error('Post not found');
     }
+
+    // Commit the transaction
+    await pool.query('COMMIT');
+
+    // Return success response
+    res.status(201).json({
+      message: 'Post shared successfully',
+      sharedPost: postResult.rows[0],
+      notification: messageResult.rows[0],
+    });
   } catch (err) {
+    // Rollback transaction in case of error
+    await pool.query('ROLLBACK');
     console.error('Error sharing feed post:', err);
-    res.status(500).json({ error: 'Database error' });
+    res.status(500).json({ error: 'An error occurred while sharing the post' });
   }
 };

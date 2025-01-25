@@ -10,7 +10,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #f5f5f5; 
+    background-color: var(--background-color-light); /* Keeping background light */
     padding: var(--padding-medium);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
@@ -28,7 +28,7 @@
 
 .brandName {
     font-size: 1.5rem;
-    color: var(--primary-color);
+    color: var(--primary-color); /* Primary brand color */
 }
 
 /* Search Bar Styling */
@@ -66,28 +66,28 @@
     position: relative;
     margin-left: var(--padding-medium);
     cursor: pointer;
-    background-color: white;  /* Keep background white */
+    background-color: white;
     padding: 12px;
     border-radius: 20px;
     display: flex;
     justify-content: center;
     align-items: center;
-    color: black;  /* Keep icon color black */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    color: black;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 /* Hover and Focus Effect */
 .icon:hover, .icon:focus {
-    background-color: var(--primary-color); /* Change background color on hover/focus */
-    transform: scale(1.05); /* Slightly scale up the icon */
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15); /* More pronounced shadow */
+    background-color: var(--primary-color);
+    transform: scale(1.05);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
 }
 
-/* Active state - when the button is pressed */
+/* Active state */
 .icon:active {
-    transform: scale(0.95); /* "Press" effect, scales the button down slightly */
-    background-color: var(--primary-color-dark); /* Darker shade when pressed */
+    transform: scale(0.95);
+    background-color: var(--primary-color-dark);
 }
 
 /* Cart Count Badge */
@@ -128,8 +128,7 @@
     }
 }
 
-
-
+/* Dropdown Menu */
 .dropdown {
     display: none;
     position: absolute;
@@ -163,45 +162,45 @@
     background-color: var(--background-color-light);
 }
 
-/* Second layer styles for categories */
+/* Second Layer Styles (Categories) */
 .secondLayer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #ffffff; 
+    background-color: var(--background-color-light);
     padding: var(--padding-medium);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     width: 100%;
 }
 
-/* Categories Button Style */
+/* Categories Button */
 .categoriesButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 20px;
-  background-color: var(--primary-color);
-  color: white;
-  border-radius: 20px;
-  border: none;
-  cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    background-color: var(--primary-color);
+    color: white;
+    border-radius: 20px;
+    border: none;
+    cursor: pointer;
 }
 
 .categoriesButton .categoriesIcon {
-  margin-right: 8px; 
+    margin-right: 8px;
 }
 
 /* Active Link Style */
 .activeLink {
-    color: var(--primary-color) !important; /* Primary color for active links */
-    font-weight: bold; /* Optional: make it bold */
+    color: var(--primary-color) !important;
+    font-weight: bold;
 }
 
 /* Links Container */
 .linksContainer {
     display: flex;
     align-items: center;
-    gap: var(--padding-large); /* More space between links */
+    gap: var(--padding-large);
 }
 
 .linksContainer a {
@@ -218,12 +217,12 @@
     display: flex;
     align-items: center;
     font-size: 1rem;
-    color: black; /* Set color to black */
-    margin-left: auto; /* Push the contact and phone number to the far right */
+    color: black;
+    margin-left: auto;
 }
 
 .contactPhone span {
-    margin-right: var(--padding-small); /* Space between 'Contact Us' and phone number */
+    margin-right: var(--padding-small);
 }
 
 /* Show this when user is signed out */
@@ -254,60 +253,59 @@
 /* Categories Popup */
 .categoriesPopup {
     position: absolute;
-    top: 100%; /* Position below the button */
+    top: 100%;
     left: 0;
-    background: white; /* Background color */
+    background: white;
     border: 1px solid var(--border-color);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    z-index: 1000; /* Ensure it appears above other elements */
-    width: 200px; /* Set width to your preference */
+    z-index: 1000;
+    width: 200px;
 }
 
 .categoriesPopup ul {
-    list-style: none; /* Remove bullets */
-    padding: 10px; /* Add padding */
-    margin: 0; /* Remove default margin */
+    list-style: none;
+    padding: 10px;
+    margin: 0;
 }
 
 .categoriesPopup li {
-    margin: 5px 0; /* Space between items */
+    margin: 5px 0;
 }
 
 .categoriesPopup a {
-    text-decoration: none; /* Remove underline */
-    color: var(--text-color); /* Use your text color variable */
+    text-decoration: none;
+    color: var(--text-color);
 }
 
 .categoriesPopup a:hover {
-    color: var(--primary-color); /* Change color on hover */
+    color: var(--primary-color);
 }
 
-
-/* Show categories popup when button is clicked */
+/* Show categories popup */
 .showPopup .categoriesPopup {
     display: block;
 }
 
 /* Sidebar Styles */
 .sidebar {
-    position: fixed; /* Fixed position to cover the screen */
+    position: fixed;
     top: 0;
-    right: -300px; /* Start hidden off-screen */
-    width: 300px; /* Width of the sidebar */
-    height: 100%; /* Full height */
-    background-color: white; /* Background color */
-    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2); /* Shadow for depth */
-    transition: right 0.3s ease; /* Smooth transition */
-    z-index: 1000; /* Above other elements */
+    right: -300px;
+    width: 300px;
+    height: 100%;
+    background-color: white;
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
+    transition: right 0.3s ease;
+    z-index: 1000;
 }
 
 .sidebar.open {
-    right: 0; /* Show the sidebar */
+    right: 0;
 }
 
 .sidebarContent {
-    padding: var(--padding-medium); /* Padding for content */
-    color: black; /* Set text color to black */
+    padding: var(--padding-medium);
+    color: black;
 }
 
 .sidebarHeader {
@@ -327,9 +325,9 @@
 
 /* User Profile Image */
 .profileImage {
-    width: 100px; /* Circle diameter */
-    height: 100px; /* Circle diameter */
-    border-radius: 50%; /* Make it circular */
-    object-fit: cover; /* Cover the image */
-    margin-bottom: var(--padding-medium); /* Space below the image */
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: var(--padding-medium);
 }
