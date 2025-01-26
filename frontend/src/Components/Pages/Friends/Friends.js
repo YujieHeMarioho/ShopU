@@ -17,8 +17,8 @@ const Friends = () => {
       const fetchUserInfo = async () => {
         try {
           const token = await getAccessTokenSilently();
-          const friendsResponse = await axios.get(
-            `http://localhost:8080/api/friends`,
+          // Fetch friends for the current user
+          const friendsResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/friends`,
             {
               headers: { Authorization: `Bearer ${token}` },
               params: { user_id: user.sub }, // Pass user_id explicitly
@@ -27,9 +27,13 @@ const Friends = () => {
   
           const friendDetails = await Promise.all(
             friendsResponse.data.map(async (friend) => {
-              const friendResponse = await axios.get(
-                `http://localhost:8080/api/user/${friend.friend_id}`,
-                { headers: { Authorization: `Bearer ${token}` } }
+
+              const friendResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/user/${friend.friend_id}`,
+                {
+                  headers: {
+                    'Authorization': `Bearer ${token}`,
+                  }
+                }
               );
               return { ...friend, ...friendResponse.data };
             })
@@ -69,20 +73,25 @@ const Friends = () => {
     return;
   }
 
-  try {
-    const token = await getAccessTokenSilently();
-    const response = await axios.post(
-      `http://localhost:8080/api/friends`,
-      { friend_id: newFriendId },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/friends`,
+        {
+          friend_id: newFriendId,
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        }
+      );
 
     alert(response.data.message);
     setNewFriendId('');
 
     // Fetch the new friend's details and add to the state
     const friendResponse = await axios.get(
-      `http://localhost:8080/api/user/${newFriendId}`,
+      `${process.env.REACT_APP_BACKEND_URL}/api/user/${newFriendId}`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
@@ -111,7 +120,7 @@ const removeFriend = async (friendId) => {
 
     const token = await getAccessTokenSilently();
     const response = await axios.delete(
-      `http://localhost:8080/api/friends/${friendId}`,
+      `${process.env.REACT_APP_BACKEND_URL}/api/friends/${friendId}`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
 

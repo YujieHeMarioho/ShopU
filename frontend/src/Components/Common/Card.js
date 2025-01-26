@@ -82,7 +82,7 @@ export const CardComponent = ({ image, title, description, price, onListingClick
 
 const favoriteAPICall = async (listingId, action, token) => {
   try {    
-    const URL = `http://localhost:8080/api/favorite/${listingId}`;
+    const URL = `${process.env.REACT_APP_BACKEND_URL}/api/favorite/${listingId}`;
     const method = action === 'add' ? 'POST' : 'DELETE';
     const response = await fetch(URL, {
       method: method,
@@ -107,7 +107,7 @@ const favoriteAPICall = async (listingId, action, token) => {
 
 const fetchFavoriteStatusAPI = async (listingId, token) => {
   try {
-    const URL = `http://localhost:8080/api/favorite/status/${listingId}`;
+    const URL = `${process.env.REACT_APP_BACKEND_URL}/api/favorite/status/${listingId}`;
     const response = await fetch(URL, {
       method: 'GET',
       headers: {
