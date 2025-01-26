@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Friends.css';
 
@@ -8,6 +9,8 @@ const Friends = () => {
   const [friends, setFriends] = useState([]);
   const [newFriendId, setNewFriendId] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -122,6 +125,33 @@ const removeFriend = async (friendId) => {
   }
 };
 
+
+// Highlighted: New Function to handle Message button click
+const handleMessage = async (friendId) => {
+  try {
+    console.log('Starting conversation with:', friendId); // Log friendId being passed
+    const token = await getAccessTokenSilently();
+    console.log('Access token fetched:', token); // Log if the token is retrieved
+
+    // Sending POST request to the backend
+    const response = await axios.post(
+      `http://localhost:8080/api/conversations`,
+      { user1_id: user.sub, user2_id: friendId },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    console.log('Response from backend:', response.data); // Log backend response
+
+    // Navigate to chat content page
+    navigate(`/chat/${response.data.conversation_id}`);
+    console.log('Navigated to chat page for conversation ID:', response.data.conversation_id);
+  } catch (error) {
+    console.error('Error starting conversation:', error); // Log the error
+    alert('Unable to start a conversation. Please try again.');
+  }
+};
+
+
   
 
 
@@ -190,7 +220,7 @@ const removeFriend = async (friendId) => {
                 <div className="friend-actions">
                   <button
                     className="message-button"
-                    onClick={() => alert(`Message ${friend.name || friend.user_id}`)}
+                    onClick={() => handleMessage(friend.friend_id)} // Added onClick handler
                   >
                     Message
                   </button>
