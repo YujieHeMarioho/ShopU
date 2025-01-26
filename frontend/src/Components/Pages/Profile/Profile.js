@@ -28,7 +28,7 @@ const Profile = () => {
       try {
         const token = await getAccessTokenSilently();
         
-        const response = await fetch('http://localhost:8080/api/users', {
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/users`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',

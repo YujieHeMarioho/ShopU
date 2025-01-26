@@ -130,7 +130,7 @@ export const SocialCard = ({
 
 const favoriteAPICall = async (listingId, action, token) => {
   try {
-    const URL = `http://localhost:8080/api/favorite/${listingId}`;
+    const URL = `${process.env.REACT_APP_BACKEND_URL}/api/favorite/${listingId}`;
     const method = action === 'add' ? 'POST' : 'DELETE';
     const response = await fetch(URL, {
       method,

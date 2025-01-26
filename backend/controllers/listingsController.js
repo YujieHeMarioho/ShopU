@@ -74,7 +74,7 @@ export const createListing = async (req, res) => {
     try {
         const { title, description, category, type, rating, price, condition} = req.body;
         // Retrieve uploaded image path from multer or use a default placeholder if none provided
-        const imagePath = req.file ? req.file.path : 'http://localhost:3000/ShopULogo.png';
+        const imagePath = req.file ? req.file.path : `${process.env.REACT_APP_AUTH0_REDIRECT_URI}/ShopULogo.png`;
 
         let userId;
         const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
