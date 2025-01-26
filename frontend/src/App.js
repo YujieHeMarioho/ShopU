@@ -19,6 +19,8 @@ import Friends from './Components/Pages/Friends/Friends';
 import { AuthenticationGuard } from "./Components/authentication-guard";
 import { useAuth0 } from '@auth0/auth0-react';
 import CheckOut from './Components/Pages/CheckOut/CheckOut'; // Import CheckOut page
+import MessagesPage from './Components/Pages/MessagesPage/MessagesPage';
+import ChatContent from './Components/Pages/ChatContent/ChatContent';
 
 function App() {
   const { loginWithRedirect, logout, user, isAuthenticated } = useAuth0();
@@ -49,6 +51,9 @@ function App() {
         
         {/* New Checkout Page */}
         <Route path="/cart" element={<AuthenticationGuard component={CheckOut} />} />
+        <Route path="/messages" element={<AuthenticationGuard component={MessagesPage} />} />
+        <Route path="/chat/:conversation_id" element={<ChatContent />} />
+
       </Routes>
 
       {/* Footer */}
