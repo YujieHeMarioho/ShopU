@@ -17,33 +17,86 @@
 # https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/Getting-Started.gitlab-ci.yml
 
 stages:          # List of stages for jobs, and their order of execution
+  - pre-build
   - build
   - test
   - deploy
 
-build-job:       # This job runs in the build stage, which runs first.
+pre-build:
+  stage: pre-build
+  tags:
+    - docker-runner
+  script:
+    - echo "This job runs on the medium Linux x86-64 instance"
+
+# This job runs in the build stage to install dependencies and build React app
+build:
   stage: build
+  image: node:20  # Use Node.js Docker image for the build
   script:
-    - echo "Compiling the code..."
-    - echo "Compile complete."
+    - cd frontend && npm install && npm run build  # Build React app
+  artifacts:
+    paths:
+      - frontend/build/
+  # The built React app
+    expire_in: 1 hour  # Set expiration to keep artifact around for a short time
 
-unit-test-job:   # This job runs in the test stage.
-  stage: test    # It only starts when the job in the build stage completes successfully.
-  script:
-    - echo "Running unit tests... This will take about 60 seconds."
-    - sleep 60
-    - echo "Code coverage is 90%"
+# unit-test-job:   # This job runs in the test stage.
+#   stage: test    # It only starts when the job in the build stage completes successfully.
+#   script:
+#     - echo "Running unit tests... This will take about 60 seconds."
+#     - sleep 60
+#     - echo "Code coverage is 90%"
 
-lint-test-job:   # This job also runs in the test stage.
-  stage: test    # It can run at the same time as unit-test-job (in parallel).
-  script:
-    - echo "Linting code... This will take about 10 seconds."
-    - sleep 10
-    - echo "No lint issues found."
-
-deploy-job:      # This job runs in the deploy stage.
-  stage: deploy  # It only runs when *both* jobs in the test stage complete successfully.
+# Deploy to Elastic Beanstalk
+deploy:
+  stage: deploy
   environment: production
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "main"'  # Only deploy from the main branch
+  image: node:20
   script:
-    - echo "Deploying application..."
-    - echo "Application successfully deployed."
+    - apt-get update
+    - apt-get install -y curl zip unzip python3 python3-pip bash python3-venv
+
+    # new changes for python require virtual env
+    - python3 -m venv /tmp/venv  # Create a virtual environment
+    - source /tmp/venv/bin/activate # Activate the virtual environment
+
+    # Install EB CLI
+    - curl -O https://bootstrap.pypa.io/get-pip.py
+    - python3 get-pip.py 
+    - pip install awsebcli --upgrade 
+
+    # Install AWS CLI v2
+    - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+    - unzip awscliv2.zip
+    - ./aws/install
+
+    # Configure AWS CLI with environment variables stored in GitLab
+    - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
+    - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
+    - aws configure set region $AWS_DEFAULT_REGION 
+
+    # Deploy the frontend
+    # 
+    # Copys frontend files to S3 bucket from previous build stage then deletes any left overs in the s3 bucket
+    - aws s3 sync frontend/build/ s3://$FRONTEND_BUCKET_NAME --delete
+    # Deploy frontend
+    - aws amplify start-deployment --app-id $AMPLFIY_APP_ID --branch-name staging --source-url s3://$FRONTEND_BUCKET_NAME/ --source-url-type BUCKET_PREFIX
+        
+    # Deploy the backend
+    #
+    # Install backend dependencies
+    - cd backend  
+    - npm install  
+
+    # Create a new version in Elastic Beanstalk and deploy
+    - eb init shopu --region "$AWS_DEFAULT_REGION" -p "Node.js 20" # Generates a config from the Elastic Beanstalk app
+    - eb deploy Shopu-env-1 # Deploy to Elastic Beanstalk
+
+    # Check status of the deployment jobs 
+    # frontend
+    - aws amplify list-jobs --app-id $AMPLFIY_APP_ID --branch-name staging --max-items 1
+    # backend
+    - eb status  # Verify deployment status 

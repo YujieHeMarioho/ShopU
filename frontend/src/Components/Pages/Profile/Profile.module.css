@@ -1,0 +1,18 @@
+/* src/views/Profile.css */
+
+.profile-card {
+    border-radius: 15px;
+  }
+  
+  .profile-header {
+    background: linear-gradient(135deg, #6b73ff 0%, #000dff 100%);
+    color: white;
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+  }
+  
+  .profile-picture {
+    border: 5px solid #ffffff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  

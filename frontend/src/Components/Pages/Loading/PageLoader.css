@@ -1,0 +1,20 @@
+/* Make the loader take up the entire screen */
+.loader {
+    position: fixed;  /* Fixed position so it stays on the page */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;  /* Use flexbox to center content */
+    justify-content: center;  /* Center horizontally */
+    align-items: center;  /* Center vertically */
+    background-color: rgba(255, 255, 255, 0.7);  /* add a semi-transparent background */
+    z-index: 9999;  /*  make sure it's on top of other content */
+  }
+  
+  /* Customize the spinner size */
+  .large-spinner {
+    width: 100px;  /* Custom width */
+    height: 100px; /* Custom height */
+  }
+  

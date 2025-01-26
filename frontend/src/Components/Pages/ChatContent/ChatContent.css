@@ -1,0 +1,124 @@
+/* ChatContent.css */
+
+/* General Layout */
+.chat-content {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding: 1rem;
+    background-color: #f9f9f9;
+}
+
+h3 {
+    text-align: center;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    color: #111827;
+}
+
+/* Messages Container */
+.messages {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+/* Container for each message */
+.sent,
+.received {
+    display: flex;
+}
+
+/* Align sent messages to the right */
+.sent {
+    justify-content: flex-end;
+}
+
+/* Align received messages to the left */
+.received {
+    justify-content: flex-start;
+}
+
+/* Message bubble styling */
+.message-bubble {
+    display: inline-block; /* Allows bubble to size based on content */
+    max-width: 50ch; /* Approximately 50 characters */
+    padding: 0.75rem 1rem;
+    border-radius: 15px;
+    font-size: 1rem;
+    line-height: 1.5;
+    overflow-wrap: break-word; /* Wrap words only if necessary */
+    white-space: pre-wrap; /* Preserve whitespace and allow wrapping */
+    word-break: break-word; /* Prevents breaking words unnecessarily */
+}
+
+/* Sent message bubble styling */
+.sent .message-bubble {
+    background-color: #2563eb; /* Blue background for sent messages */
+    color: #ffffff; /* White text */
+    border-radius: 15px 15px 0 15px; /* Rounded corners */
+}
+
+/* Received message bubble styling */
+.received .message-bubble {
+    background-color: #d1d5db; /* Slightly darker grey for better contrast */
+    color: #000000; /* Black text */
+    border-radius: 15px 15px 15px 0; /* Rounded corners */
+}
+
+/* Timestamp styling */
+.message-time {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+    text-align: right; /* Align timestamp to the right inside the bubble */
+}
+
+/* Message input container */
+.message-input {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+/* Input field styling */
+.message-input input {
+    flex: 1;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+    resize: none; /* Prevent resizing */
+    color: #000000; /* Ensure input text is black */
+    background-color: #ffffff; /* White background for input */
+}
+
+/* Send button styling */
+.message-input button {
+    padding: 0.75rem 1.5rem;
+    background-color: #2563eb;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+/* Send button hover effect */
+.message-input button:hover {
+    background-color: #1e40af;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 600px) {
+    .message-bubble {
+        max-width: 90ch; /* Increase max-width on smaller screens */
+    }
+}
