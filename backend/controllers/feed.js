@@ -34,21 +34,29 @@ export const getAllFeedPosts = async (req, res) => {
         f.image_url,
         f.date_created,
         u.user_id AS author,
-        f.likes_count
+        f.likes_count,
+        ARRAY_AGG(t.tag_name) AS tags, -- Aggregate tags into an array
+        EXISTS (
+            SELECT 1
+            FROM post_likes pl
+            WHERE pl.post_id = f.post_id AND pl.user_id = $1
+        ) AS isLiked -- Check if the current user liked the post
       FROM
-        feed_posts f
+          feed_posts f
       JOIN
-        users u ON f.user_id = u.user_id
+          users u ON f.user_id = u.user_id
+      LEFT JOIN
+          post_tags pt ON f.post_id = pt.post_id -- Join with post_tags
+      LEFT JOIN
+          tags t ON pt.tag_id = t.tag_id -- Join with tags
+      GROUP BY
+          f.post_id, u.user_id -- Group by post and user to aggregate tags
       ORDER BY
-        f.date_created DESC;
+          f.date_created DESC;
     `;
 
     // Execute the query
-    const result = await pool.query(query);
-
-    // Check if the post is already liked by the user, integrate this into above query as a boolean passed to isLiked
-    const likeCheckQuery = 'SELECT * FROM post_likes WHERE user_id = $1 AND post_id = $2';
-    const likeCheckResult = await pool.query(likeCheckQuery, [userId, id]);
+    const result = await pool.query(query, [userId]);
 
     if (result.rowCount === 0) {
       console.log('No feed posts found.');

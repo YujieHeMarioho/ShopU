@@ -19,7 +19,13 @@ const SocialFeed = () => {
 
     const fetchFeed = async () => {
         try {
-            const response = await fetch('http://localhost:8080/api/feed');
+            const token = await getAccessTokenSilently();
+
+            const response = await fetch('http://localhost:8080/api/feed', {
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                },
+              });
             if (!response.ok) throw new Error(`Failed to fetch feed: ${response.statusText}`);
             const rawFeed = await response.json();
             setFeed(rawFeed);
@@ -168,7 +174,7 @@ const SocialFeed = () => {
                     <p>No posts available.</p>
                 ) : (
                     feed.map((post) => (
-                        <div key={post.post_id} className={styles.gridItem}>
+                        <div key={post.post_id} className={styles.gridItem}> 
                             <SocialCard
                                 post_id={post.post_id}                // Directly passing post_id
                                 image={post.image_url}                 // Passing image URL
@@ -178,7 +184,7 @@ const SocialFeed = () => {
                                 author={post.author}                   // Passing author name
                                 initialLikes={post.likes_count}        // Mapping likes_count to initialLikes
                                 initialShares={post.shares}            // Mapping shares to initialShares
-                                isLiked={post.isLiked}
+                                isLikedAlready={post.isliked}                 // Check if post already liked by user
                                 tags={post.tags}                       // Passing tags
                                 onLike={() => handleLike(post.post_id, post.likes_count, post.is_liked)} // Handling like action
                                 onShare={() => shareFeedPost(post.post_id)}  // Handling share action

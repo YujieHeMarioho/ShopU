@@ -15,13 +15,14 @@ export const SocialCard = ({
   author,
   initialLikes = 0,
   initialShares = 0,
+  isLikedAlready,
   tags = [],             // Tags for the post
 }) => {
   const { user, getAccessTokenSilently } = useAuth0();
   const navigate = useNavigate();
   const [likes, setLikes] = useState(initialLikes);
   const [shares, setShares] = useState(initialShares);
-  const [isLiked, setIsLiked] = useState(false);
+  const [isLiked, setIsLiked] = useState(isLikedAlready);
   const [isShared, setIsShared] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [alertMessage, setAlertMessage] = useState(null);
@@ -66,9 +67,24 @@ export const SocialCard = ({
     }
   };
 
-  const handleFavoriteClick = async()=>{
+  const handleFavoriteClick = async (e) => {
+    e.stopPropagation();
+    try {
+      const token = await getAccessTokenSilently();
+      const action = isFavorited ? 'remove' : 'add';
+      const success = await favoriteAPICall(post_id, action, token);
 
-  }
+      if (success) {
+        setIsFavorited(!isFavorited);
+        setAlertMessage(isFavorited ? 'Removed from favorites' : 'Added to favorites');
+        setTimeout(() => setAlertMessage(null), 3000);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      setAlertMessage('Failed to update favorite. Please try again later.');
+      setTimeout(() => setAlertMessage(null), 3000);
+    }
+  };
 
   const handleNavigateToItem = () => {
     navigate(`/item/${post_id}`);
@@ -187,6 +203,30 @@ const shareAPICall = async (post_id, token, userId) => {
     return await response.json();
   } catch (error) {
     console.error('Error:', error);
+    throw error;
+  }
+};
+
+const favoriteAPICall = async (listingId, action, token) => {
+  try {
+    const URL = `${process.env.REACT_APP_BACKEND_URL}/api/favorite/${listingId}`;
+    const method = action === 'add' ? 'POST' : 'DELETE';
+    const response = await fetch(URL, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (response.ok) {
+      return true;
+    } else {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Something went wrong');
+    }
+  } catch (error) {
+    console.error('API Error:', error);
     throw error;
   }
 };
