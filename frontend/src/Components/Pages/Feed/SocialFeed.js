@@ -47,17 +47,18 @@ const SocialFeed = () => {
 
     const createFeedPost = async () => {
         setIsPostLoading(true);
+        const uId = userId;
         try {
             const response = await fetch('http://localhost:8080/api/feed/create', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...newPost, userId }),
+                body: JSON.stringify({ ...newPost, uId }),
             });
             if (!response.ok) throw new Error('Failed to create post');
             const createdPost = await response.json();
             setFeed((prev) => [createdPost, ...prev]);
             setUserFeed((prev) => [createdPost, ...prev]);
-            setNewPost({ title: '', content: '', imageUrl: '' });
+            setNewPost({ title: '', content: '', imageUrl: '' });   // TODO: Update method with fillable form
         } catch (err) {
             console.error('Error creating post:', err);
         } finally {
@@ -157,6 +158,10 @@ const SocialFeed = () => {
                 </Button>
             </div>
 
+            <Button onClick={createFeedPost} variant="outline-primary"> Create new Post
+
+            </Button>
+
             {/* Display the feed */}
             <div className={`${styles.feedContainer} ${isGridLayout ? styles.gridView : styles.scrollView}`}>
                 {feed.length === 0 ? (
@@ -173,6 +178,7 @@ const SocialFeed = () => {
                                 author={post.author}                   // Passing author name
                                 initialLikes={post.likes_count}        // Mapping likes_count to initialLikes
                                 initialShares={post.shares}            // Mapping shares to initialShares
+                                isLiked={post.isLiked}
                                 tags={post.tags}                       // Passing tags
                                 onLike={() => handleLike(post.post_id, post.likes_count, post.is_liked)} // Handling like action
                                 onShare={() => shareFeedPost(post.post_id)}  // Handling share action

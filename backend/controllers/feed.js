@@ -24,6 +24,8 @@ const extractUserIdFromToken = (req) => {
 // Fetch all feed posts
 export const getAllFeedPosts = async (req, res) => {
   try {
+    const userId = extractUserIdFromToken(req); // Extract user ID from token
+
     const query = `
       SELECT
         f.post_id,
@@ -43,6 +45,10 @@ export const getAllFeedPosts = async (req, res) => {
 
     // Execute the query
     const result = await pool.query(query);
+
+    // Check if the post is already liked by the user, integrate this into above query as a boolean passed to isLiked
+    const likeCheckQuery = 'SELECT * FROM post_likes WHERE user_id = $1 AND post_id = $2';
+    const likeCheckResult = await pool.query(likeCheckQuery, [userId, id]);
 
     if (result.rowCount === 0) {
       console.log('No feed posts found.');
@@ -139,7 +145,6 @@ export const createFeedPost = async (req, res) => {
 
   try {
     const userId = extractUserIdFromToken(req); // Extract user_id from token
-
     const query = `
       INSERT INTO feed_posts (title, content, image_url, user_id, date_created)
       VALUES ($1, $2, $3, $4, NOW())

@@ -106,22 +106,16 @@ const Header = () => {
 
             {/* Second Layer */}
             <div className={styles.secondLayer}>
-                {/* Categories Button (Collapsed for Mobile) */}
-                {isMobile ? (
-                    <button
-                        className={styles.categoriesButton}
-                        onClick={toggleCategoriesPopup}
-                        aria-label="Toggle Categories"
-                    >
-                        <FaBars className={styles.categoriesIcon} />
-                        All Categories
-                    </button>
-                ) : (
-                    <div className={styles.categoriesButton}>Categories</div>
-                )}
+                <button
+                    className={styles.categoriesButton}
+                    onClick={toggleCategoriesPopup}
+                    aria-label="Toggle Categories"
+                >
+                    <FaBars className={styles.categoriesIcon} />
+                    All Categories
+                </button>
 
-                {/* Categories Dropdown Popup (Only for Mobile) */}
-                {showCategoriesPopup && isMobile && (
+                {showCategoriesPopup && (
                     <div className={styles.categoriesPopup}>
                         <ul>
                             {[
