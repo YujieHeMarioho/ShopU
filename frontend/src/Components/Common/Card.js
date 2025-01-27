@@ -31,7 +31,7 @@ export const CardComponent = ({ image, title, description, price, onListingClick
     try {
       const token = await getAccessTokenSilently();
       const action = isFavorited ? 'remove' : 'add';
-      const success = await favoriteAPICall( listingId, action, token);
+      const success = await favoriteAPICall(listingId, action, token);
 
 
       if (success) {
