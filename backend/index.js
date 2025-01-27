@@ -77,22 +77,11 @@ app.use('/api', friendsRoutes)
 app.use('/api', privacyPolicies)
 app.use('/api', listings);
 app.use('/api', filters);
-app.use('/api', favorites);
-
 app.use('/api/messages', messagesRoutes);
-
 app.use('/api/conversations', (req, res, next) => {
   console.log('Conversations route hit');
   next();
 }, conversationsRoutes);
-
-// Error handling for unauthorized access
-app.use((err, req, res, next) => {
-  if (err.name === 'UnauthorizedError') {
-    return res.status(401).send('Invalid or missing token');
-  }
-  next(err);
-});
 
 // Start Server
 app.listen(port, () => {
