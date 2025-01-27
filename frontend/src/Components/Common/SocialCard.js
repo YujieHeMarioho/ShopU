@@ -111,9 +111,9 @@ export const SocialCard = ({
         <p className={styles.description}>{description}</p>
       </div>
 
-      {tags.length > 0 && (
+      {tags?.length > 0 && (
         <div className={styles.tagsContainer}>
-          {tags.map((tag, index) => (
+          {tags.filter(tag => tag).map((tag, index) => ( // Exclude NULL or empty values
             <span key={index} className={styles.tag}>
               {tag}
             </span>

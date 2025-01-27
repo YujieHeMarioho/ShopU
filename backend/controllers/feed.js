@@ -35,7 +35,7 @@ export const getAllFeedPosts = async (req, res) => {
         f.date_created,
         u.user_id AS author,
         f.likes_count,
-        ARRAY_AGG(t.tag_name) AS tags, -- Aggregate tags into an array
+        ARRAY_AGG(t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL) AS tags, -- Aggregate tags into an array
         EXISTS (
             SELECT 1
             FROM post_likes pl
