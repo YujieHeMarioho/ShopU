@@ -139,14 +139,14 @@ const Header = () => {
                 {/* Links */}
                 <div className={styles.linksContainer}>
                     {[
-                        'home',
-                        'marketplace',
-                        'feed',
-                        'community',
-                        'resources',
-                        'become-a-seller',
-                        'contact',
-                        'friends',
+                        'Home',
+                        'Marketplace',
+                        'Feed',
+                        'Community',
+                        'Resources',
+                        'Become-a-seller',
+                        'Contact',
+                        'Friends',
                     ].map((link) => (
                         <a
                             key={link}
