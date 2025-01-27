@@ -15,6 +15,8 @@ import Profile from './Components/Pages/Profile/Profile';
 import SocialFeed from './Components/Pages/Feed/SocialFeed';
 import PrivateRoute from './Components/Common/PrivateRoute';
 import CreateListingPage from './Components/Pages/CommonPages/CreateListingPage';
+import EditImage from './Components/Pages/Feed/EditImage';
+import PostDetails from './Components/Pages/Feed/PostDetails';
 import Friends from './Components/Pages/Friends/Friends';
 import { AuthenticationGuard } from "./Components/authentication-guard";
 import { useAuth0 } from '@auth0/auth0-react';
@@ -46,6 +48,8 @@ function App() {
         <Route path="/friends" element={<AuthenticationGuard component={Friends} />} />
         <Route path="/community" element={<AuthenticationGuard component={Communities} />} />
         <Route path="/profile" element={<AuthenticationGuard component={Profile} />} />
+        <Route path="/edit-image" element={<AuthenticationGuard component={EditImage} />} />
+        <Route path="/post-details" element={<AuthenticationGuard component={PostDetails} />} />
         
         {/* New Checkout Page */}
         <Route path="/cart" element={<AuthenticationGuard component={CheckOut} />} />

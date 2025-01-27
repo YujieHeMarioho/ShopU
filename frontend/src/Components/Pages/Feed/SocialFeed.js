@@ -3,6 +3,9 @@ import styles from './SocialFeed.module.css';
 import { Button } from 'react-bootstrap';
 import { SocialCard } from '../../Common'; // Import the SocialCard component
 import { useAuth0 } from '@auth0/auth0-react';
+import { Route, Routes } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { Modal } from 'react-bootstrap';
 
 const SocialFeed = () => {
     const [feed, setFeed] = useState([]);
@@ -12,8 +15,11 @@ const SocialFeed = () => {
     const [newPost, setNewPost] = useState({ title: '', content: '', imageUrl: '' });
     const [editPost, setEditPost] = useState(null);
     const [isPostLoading, setIsPostLoading] = useState(false);
+    const [showModal, setShowModal] = useState(false); // State to toggle the modal
+    const [selectedImage, setSelectedImage] = useState(null); // State for uploaded image
     const [isGridLayout, setIsGridLayout] = useState(true); // State to toggle layout
     const { user, isAuthenticated, getAccessTokenSilently, isLoading: authLoading } = useAuth0();
+    const navigate = useNavigate();
 
     const userId = isAuthenticated ? user?.sub : null;
 
@@ -52,24 +58,27 @@ const SocialFeed = () => {
     };
 
     const createFeedPost = async () => {
-        setIsPostLoading(true);
-        const uId = userId;
-        try {
-            const response = await fetch('http://localhost:8080/api/feed/create', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...newPost, uId }),
-            });
-            if (!response.ok) throw new Error('Failed to create post');
-            const createdPost = await response.json();
-            setFeed((prev) => [createdPost, ...prev]);
-            setUserFeed((prev) => [createdPost, ...prev]);
-            setNewPost({ title: '', content: '', imageUrl: '' });   // TODO: Update method with fillable form
-        } catch (err) {
-            console.error('Error creating post:', err);
-        } finally {
-            setIsPostLoading(false);
-        }
+        handleCreateNewPost();
+
+
+        // setIsPostLoading(true);
+        // const uId = userId;
+        // try {
+        //     const response = await fetch('http://localhost:8080/api/feed/create', {
+        //         method: 'POST',
+        //         headers: { 'Content-Type': 'application/json' },
+        //         body: JSON.stringify({ ...newPost, uId }),
+        //     });
+        //     if (!response.ok) throw new Error('Failed to create post');
+        //     const createdPost = await response.json();
+        //     setFeed((prev) => [createdPost, ...prev]);
+        //     setUserFeed((prev) => [createdPost, ...prev]);
+        //     setNewPost({ title: '', content: '', imageUrl: '' });   // TODO: Update method with fillable form
+        // } catch (err) {
+        //     console.error('Error creating post:', err);
+        // } finally {
+        //     setIsPostLoading(false);
+        // }
     };
 
     const handlePostOperation = async (postId, method, updatedPost = null) => {
@@ -135,6 +144,31 @@ const SocialFeed = () => {
         setIsGridLayout((prev) => !prev); // Toggle between grid and scroll view
     };
 
+    const handleCreateNewPost = () => {
+        setShowModal(true); // Show the modal when the button is clicked
+      };
+    
+      const handleCloseModal = () => {
+        setShowModal(false);
+        setSelectedImage(null);
+      };
+    
+      const proceedToEditImage = () => {
+        setShowModal(false);
+        navigate("/edit-image", { state: { image: selectedImage } });
+      };
+    
+      const handleImageChange = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            setSelectedImage(reader.result); // Set image as a base64 data URL
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+
     // useEffect(() => {
     //     if (userId) {
     //         fetchUserFeed();  // Fetch user feed if user is logged in
@@ -193,6 +227,40 @@ const SocialFeed = () => {
                     ))
                 )}
             </div>
+            {/* Modal for Image Upload */}
+            <Modal show={showModal} onHide={handleCloseModal} centered>
+                <Modal.Header closeButton>
+                <Modal.Title>Upload an Image</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                <input type="file" accept="image/*" onChange={handleImageChange} />
+                {selectedImage && (
+                    <div style={{ marginTop: "20px", textAlign: "center" }}>
+                    <img
+                        src={selectedImage}
+                        alt="Preview"
+                        style={{
+                        maxWidth: "100%",
+                        maxHeight: "300px",
+                        borderRadius: "8px",
+                        }}
+                    />
+                    </div>
+                )}
+                </Modal.Body>
+                <Modal.Footer>
+                <Button variant="secondary" onClick={handleCloseModal}>
+                    Cancel
+                </Button>
+                <Button
+                    variant="primary"
+                    onClick={proceedToEditImage}
+                    disabled={!selectedImage} // Disable if no image is uploaded
+                >
+                    Next
+                </Button>
+                </Modal.Footer>
+            </Modal>
         </div>
     );
 };
