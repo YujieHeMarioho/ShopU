@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import { FaThumbsUp, FaShare } from 'react-icons/fa';
+import { FaThumbsUp, FaShare, FaHeart, FaRegHeart } from 'react-icons/fa';
 import styles from './SocialCard.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
 
@@ -23,6 +23,7 @@ export const SocialCard = ({
   const [shares, setShares] = useState(initialShares);
   const [isLiked, setIsLiked] = useState(false);
   const [isShared, setIsShared] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
   const [alertMessage, setAlertMessage] = useState(null);
 
   useEffect(() => {
@@ -64,6 +65,10 @@ export const SocialCard = ({
       setTimeout(() => setAlertMessage(null), 3000);
     }
   };
+
+  const handleFavoriteClick = async()=>{
+
+  }
 
   const handleNavigateToItem = () => {
     navigate(`/item/${post_id}`);
@@ -118,6 +123,14 @@ export const SocialCard = ({
         >
           <FaShare style={{ marginRight: '5px' }} />
           {shares}
+        </Button>
+        <Button
+          variant="light"
+          onClick={handleFavoriteClick}
+          className={styles.button}
+          style={{ color: isFavorited ? 'red' : 'gray' }}
+        >
+          {isFavorited ? <FaHeart /> : <FaRegHeart />}
         </Button>
         <Button variant="primary" onClick={handleNavigateToItem} className={styles.viewItemButton}>
           View Item
