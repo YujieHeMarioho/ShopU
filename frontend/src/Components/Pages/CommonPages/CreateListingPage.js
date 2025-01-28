@@ -136,7 +136,7 @@ const CreateListingPage = () => {
       }
   
       const data = await response.json();
-      console.log('Files uploaded: ' + JSON.stringify(data.files));
+
       return data.files; // Assuming the backend returns an array of URLs
     } catch (error) {
       console.error('Error uploading images:', error);
