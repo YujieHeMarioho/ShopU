@@ -1,8 +1,9 @@
 import pool from '../pool.js';
-import { jwtDecode } from "jwt-decode";
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { v4 as uuidv4 } from "uuid"; 
+import { jwtDecode } from 'jwt-decode';
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { v4 as uuidv4 } from 'uuid'; 
+import  sharp  from 'sharp';
 import dotenv, { parse } from 'dotenv';
 
 dotenv.config();
@@ -217,12 +218,14 @@ export const uploadImages = async (req, res) => {
 
     const uploadedFiles = [];
 
+
     for (const file of req.files) {
+      const buffer = await sharp(file.buffer).resize({height:1080, width: 1920, fit: "contain"}).toBuffer();
       const fileName = `${uuidv4()}-${file.originalname}`;
       const params = {
         Bucket: bucketName,
         Key: fileName,
-        Body: file.buffer,
+        Body: buffer,
         ContentType: file.mimetype,
       };
 

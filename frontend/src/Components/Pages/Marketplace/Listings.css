@@ -24,16 +24,24 @@
 	/* Align items to the top */
 }
 
+/* Flexbox for the image */
+.modal-body .image-container {
+	flex: 1;
+	/* Ensure it takes up proportional space */
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
 /* Styling the image */
-.modal-body img {
+.modal-body .img {
 	width: 100%;
 	/* Image takes up 60% of the modal width */
-	max-width: 3000px;
-	/* Optional: Limit the maximum width */
-	height: auto;
+	width: 1200px;
+	height: 800px;
 	/* Maintain aspect ratio */
 	border-radius: 8px;
-	object-fit: contain;
+	object-fit: cover;
 }
 
 /* Container for content on the right */
