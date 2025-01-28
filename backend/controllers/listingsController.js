@@ -127,9 +127,7 @@ export const createListing = async (req, res) => {
     try {
         const { title, description, category, type, rating, price, condition, images} = req.body;
         const parsedImages  =  images ? JSON.parse(images) : [];
-        
-                // Retrieve uploaded image path from multer or use a default placeholder if none provided
-        const imagePath = req.file ? req.file.path : `${process.env.REACT_APP_AUTH0_REDIRECT_URI}/ShopULogo.png`;
+
         let userId;
         const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
         try {
@@ -214,7 +212,6 @@ export const uploadImages = async (req, res) => {
     }
 
     const uploadedFiles = [];
-
 
     for (const file of req.files) {
       // Preproccess the images
