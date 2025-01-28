@@ -17,9 +17,9 @@ function ListingModal({ show, onHide, listing }) {
           <Modal.Title className='card-title'>{listing.title}</Modal.Title>
       </Modal.Header>
       <Modal.Body className='modal-body'>
-          <div className='modal-images'>
+          <div className='carousel-container'>
               {listing.image.length > 1 ? (
-              <Carousel interval={null} className='carousel-container'>
+              <Carousel interval={null} slide={false}>
                 {listing.image.map((img, index) => (
                   <Carousel.Item key={index}>
                     <img
