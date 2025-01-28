@@ -18,6 +18,7 @@ const MessagesPage = () => {
   const BACKEND_URL = 'http://localhost:8080'; // Update this if your backend runs elsewhere
 
   const userCache = useRef({}); // Initialize an empty cache
+  const messagesEndRef = useRef(null); // Ref for auto-scrolling
 
   // Function to fetch a user's details by Auth0 ID with caching
   const fetchUserDetails = async (userId, token) => {
@@ -42,6 +43,11 @@ const MessagesPage = () => {
     }
   };
 
+  // Function to scroll to the bottom of the messages
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   // Fetch conversations and associated usernames
   useEffect(() => {
     const fetchConversations = async () => {
@@ -59,7 +65,7 @@ const MessagesPage = () => {
 
         // Step 2: Identify the other participant's Auth0 ID in each conversation
         const otherUserIds = conversationsData.map((conv) =>
-          conv.user1_id === user.sub ? conv.user2_id : conv.user1_id
+          conv.user1_id.toLowerCase() === user.sub.toLowerCase() ? conv.user2_id : conv.user1_id
         );
 
         // Step 3: Remove duplicate IDs to optimize API calls
@@ -77,7 +83,8 @@ const MessagesPage = () => {
 
         // Step 6: Enhance conversations with the other participant's username and profile picture
         const enhancedConversations = conversationsData.map((conv) => {
-          const otherUserId = conv.user1_id === user.sub ? conv.user2_id : conv.user1_id;
+          const otherUserId =
+            conv.user1_id.toLowerCase() === user.sub.toLowerCase() ? conv.user2_id : conv.user1_id;
           const { username, picture } = userIdToDetailsMap[otherUserId] || {
             username: 'Unknown User',
             picture: 'https://via.placeholder.com/40',
@@ -121,6 +128,10 @@ const MessagesPage = () => {
         );
         setMessages(response.data);
         setError(null); // Reset error on success
+        // Scroll to bottom after fetching messages
+        setTimeout(() => {
+          scrollToBottom();
+        }, 100);
       } catch (err) {
         console.error('Error fetching messages:', err);
         setError('Failed to load messages. Please try again later.');
@@ -131,6 +142,11 @@ const MessagesPage = () => {
 
     fetchMessages();
   }, [selectedConversation, getAccessTokenSilently]);
+
+  // Scroll to bottom whenever messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   // Handle sending a new message
   const handleSendMessage = async () => {
@@ -146,9 +162,21 @@ const MessagesPage = () => {
       setMessages((prev) => [...prev, response.data]);
       setNewMessage(''); // Clear input field
       setError(null); // Reset error on success
+      // Scroll to bottom after sending a message
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100);
     } catch (err) {
       console.error('Error sending message:', err);
       setError('Failed to send message. Please try again.');
+    }
+  };
+
+  // Handle pressing "Enter" key to send message
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { // Allow Shift+Enter for new lines
+      e.preventDefault();
+      handleSendMessage();
     }
   };
 
@@ -159,7 +187,7 @@ const MessagesPage = () => {
         <h3>Conversations</h3>
         {error && <p className="error-message">{error}</p>}
         {isLoadingConversations ? (
-          <p>Loading conversations...</p>
+          <div className="spinner">Loading conversations...</div>
         ) : conversations.length === 0 ? (
           <p>No conversations found. Start chatting with your friends!</p>
         ) : (
@@ -177,7 +205,7 @@ const MessagesPage = () => {
                 <div className="conversation-info">
                   <img
                     src={conversation.otherProfilePicture || 'https://via.placeholder.com/40'}
-                    alt={conversation.otherUsername}
+                    alt={`Avatar of ${conversation.otherUsername}`}
                     className="conversation-avatar"
                   />
                   <div>
@@ -197,25 +225,30 @@ const MessagesPage = () => {
           <>
             <h3>Chat with {selectedConversation.otherUsername}</h3>
             {isLoadingMessages ? (
-              <p>Loading messages...</p>
+              <div className="spinner">Loading messages...</div>
             ) : (
               <div className="messages">
-                {messages.map((message) => (
-                  <div
-                    key={message.message_id}
-                    className={message.senderId === user.sub ? 'sent' : 'received'}
-                  >
-                    <div className="message-bubble">
-                      <p>{message.content}</p>
-                      <span className="message-time">
-                        {new Date(message.created_at).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </span>
+                {messages.map((message) => {
+                  const isSent = message.sender_id.toLowerCase() === user.sub.toLowerCase();
+                  return (
+                    <div
+                      key={message.message_id}
+                      className={isSent ? 'sent' : 'received'}
+                    >
+                      <div className="message-bubble">
+                        <p>{message.content}</p>
+                        <span className="message-time">
+                          {new Date(message.created_at).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
+                {/* Dummy div to scroll into view */}
+                <div ref={messagesEndRef} />
               </div>
             )}
             <div className="message-input">
@@ -224,12 +257,7 @@ const MessagesPage = () => {
                 placeholder="Type a message..."
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }
-                }}
+                onKeyDown={handleKeyPress}
               />
               <button onClick={handleSendMessage}>Send</button>
             </div>
