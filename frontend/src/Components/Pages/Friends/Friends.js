@@ -17,146 +17,154 @@ const Friends = () => {
       const fetchUserInfo = async () => {
         try {
           const token = await getAccessTokenSilently();
+          console.log('Access Token:', token);
+
           const friendsResponse = await axios.get(
             `http://localhost:8080/api/friends`,
             {
               headers: { Authorization: `Bearer ${token}` },
-              params: { user_id: user.sub }, // Pass user_id explicitly
+              params: { user_id: user.sub },
             }
           );
-  
+
+          console.log('Friends Response:', friendsResponse.data);
+
           const friendDetails = await Promise.all(
             friendsResponse.data.map(async (friend) => {
-              const friendResponse = await axios.get(
-                `http://localhost:8080/api/user/${friend.friend_id}`,
-                { headers: { Authorization: `Bearer ${token}` } }
-              );
-              return { ...friend, ...friendResponse.data };
+              try {
+                const friendResponse = await axios.get(
+                  `http://localhost:8080/api/user/${encodeURIComponent(friend.friend_id)}`,
+                  { headers: { Authorization: `Bearer ${token}` } }
+                );
+                console.log(`Friend ${friend.friend_id} Details:`, friendResponse.data);
+                return { 
+                  ...friend, 
+                  username: friendResponse.data.username, 
+                  email: friendResponse.data.email, // Include email
+                  profile_picture: friendResponse.data.picture 
+                };
+              } catch (error) {
+                console.error(`Error fetching data for friend_id ${friend.friend_id}:`, error.response ? error.response.data : error.message);
+                return { 
+                  ...friend, 
+                  username: 'Unknown User', 
+                  email: 'No Email Provided', // Fallback for email
+                  profile_picture: 'https://via.placeholder.com/100' 
+                };
+              }
             })
           );
-  
+
+          console.log('Merged Friend Details:', friendDetails);
           setFriends(friendDetails);
         } catch (error) {
-          console.error('Error fetching user info or friends:', error);
+          console.error('Error fetching user info or friends:', error.response ? error.response.data : error.message);
+          alert('Failed to load friends. Please try again later.');
         } finally {
           setIsLoading(false);
         }
       };
-  
+
       fetchUserInfo();
     }
   }, [authLoading, user, getAccessTokenSilently]);
-  
-  
-
-
-
-
-
-
-
-
 
   const addFriend = async () => {
-  if (!newFriendId) {
-    alert('Please enter a valid Friend ID.');
-    return;
-  }
+    if (!newFriendId.trim()) {
+      alert('Please enter a valid Friend ID.');
+      return;
+    }
 
-  if (friends.some((friend) => friend.user_id === newFriendId)) {
-    alert('Friendship already exists.');
-    setNewFriendId('');
-    return;
-  }
+    if (friends.some((friend) => friend.friend_id === newFriendId.trim())) {
+      alert('Friendship already exists.');
+      setNewFriendId('');
+      return;
+    }
 
-  try {
-    const token = await getAccessTokenSilently();
-    const response = await axios.post(
-      `http://localhost:8080/api/friends`,
-      { friend_id: newFriendId },
-      { headers: { Authorization: `Bearer ${token}` } }
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await axios.post(
+        `http://localhost:8080/api/friends`,
+        { friend_id: newFriendId.trim() },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      console.log('Add Friend Response:', response.data);
+      alert(response.data.message);
+      setNewFriendId('');
+
+      // Fetch the new friend's details and add to the state
+      const friendResponse = await axios.get(
+        `http://localhost:8080/api/user/${encodeURIComponent(newFriendId.trim())}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      console.log(`New Friend ${newFriendId.trim()} Details:`, friendResponse.data);
+
+      setFriends((prevFriends) => [
+        ...prevFriends,
+        { 
+          ...friendResponse.data, 
+          friend_id: newFriendId.trim(), 
+          email: friendResponse.data.email, // Include email
+          profile_picture: friendResponse.data.picture, 
+          username: friendResponse.data.username,
+          friended_at: new Date().toISOString() // Assuming current time
+        },
+      ]);
+    } catch (error) {
+      console.error('Error adding friend:', error.response ? error.response.data : error.message);
+      alert('Error adding friend.');
+    }
+  };
+
+  const removeFriend = async (friendId) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this friend? This action cannot be undone."
     );
 
-    alert(response.data.message);
-    setNewFriendId('');
+    if (!confirmDelete) return;
 
-    // Fetch the new friend's details and add to the state
-    const friendResponse = await axios.get(
-      `http://localhost:8080/api/user/${newFriendId}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    try {
+      console.log('Removing Friend ID:', friendId);
 
-    setFriends((prevFriends) => [
-      ...prevFriends,
-      { ...friendResponse.data, friend_id: newFriendId },
-    ]);
-  } catch (error) {
-    console.error('Error adding friend:', error);
-    alert('Error adding friend.');
-  }
-};
+      const token = await getAccessTokenSilently();
+      const response = await axios.delete(
+        `http://localhost:8080/api/friends/${encodeURIComponent(friendId)}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-const removeFriend = async (friendId) => {
-  const confirmDelete = window.confirm(
-    "Are you sure you want to delete this friend? This action cannot be undone."
-  );
+      console.log('Remove Friend Response:', response.data);
+      alert(response.data.message);
 
-  // If the user cancels, exit the function
-  if (!confirmDelete) {
-    return;
-  }
-  try {
-    console.log('Removing Friend ID:', friendId); // Debugging
+      setFriends((prevFriends) => prevFriends.filter((friend) => friend.friend_id !== friendId));
+    } catch (error) {
+      console.error('Error removing friend:', error.response ? error.response.data : error.message);
+      alert('Error removing friend.');
+    }
+  };
 
+  // Handle Message button click
+  const handleMessage = async (friendId) => {
+    try {
+      console.log('Starting conversation with:', friendId);
+      const token = await getAccessTokenSilently();
+      console.log('Access token fetched:', token);
 
-    const token = await getAccessTokenSilently();
-    const response = await axios.delete(
-      `http://localhost:8080/api/friends/${friendId}`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+      const response = await axios.post(
+        `http://localhost:8080/api/conversations`,
+        { user1_id: user.sub, user2_id: friendId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-    alert(response.data.message);
-
-    // Update the state by filtering out the removed friend
-    setFriends((prevFriends) => prevFriends.filter((friend) => friend.user_id !== friendId));
-  } catch (error) {
-    console.error('Error removing friend:', error);
-    alert('Error removing friend.');
-  }
-};
-
-
-// Highlighted: New Function to handle Message button click
-const handleMessage = async (friendId) => {
-  try {
-    console.log('Starting conversation with:', friendId); // Log friendId being passed
-    const token = await getAccessTokenSilently();
-    console.log('Access token fetched:', token); // Log if the token is retrieved
-
-    // Sending POST request to the backend
-    const response = await axios.post(
-      `http://localhost:8080/api/conversations`,
-      { user1_id: user.sub, user2_id: friendId },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-
-    console.log('Response from backend:', response.data); // Log backend response
-
-    // Navigate to chat content page
-    navigate(`/chat/${response.data.conversation_id}`);
-    console.log('Navigated to chat page for conversation ID:', response.data.conversation_id);
-  } catch (error) {
-    console.error('Error starting conversation:', error); // Log the error
-    alert('Unable to start a conversation. Please try again.');
-  }
-};
-
-
-  
-
-
-
-  
+      console.log('Conversation Created:', response.data);
+      navigate(`/chat/${response.data.conversation_id}`);
+      console.log('Navigated to chat page for conversation ID:', response.data.conversation_id);
+    } catch (error) {
+      console.error('Error starting conversation:', error.response ? error.response.data : error.message);
+      alert('Unable to start a conversation. Please try again.');
+    }
+  };
 
   if (isLoading) {
     return <div className="loading">Loading user information...</div>;
@@ -206,21 +214,20 @@ const handleMessage = async (friendId) => {
         ) : (
           <div className="friends-grid">
             {friends.map((friend) => (
-              <div key={friend.user_id} className="friend-card">
+              <div key={friend.friend_id} className="friend-card">
                 <img
                   src={friend.profile_picture || 'https://via.placeholder.com/100'}
-                  alt={friend.user_id}
+                  alt={friend.username || `User ${friend.friend_id}`}
                   className="friend-avatar"
                 />
                 <div className="friend-info">
-                  <h3>{friend.name || `User ${friend.user_id}`}</h3>
-                  <p><strong>Email:</strong> {friend.email}</p>
+                  <h3>{friend.username || `User ${friend.friend_id}`}</h3>
                   <p><strong>Friended At:</strong> {new Date(friend.friended_at).toLocaleString()}</p>
                 </div>
                 <div className="friend-actions">
                   <button
                     className="message-button"
-                    onClick={() => handleMessage(friend.friend_id)} // Added onClick handler
+                    onClick={() => handleMessage(friend.friend_id)}
                   >
                     Message
                   </button>
