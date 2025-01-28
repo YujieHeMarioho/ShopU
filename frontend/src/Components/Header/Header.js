@@ -144,7 +144,7 @@ const Header = () => {
                         'Feed',
                         'Community',
                         'Resources',
-                        'Become-a-seller',
+                        'Become A Seller',
                         'Contact',
                         'Friends',
                     ].map((link) => (
