@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Form, Row, Col, Container, Card, Carousel } from 'react-bootstrap';
+import { Button, Form, Row, Col, Container, Card, Carousel, FormGroup, FormLabel, FormSelect } from 'react-bootstrap';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import itemStyles from './CreateItemListingPage.module.css';
@@ -9,6 +9,8 @@ import { useAuth0 } from '@auth0/auth0-react';
 const CreateListingPage = () => {
   const [formData, setFormData] = useState({
     title: '',
+    category: '',
+    condition: '',
     description: '',
     price: '',
     tags: '',
@@ -23,14 +25,43 @@ const CreateListingPage = () => {
   });
 
   const [isServicePage, setIsServicePage] = useState(false);
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+  const [categories, setCategories] = useState([]);
   const { getAccessTokenSilently } = useAuth0();
+  const currentStyles = isServicePage ? serviceStyles : itemStyles;
 
   useEffect(() => {
     const currentPath = window.location.pathname;
     setIsServicePage(currentPath.includes('service'));
   }, []);
 
-  const currentStyles = isServicePage ? serviceStyles : itemStyles;
+  useEffect(() => {
+    // Fetch the most recent listings from the server
+    const fetchCategories = async () => {
+      try {
+        const token = await getAccessTokenSilently();
+
+        const response = await fetch('http://localhost:8080/api/marketplace/categories', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        const rawData = await response.json();
+        
+        const formattedData = rawData.map((category_name, index) => ({
+          category_id: index + 1,
+          name: category_name
+        }));
+;
+        setCategories(formattedData);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -105,7 +136,7 @@ const CreateListingPage = () => {
       }
   
       const data = await response.json();
-      console.log('Files uploaded: ' + JSON.stringify(data.files));
+
       return data.files; // Assuming the backend returns an array of URLs
     } catch (error) {
       console.error('Error uploading images:', error);
@@ -146,6 +177,7 @@ const CreateListingPage = () => {
     }
 
     const formDataToSubmit = new FormData();
+    setIsButtonDisabled(true);
 
     try { 
       const uploadedImages = await uploadImages(formData.images);
@@ -164,24 +196,24 @@ const CreateListingPage = () => {
     if (isServicePage) {
       formDataToSubmit.append('title', formData.businessName);
       formDataToSubmit.append('description', formData.description);
-      formDataToSubmit.append('category', formData.category || 'General'); // Default category
+      formDataToSubmit.append('category', formData.category); 
       formDataToSubmit.append('type', formData.type || 'service'); // Default type
       formDataToSubmit.append('rating', formData.rating || 0); // Default rating
       formDataToSubmit.append('price', formData.services[1].price);
-      formDataToSubmit.append('condition', 'New'); // Needs to be added to the form defualting to new for now
+      formDataToSubmit.append('condition', formData.condition || 'New'); // Needs to be added to the form defualting to new for now
     }
     else {
       formDataToSubmit.append('title', formData.title);
       formDataToSubmit.append('description', formData.description);
-      formDataToSubmit.append('category', formData.category || 'General'); // Default category
+      formDataToSubmit.append('category', formData.category); 
       formDataToSubmit.append('type', formData.type || 'item'); // Default type
       formDataToSubmit.append('rating', formData.rating || 0); // Default rating
       formDataToSubmit.append('price', formData.price);
-      formDataToSubmit.append('condition', 'New'); // Needs to be added to the form defualting to new for now
+      formDataToSubmit.append('condition', formData.condition) 
     }
 
     const jsonString = JSON.stringify(Object.fromEntries(formDataToSubmit.entries()));
-    console.log(jsonString);
+
     try {
       const token = await getAccessTokenSilently();
       const response = await fetch('http://localhost:8080/api/listings/create', {
@@ -223,7 +255,17 @@ const CreateListingPage = () => {
                   <Form.Label>Description</Form.Label>
                   <Form.Control as="textarea" name="description" value={formData.description} onChange={handleChange} />
                 </Form.Group>
-
+                <FormGroup controlId="category">
+                  <FormLabel>Category</FormLabel>
+                  <FormSelect name="category" value={formData.category} onChange={handleChange}>
+                    <option value="" disabled hidden>Select A Category</option>
+                    {categories.map(category => (
+                      <option key={category.category_id} value={category.category_id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </FormSelect>
+                </FormGroup>
                 {/* Appointment Based Toggle */}
                 <Form.Group controlId="appointmentBased">
                   <Form.Check
@@ -297,6 +339,25 @@ const CreateListingPage = () => {
                   <Form.Label>Description</Form.Label>
                   <Form.Control as="textarea" name="description" value={formData.description} onChange={handleChange} />
                 </Form.Group>
+                <FormGroup controlId="category">
+                  <FormLabel>Category</FormLabel>
+                  <FormSelect name="category" value={formData.category} onChange={handleChange}>
+                    <option value="" disabled hidden>Select A Category</option>
+                    {categories.map(category => (
+                      <option key={category.category_id} value={category.category_id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </FormSelect>
+                </FormGroup>
+                <FormGroup controlId="condition">
+                  <FormLabel>Condition</FormLabel>
+                  <FormSelect placeholder="Select A Condition" name="condition" value={formData.condition} onChange={handleChange}>
+                    <option value="" disabled hidden>Select A Condition</option>
+                    <option value='New'>New</option>
+                    <option value='Used'>Used</option>
+                  </FormSelect>
+                </FormGroup>
                 <Form.Group controlId="price">
                   <Form.Label>Price</Form.Label>
                   <Form.Control type="number" name="price" value={formData.price} onChange={handleChange} />
@@ -323,7 +384,7 @@ const CreateListingPage = () => {
               <Form.Control type="file" multiple onChange={handleImages} accept="image/jpeg, image/png, image/jpg, image/gif"/>
             </Form.Group>
             {/* Create Listing Button */}
-            <Button variant="primary" onClick={handleSubmit}>Create Listing</Button>
+            <Button variant="primary" onClick={handleSubmit} disabled={isButtonDisabled}>Create Listing</Button>
           </Form>
         </Col>
         <Col md={6}>

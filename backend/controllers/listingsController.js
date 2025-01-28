@@ -4,7 +4,7 @@ import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid'; 
 import  sharp  from 'sharp';
-import dotenv, { parse } from 'dotenv';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
@@ -141,10 +141,10 @@ export const createListing = async (req, res) => {
         //database call to create listing in listing table
         const listingQuery = `
             INSERT INTO public.listings (title, description, category_id, item_type, star_rating, price, condition, date_posted, user_id)
-            VALUES ($1, $2, 1, $3, $4, $5, $6, $7, $8)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING *;
         `;
-        const listingValues = [title, description, type, rating || 0, price, condition, new Date().toISOString(), userId];
+        const listingValues = [title, description, category, type, rating || 0, price, condition, new Date().toISOString(), userId];
 
         
         // Execute listings table query
@@ -168,42 +168,42 @@ export const createListing = async (req, res) => {
     }
 };
 
-//Endpoint for create a listing
-export const createServiceListing = async (req, res) => {
-  try {
-      const { title, description, category, type, rating, price, condition} = req.body;
+// //Endpoint for create a listing
+// export const createServiceListing = async (req, res) => {
+//   try {
+//       const { title, description, category, type, rating, price, condition} = req.body;
       
-      let userId;
-      const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
-      try {
-          const decodedToken = jwtDecode(token); // Decode the token
-          userId = decodedToken.sub;
-      } catch (err) {
-          console.error('Error decoding token:', err);
-          return res.status(401).json({ message: 'Invalid token' });
-      }
+//       let userId;
+//       const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+//       try {
+//           const decodedToken = jwtDecode(token); // Decode the token
+//           userId = decodedToken.sub;
+//       } catch (err) {
+//           console.error('Error decoding token:', err);
+//           return res.status(401).json({ message: 'Invalid token' });
+//       }
     
-      //database call to create listing in listing table
-      const listingQuery = `
-          INSERT INTO public.listings (title, description, category_id, item_type, star_rating, price, condition, date_posted, user_id)
-          VALUES ($1, $2, 1, $3, $4, $5, $1, $6, $7, $8)
-          RETURNING *;
-      `;
-      const listingValues = [title, description, type, rating || 0, price, condition, new Date().toISOString(), userId];
+//       //database call to create listing in listing table
+//       const listingQuery = `
+//           INSERT INTO public.listings (title, description, category_id, item_type, star_rating, price, condition, date_posted, user_id)
+//           VALUES ($1, $2, 1, $3, $4, $5, $1, $6, $7, $8)
+//           RETURNING *;
+//       `;
+//       const listingValues = [title, description, type, rating || 0, price, condition, new Date().toISOString(), userId];
       
-      // Execute listings table query
-      const listingResult = await pool.query(listingQuery, listingValues);
+//       // Execute listings table query
+//       const listingResult = await pool.query(listingQuery, listingValues);
 
-      const imageQuery = `INSERT INTO public.listings`;
+//       const imageQuery = `INSERT INTO public.listings`;
 
-      const imageValues = [];
+//       const imageValues = [];
       
-      res.status(201).json(listingQuery.rows[0]);
-  } catch (err) {
-      console.error('Error creating listing:', err);
-      res.status(500).json({ error: 'Database error' });
-  }
-};
+//       res.status(201).json(listingQuery.rows[0]);
+//   } catch (err) {
+//       console.error('Error creating listing:', err);
+//       res.status(500).json({ error: 'Database error' });
+//   }
+// };
 
 export const uploadImages = async (req, res) => {
   try {
@@ -246,4 +246,22 @@ export const uploadImages = async (req, res) => {
   }
 };
 
-export default {createListing, getFavoritedListings, getAllListings, uploadImages, createServiceListing};
+//Endpoint for fetching rows
+export const getAllCategories = async (req, res) => {
+
+  const queryCategories = 'SELECT * FROM public.categories';  
+
+  try {
+      const result = await pool.query(queryCategories);  
+
+         // Transform the result an array of category names
+         const categories = result.rows.map(row => row.name);
+
+      res.status(200).json(categories); 
+  } catch (err) {
+      console.error('Error running query:', err);  
+      res.status(500).json({ error: 'Database error' });  
+  }
+};
+
+export default {createListing, getFavoritedListings, getAllListings, uploadImages, getAllCategories};
