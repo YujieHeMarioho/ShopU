@@ -13,10 +13,36 @@ function PostDetails() {
   // Retrieve the edited image from the previous step
   const { image } = location.state || {};
 
-  const handleSubmit = () => {
-    // Post submission logic here
-    alert("Post created successfully!");
-    navigate("/Feed");
+  const handleSubmit = async () => {
+    // Prepare the data to send
+    const postData = {
+      title,
+      description,
+      link,
+      tags,
+      image, // Include the image URL or base64 string
+    };
+
+    try {
+      // Send the post data to the backend using fetch
+      const response = await fetch("http://localhost:8080/api/feed/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(postData), // Convert the post data to JSON
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create post");
+      }
+
+      alert("Post created successfully!");
+      navigate("/Feed"); // Navigate to the feed page after success
+    } catch (err) {
+      console.error("Error creating post:", err);
+      alert("Error creating post. Please try again.");
+    }
   };
 
   return (

@@ -230,37 +230,69 @@ const SocialFeed = () => {
             {/* Modal for Image Upload */}
             <Modal show={showModal} onHide={handleCloseModal} centered>
                 <Modal.Header closeButton>
-                <Modal.Title>Upload an Image</Modal.Title>
+                    <Modal.Title style={{ color: "#000000" }}>New Post</Modal.Title>
                 </Modal.Header>
-                <Modal.Body>
-                <input type="file" accept="image/*" onChange={handleImageChange} />
-                {selectedImage && (
-                    <div style={{ marginTop: "20px", textAlign: "center" }}>
-                    <img
+                <Modal.Body 
+                    style={{ 
+                    color: "#000000", 
+                    textAlign: "center", 
+                    display: "flex", 
+                    justifyContent: "center", 
+                    flexDirection: "column" 
+                    }}
+                >
+                    <p style={{ marginBottom: "20px" }}>Upload an Image</p>
+                    <div style={{ marginBottom: "20px" }}>
+                    <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleImageChange} 
+                        style={{ display: "inline-block" }} 
+                    />
+                    </div>
+                    {selectedImage && (
+                    <div 
+                        style={{
+                        marginTop: "20px",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        overflow: "visible", // Allow the image to expand without clipping
+                        }}
+                    >
+                        <img
                         src={selectedImage}
                         alt="Preview"
                         style={{
-                        maxWidth: "100%",
-                        maxHeight: "300px",
-                        borderRadius: "8px",
+                            maxWidth: "100%", // Ensures it scales down to fit the width of the modal
+                            maxHeight: "90vh", // Ensures the image doesn't overflow the height of the viewport
+                            width: "auto", // Maintain aspect ratio
+                            height: "auto", // Maintain aspect ratio
+                            borderRadius: "12px",
+                            boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
                         }}
-                    />
+                        />
                     </div>
-                )}
+                    )}
                 </Modal.Body>
                 <Modal.Footer>
-                <Button variant="secondary" onClick={handleCloseModal}>
+                    <Button variant="secondary" onClick={handleCloseModal}>
                     Cancel
-                </Button>
-                <Button
+                    </Button>
+                    <Button
                     variant="primary"
                     onClick={proceedToEditImage}
                     disabled={!selectedImage} // Disable if no image is uploaded
-                >
+                    >
                     Next
-                </Button>
+                    </Button>
                 </Modal.Footer>
-            </Modal>
+                </Modal>
+
+
+
+
+
         </div>
     );
 };
