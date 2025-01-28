@@ -32,7 +32,6 @@ export const getAllListings = async (req, res) => {
           l.item_type,
           l.star_rating,
           l.price,
-          l.image_url,
           ARRAY_AGG(li.file_key) AS file_keys 
         FROM
           listings l
@@ -47,8 +46,7 @@ export const getAllListings = async (req, res) => {
           c.name, 
           l.item_type, 
           l.star_rating, 
-          l.price, 
-          l.image_url;
+          l.price;
       `;
  
     try {
@@ -104,8 +102,7 @@ export const getFavoritedListings = async (req, res) => {
           c.name AS category,  -- Get the category name
           l.item_type,
           l.star_rating,
-          l.price,
-          l.image_url
+          l.price;
         FROM
           listings l
         JOIN
@@ -145,11 +142,11 @@ export const createListing = async (req, res) => {
       
         //database call to create listing in listing table
         const listingQuery = `
-            INSERT INTO public.listings (title, description, category_id, item_type, star_rating, price, image_url, condition, date_posted, user_id)
-            VALUES ($1, $2, 1, $3, $4, $5, $6, $7, $8, $9)
+            INSERT INTO public.listings (title, description, category_id, item_type, star_rating, price, condition, date_posted, user_id)
+            VALUES ($1, $2, 1, $3, $4, $5, $6, $7, $8)
             RETURNING *;
         `;
-        const listingValues = [title, description, type, rating || 0, price, imagePath, condition, new Date().toISOString(), userId];
+        const listingValues = [title, description, type, rating || 0, price, condition, new Date().toISOString(), userId];
 
         
         // Execute listings table query
@@ -176,7 +173,7 @@ export const createListing = async (req, res) => {
 //Endpoint for create a listing
 export const createServiceListing = async (req, res) => {
   try {
-      const { title, description, category, type, rating, price, condition, images} = req.body;
+      const { title, description, category, type, rating, price, condition} = req.body;
       
       let userId;
       const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
@@ -218,10 +215,14 @@ export const uploadImages = async (req, res) => {
 
     const uploadedFiles = [];
 
-
     for (const file of req.files) {
-      const buffer = await sharp(file.buffer).resize({height:1080, width: 1920, fit: "contain"}).toBuffer();
+      // Preproccess the images
+      const buffer = await sharp(file.buffer).resize({height:1080, width: 1920, fit: "cover"}).toBuffer();
+
+      //Create unique image names so no collusion within the bucket
       const fileName = `${uuidv4()}-${file.originalname}`;
+      
+      //upload params 
       const params = {
         Bucket: bucketName,
         Key: fileName,
