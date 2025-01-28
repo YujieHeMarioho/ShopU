@@ -80,7 +80,16 @@ export const favoriteItem = async (req, res) => {
 // Endpoint to add a new favorited item 
 export const unfavoriteItem = async (req, res) => {
     const { listing_id } = req.params;  
-    const { userId } = req.body;
+    let userId;
+
+    const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+    try {
+        const decodedToken = jwtDecode(token); // Decode the token
+        userId = decodedToken.sub;
+    } catch (err) {
+        console.error('Error decoding token:', err);
+        return res.status(401).json({ message: 'Invalid token' });
+    }
 
     // Check if all required fields are provided
     if (!userId || !listing_id) {
