@@ -1,5 +1,5 @@
 import { Banner, CommunityCardGrid} from '../../Common';
-import React, { useState, useLayoutEffect } from 'react';
+import React, { useState, useLayoutEffect, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import axios from 'axios';
 import './Community.css';
@@ -14,6 +14,8 @@ const Communities = () => {
   const [otherCommunities, setOtherCommunities] = useState([]);
   const [newCommunityId, setNewCommunityId] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [newCommunityName, setNewCommunityName] = useState('');
+  const [newCommunityDescription, setNewCommunityDescription] = useState('');
 
   const { getAccessTokenSilently } = useAuth0();  
 
@@ -57,7 +59,63 @@ const Communities = () => {
     }
   }, [isLoading]);
 
+  //Create a community
+  const createCommunity = async () => {
+    if (!newCommunityName)
+    {
+      alert('Please name your community.');
+      return;
+    }
+    if (!newCommunityDescription)
+    {
+      alert('Please give your community a description.');
+      return;
+    }
+    //prevent duplicate names
+    if (communities.some(community => community.name === newCommunityName)) {
+      alert('Community Already Exists.');
+      return;
+    }
 
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await axios.post('http://localhost:8080/api/communities/add', {
+        name: newCommunityName,
+        description: newCommunityDescription
+      }, 
+      {    
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      }
+    );
+      alert("Community created successfully"); // Success message
+      setNewCommunityName(''); // Clear input field
+      setNewCommunityDescription('');
+
+      // Fetch the updated communities list with details
+      const communityResponse = await axios.get(`http://localhost:8080/api/communities`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        }
+      );
+      const otherCommunityResponse = await axios.get(`http://localhost:8080/api/communities/all`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        }
+      );
+      setOtherCommunities(otherCommunityResponse.data);
+      setCommunities(communityResponse.data); // Update state with full details
+    } catch (error) {
+      console.error('Error creating community:', error);
+      //alert(error)
+      alert('Error creating community.');
+    }
+  }
   // Add a community
   const addCommunity = async () => {
     if (!newCommunityId) {
@@ -92,6 +150,14 @@ const Communities = () => {
           }
         }
       );
+      const otherCommunityResponse = await axios.get(`http://localhost:8080/api/communities/all`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        }
+      );
+      setOtherCommunities(otherCommunityResponse.data);
       setCommunities(communityResponse.data); // Update state with full details
     } catch (error) {
       console.error('Error adding community:', error);
@@ -121,6 +187,14 @@ const Communities = () => {
           }
         }
       );
+      const otherCommunityResponse = await axios.get(`http://localhost:8080/api/communities/all`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        }
+      );
+      setOtherCommunities(otherCommunityResponse.data);
       setCommunities(communityResponse.data); // Update state with full details
     } catch (error) {
       console.error('Error removing community:', error);
@@ -136,35 +210,8 @@ const Communities = () => {
     title: comm.name,
     description: comm.description,
     image: "https://via.placeholder.com/300x200",
+    communityId: comm.community_id
   }));
-
-  const communities_data = [
-    {
-      image: 'https://via.placeholder.com/300x200',
-      title: 'Community 1',
-      description: 'This is a description for community 1.',
-    },
-    {
-      image: 'https://via.placeholder.com/300x200',
-      title: 'Community 2',
-      description: 'This is a description for community 2.',
-    },
-    {
-      image: 'https://via.placeholder.com/300x200',
-      title: 'Community 3',
-      description: 'This is a description for community 3.',
-    },
-    {
-      image: 'https://via.placeholder.com/300x200',
-      title: 'Community 4',
-      description: 'This is a description for community 4.',
-    },
-    {
-      image: 'https://via.placeholder.com/300x200',
-      title: 'Community 5',
-      description: 'This is a description for community 5.',
-    },
-  ];
 
   /*if (isLoading) {
     return <div className="loading">Loading user information...</div>;
@@ -178,12 +225,13 @@ const Communities = () => {
     <div>
       <Banner
         title="Communities"
-        description="Here are some communities you might like."
+        description="Here are some communities in your orbit."
+        showConnectButton={false}
       />
 
       {/* Add Community Section */}
-      <div className="add-community-section">
-        <h2>Add a New Community</h2>
+      {/*<div className="add-community-section">
+        <h2>Join a New Community</h2>
         <div className="add-community-form">
           <input
             type="text"
@@ -193,7 +241,7 @@ const Communities = () => {
           />
           <button onClick={addCommunity}>Add Community</button>
         </div>
-      </div>
+      </div>*/}
 
       <div className="your-community-grid">
       <h2>Your Communities</h2>
@@ -219,8 +267,29 @@ const Communities = () => {
           ))
       )}
       </div>
+      <div className="community-browse">
         {/* Render CardGrid with listings */}
+        <h2>Browse Communities</h2>
         <CommunityCardGrid communities={formattedOtherCommunities} />
+      </div>
+      <div className="create-community-section">
+        <h2>Create a New Community</h2>
+        <div className="create-community-form">
+          <input
+            type="text"
+            placeholder="Enter Community Name"
+            value={newCommunityName}
+            onChange={(e) => setNewCommunityName(e.target.value)}
+          />
+          <input
+            type="text"
+            placeholder="Enter Community Description"
+            value={newCommunityDescription}
+            onChange={(e) => setNewCommunityDescription(e.target.value)}
+            />
+          <button onClick={createCommunity}>Create Community</button>
+        </div>
+      </div>
     </div>
 
     
