@@ -66,6 +66,24 @@
     font-size: 0.85rem;
 }
 
+/* New Styles Added */
+
+/* Style for the conversation-info container to align avatar and text */
+.conversation-info {
+    display: flex;
+    align-items: center;
+}
+
+/* Style for conversation avatars */
+.conversation-avatar {
+    width: 40px;               /* Set the desired width */
+    height: 40px;              /* Set the desired height */
+    border-radius: 50%;        /* Make the avatar circular */
+    object-fit: cover;         /* Ensure the image covers the container without distortion */
+    margin-right: 10px;        /* Space between avatar and text */
+    flex-shrink: 0;            /* Prevent the avatar from shrinking */
+}
+
 /* Right Half: Chat Content */
 .main-content {
     flex: 1;
@@ -173,5 +191,11 @@
 
     .main-content {
         height: calc(100vh - 200px);
+    }
+
+    /* Optional: Adjust avatar sizes on smaller screens */
+    .conversation-avatar {
+        width: 30px;
+        height: 30px;
     }
 }

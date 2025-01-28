@@ -28,29 +28,48 @@ export const getAllAuth0Users = async (req, res) => {
         res.status(500).json({ message: 'Error fetching users', error });
       }
 };
+
+
+
+
   
-export const getUserInfo =  async (req, res) => {
+
+
+// controllers/users.js
+
+export const getUserInfo = async (req, res) => {
   const { user_id } = req.params;
 
   try {
     const accessToken = await getManagementApiAccessToken();
     const response = await axios.get(
-      `${audience}users/${user_id}`,
-    {
-      headers: {
-          'Authorization': `Bearer ${accessToken}`,
+      `${audience}users/${encodeURIComponent(user_id)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
       }
-    });
+    );
 
-    if (response.rowCount === 0) {
+    // Check if user data is present
+    if (!response.data) {
       return res.status(404).json({ message: 'User not found' });
     }
-    res.status(200).json(response.data);
+
+    // Extract necessary fields
+    const { nickname, name, picture } = response.data;
+
+    res.status(200).json({
+      username: nickname || name || 'Unnamed User',
+      picture: picture || 'https://via.placeholder.com/40', // Fallback image
+    });
   } catch (error) {
-    console.error('Error fetching user details:', error);
-    res.status(500).json({ message: 'Error fetching user details', error });
+    console.error('Error fetching user details:', error.response ? error.response.data : error.message);
+    res.status(500).json({ message: 'Error fetching user details', error: error.message });
   }
 };
+
+
   
 // Save or Update user
 export const updateUser =  async (req, res) => {

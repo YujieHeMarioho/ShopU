@@ -1,6 +1,6 @@
 // MessagesPage.js
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import axios from 'axios';
 import './MessagesPage.css';
@@ -17,16 +17,28 @@ const MessagesPage = () => {
 
   const BACKEND_URL = 'http://localhost:8080'; // Update this if your backend runs elsewhere
 
-  // Function to fetch a user's details by Auth0 ID
+  const userCache = useRef({}); // Initialize an empty cache
+
+  // Function to fetch a user's details by Auth0 ID with caching
   const fetchUserDetails = async (userId, token) => {
+    if (userCache.current[userId]) {
+      return userCache.current[userId];
+    }
     try {
       const response = await axios.get(`${BACKEND_URL}/api/user/${encodeURIComponent(userId)}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      return response.data.username || userId; // Fallback to ID if username is missing
+      const userData = {
+        username: response.data.username || userId, // Fallback to ID if username is missing
+        picture: response.data.picture || 'https://via.placeholder.com/40', // Fallback image
+      };
+      userCache.current[userId] = userData; // Cache the result
+      return userData;
     } catch (err) {
       console.error(`Error fetching user details for ${userId}:`, err);
-      return userId; // Fallback to ID in case of error
+      const fallbackData = { username: userId, picture: 'https://via.placeholder.com/40' };
+      userCache.current[userId] = fallbackData; // Cache the fallback
+      return fallbackData;
     }
   };
 
@@ -53,27 +65,29 @@ const MessagesPage = () => {
         // Step 3: Remove duplicate IDs to optimize API calls
         const uniqueOtherUserIds = [...new Set(otherUserIds)];
 
-        // Step 4: Fetch usernames for all unique other user IDs
-        const usernamesPromises = uniqueOtherUserIds.map((id) => fetchUserDetails(id, token));
-        const usernames = await Promise.all(usernamesPromises);
+        // Step 4: Fetch usernames and profile pictures for all unique other user IDs
+        const userDetailsPromises = uniqueOtherUserIds.map((id) => fetchUserDetails(id, token));
+        const userDetails = await Promise.all(userDetailsPromises);
 
-        // Step 5: Create a mapping from user ID to username
-        const userIdToUsernameMap = {};
+        // Step 5: Create a mapping from user ID to user details
+        const userIdToDetailsMap = {};
         uniqueOtherUserIds.forEach((id, index) => {
-          userIdToUsernameMap[id] = usernames[index];
+          userIdToDetailsMap[id] = userDetails[index];
         });
 
         // Step 6: Enhance conversations with the other participant's username and profile picture
         const enhancedConversations = conversationsData.map((conv) => {
           const otherUserId = conv.user1_id === user.sub ? conv.user2_id : conv.user1_id;
-          const otherUsername = userIdToUsernameMap[otherUserId] || otherUserId; // Fallback to ID if username is missing
-          const otherProfilePicture = conv.user1_id === user.sub ? conv.user2_picture : conv.user1_picture; // Assuming profile pictures are included
+          const { username, picture } = userIdToDetailsMap[otherUserId] || {
+            username: 'Unknown User',
+            picture: 'https://via.placeholder.com/40',
+          };
 
           return {
             ...conv,
             otherUserId,
-            otherUsername,
-            otherProfilePicture, // Include profile picture
+            otherUsername: username,
+            otherProfilePicture: picture,
           };
         });
 
@@ -189,7 +203,7 @@ const MessagesPage = () => {
                 {messages.map((message) => (
                   <div
                     key={message.message_id}
-                    className={message.sender_id === user.sub ? 'sent' : 'received'}
+                    className={message.senderId === user.sub ? 'sent' : 'received'}
                   >
                     <div className="message-bubble">
                       <p>{message.content}</p>
