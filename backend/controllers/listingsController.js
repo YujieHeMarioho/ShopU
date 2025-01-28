@@ -215,6 +215,7 @@ export const uploadImages = async (req, res) => {
 
     const uploadedFiles = [];
 
+
     for (const file of req.files) {
       // Preproccess the images
       const buffer = await sharp(file.buffer).resize({ height: 1080, width: 1920, fit: "cover" }).toBuffer();
