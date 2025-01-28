@@ -26,13 +26,14 @@
 
 /* Styling the image */
 .modal-body img {
-	width: 50%;
+	width: 100%;
 	/* Image takes up 60% of the modal width */
 	max-width: 3000px;
 	/* Optional: Limit the maximum width */
 	height: auto;
 	/* Maintain aspect ratio */
 	border-radius: 8px;
+	object-fit: contain;
 }
 
 /* Container for content on the right */
@@ -68,3 +69,4 @@
 	padding: 10px 20px;
 	font-size: 1rem;
 }
+
