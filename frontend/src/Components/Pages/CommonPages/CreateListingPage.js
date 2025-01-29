@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Form, Row, Col, Container, Card } from 'react-bootstrap';
+import { Button, Form, Row, Col, Container, Card, Carousel, FormGroup, FormLabel, FormSelect } from 'react-bootstrap';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import itemStyles from './CreateItemListingPage.module.css';
@@ -9,12 +9,14 @@ import { useAuth0 } from '@auth0/auth0-react';
 const CreateListingPage = () => {
   const [formData, setFormData] = useState({
     title: '',
+    category: '',
+    condition: '',
     description: '',
     price: '',
     tags: '',
     location: '',
     deliveryType: 'Pickup',
-    image: null,
+    images: [],
     businessName: '',
     services: [{ name: '', estimatedTime: '', price: '' }],
     contactDetails: { phone: '', email: '' },
@@ -23,14 +25,43 @@ const CreateListingPage = () => {
   });
 
   const [isServicePage, setIsServicePage] = useState(false);
-  const { getAccessTokenSilently } = useAuth0();  
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const { getAccessTokenSilently } = useAuth0();
+  const currentStyles = isServicePage ? serviceStyles : itemStyles;
 
   useEffect(() => {
     const currentPath = window.location.pathname;
     setIsServicePage(currentPath.includes('service'));
   }, []);
 
-  const currentStyles = isServicePage ? serviceStyles : itemStyles;
+  useEffect(() => {
+    // Fetch the most recent listings from the server
+    const fetchCategories = async () => {
+      try {
+        const token = await getAccessTokenSilently();
+
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/marketplace/categories`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        const rawData = await response.json();
+        
+        const formattedData = rawData.map((category_name, index) => ({
+          category_id: index + 1,
+          name: category_name
+        }));
+;
+        setCategories(formattedData);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -69,10 +100,47 @@ const CreateListingPage = () => {
     setFormData((prevData) => ({ ...prevData, availability: date }));
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData((prevData) => ({ ...prevData, image: URL.createObjectURL(file) }));
+  const handleImages = (e) => {
+    const validImageFormats = ["image/jpeg", "image/png", "image/jpg", "image/gif"];
+    const files = Array.from(e.target.files);
+    const validFiles = files.filter((file) => validImageFormats.includes(file.type));
+  
+    if (validFiles.length < files.length){
+      alert("Certain files were not added because they are not in a supported format (JPEG, PNG, JPG, GIF)");
+    }
+  
+    setFormData((prevData) => ({
+      ...prevData,
+      images: validFiles, // Set the images to the new selection, replacing the previous ones
+    }));
+  };
+
+  const uploadImages = async (images) => {
+    try {
+      const formData = new FormData();
+
+      // Appending files to formData
+      images.forEach((image) => formData.append('images', image));
+      
+      const token = await getAccessTokenSilently();
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings/uploadImages`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Failed to upload images: ${response.statusText}`);
+      }
+  
+      const data = await response.json();
+
+      return data.files; //this returns an array of type file
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      return [];
     }
   };
 
@@ -94,7 +162,7 @@ const CreateListingPage = () => {
       return false;
     }
 
-    if (!formData.image) {
+    if (formData.images.length === 0) {
       return false;
     }
 
@@ -103,39 +171,49 @@ const CreateListingPage = () => {
 
   const handleSubmit = async () => {
     if (!validateForm()) {
-      alert("Please fill in all required fields, including uploading an image.");
+      alert("Please fill in all required fields, including uploading an images.");
+
       return;
     }
 
     const formDataToSubmit = new FormData();
+    setIsButtonDisabled(true);
 
-    if (isServicePage){
+    try { 
+      const uploadedImages = await uploadImages(formData.images);
+
+      if (uploadedImages.length === 0){
+        alert('Failed to upload image(s). Please Try Again');
+        return
+      }
+
+      formDataToSubmit.append('images', JSON.stringify(uploadedImages));
+    } catch (error) {
+      console.error('Failed to upload image(s)', error);
+    }
+
+
+    if (isServicePage) {
       formDataToSubmit.append('title', formData.businessName);
       formDataToSubmit.append('description', formData.description);
-      formDataToSubmit.append('category', formData.category || 'General'); // Default category
+      formDataToSubmit.append('category', formData.category); 
       formDataToSubmit.append('type', formData.type || 'service'); // Default type
       formDataToSubmit.append('rating', formData.rating || 0); // Default rating
       formDataToSubmit.append('price', formData.services[1].price);
-      if (formData.image) {
-        formDataToSubmit.append('image', formData.image);
-      }
-      formDataToSubmit.append('condition', 'New'); // Needs to be added to the form defualting to new for now
+      formDataToSubmit.append('condition', formData.condition || 'New'); // Needs to be added to the form defualting to new for now
     }
-    else{
+    else {
       formDataToSubmit.append('title', formData.title);
       formDataToSubmit.append('description', formData.description);
-      formDataToSubmit.append('category', formData.category || 'General'); // Default category
+      formDataToSubmit.append('category', formData.category); 
       formDataToSubmit.append('type', formData.type || 'item'); // Default type
       formDataToSubmit.append('rating', formData.rating || 0); // Default rating
       formDataToSubmit.append('price', formData.price);
-      if (formData.image) {
-        formDataToSubmit.append('image', formData.image);
-      }
-      formDataToSubmit.append('condition', 'New'); // Needs to be added to the form defualting to new for now
-  
+      formDataToSubmit.append('condition', formData.condition) 
     }
 
     const jsonString = JSON.stringify(Object.fromEntries(formDataToSubmit.entries()));
+
     try {
       const token = await getAccessTokenSilently();
       const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings/create`, {
@@ -177,7 +255,17 @@ const CreateListingPage = () => {
                   <Form.Label>Description</Form.Label>
                   <Form.Control as="textarea" name="description" value={formData.description} onChange={handleChange} />
                 </Form.Group>
-
+                <FormGroup controlId="category">
+                  <FormLabel>Category</FormLabel>
+                  <FormSelect name="category" value={formData.category} onChange={handleChange}>
+                    <option value="" disabled hidden>Select A Category</option>
+                    {categories.map(category => (
+                      <option key={category.category_id} value={category.category_id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </FormSelect>
+                </FormGroup>
                 {/* Appointment Based Toggle */}
                 <Form.Group controlId="appointmentBased">
                   <Form.Check
@@ -251,6 +339,25 @@ const CreateListingPage = () => {
                   <Form.Label>Description</Form.Label>
                   <Form.Control as="textarea" name="description" value={formData.description} onChange={handleChange} />
                 </Form.Group>
+                <FormGroup controlId="category">
+                  <FormLabel>Category</FormLabel>
+                  <FormSelect name="category" value={formData.category} onChange={handleChange}>
+                    <option value="" disabled hidden>Select A Category</option>
+                    {categories.map(category => (
+                      <option key={category.category_id} value={category.category_id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </FormSelect>
+                </FormGroup>
+                <FormGroup controlId="condition">
+                  <FormLabel>Condition</FormLabel>
+                  <FormSelect placeholder="Select A Condition" name="condition" value={formData.condition} onChange={handleChange}>
+                    <option value="" disabled hidden>Select A Condition</option>
+                    <option value='New'>New</option>
+                    <option value='Used'>Used</option>
+                  </FormSelect>
+                </FormGroup>
                 <Form.Group controlId="price">
                   <Form.Label>Price</Form.Label>
                   <Form.Control type="number" name="price" value={formData.price} onChange={handleChange} />
@@ -272,37 +379,54 @@ const CreateListingPage = () => {
                 </Form.Group>
               </>
             )}
-            <Form.Group controlId="image">
-              <Form.Label>Upload Image</Form.Label>
-              <Form.Control type="file" onChange={handleImageChange} />
+            <Form.Group controlId="images">
+              <Form.Label>Upload Images</Form.Label>
+              <Form.Control type="file" multiple onChange={handleImages} accept="image/jpeg, image/png, image/jpg, image/gif"/>
             </Form.Group>
             {/* Create Listing Button */}
-            <Button variant="primary" onClick={handleSubmit}>Create Listing</Button>
+            <Button variant="primary" onClick={handleSubmit} disabled={isButtonDisabled}>Create Listing</Button>
           </Form>
         </Col>
-
-        {/* Preview Section */}
         <Col md={6}>
           <h3>Preview</h3>
           <Card className="mb-3">
-            {formData.image && (
-              <Card.Img variant="top" src={formData.image} alt="Preview" />
+            {formData.images.length > 0 && (
+              <Carousel>
+                {formData.images.map((image, index) => {
+                  const fileURL = typeof image === 'string' ? image : URL.createObjectURL(image);
+                  return (
+                    <Carousel.Item key={index}>
+                      <div className="position-relative">
+                        <img
+                          className="d-block w-100"
+                          src={fileURL} // Use the generated or provided URL
+                          alt={`Preview ${index}`}
+                        />
+                      </div>
+                    </Carousel.Item>
+                  );
+                })}
+              </Carousel>
             )}
             <Card.Body>
               {isServicePage ? (
                 <>
                   <Card.Title>{formData.businessName}</Card.Title>
-                  <Card.Text><strong>Description:</strong> {formData.description}</Card.Text>
+                  <Card.Text>
+                    <strong>Description:</strong> {formData.description}
+                  </Card.Text>
                   <Card.Text><strong>Offered Services:</strong></Card.Text>
                   {formData.services.map((service, index) => (
                     <Card.Text key={index}>
-                      {service.name} - {formData.appointmentBased ? `${service.estimatedTime} hrs, ` : ''}${service.price}
+                      {service.name} - {formData.appointmentBased ? `${service.estimatedTime} hrs, ` : ''}{service.price}
                     </Card.Text>
                   ))}
                   {formData.appointmentBased && (
                     <Card.Text><strong>Availability:</strong> {formData.availability.toLocaleDateString()}</Card.Text>
                   )}
-                  <Card.Text><strong>Contact:</strong> {formData.contactDetails.phone}, {formData.contactDetails.email}</Card.Text>
+                  <Card.Text>
+                    <strong>Contact:</strong> {formData.contactDetails.phone}, {formData.contactDetails.email}
+                  </Card.Text>
                 </>
               ) : (
                 <>

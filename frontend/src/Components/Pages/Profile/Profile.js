@@ -11,7 +11,8 @@ const Profile = () => {
     const [formData, setFormData] = useState({
       name: name || '',
       email: email || '',
-      picture: picture || '' });
+      picture: picture || ''});
+      
   
     const [message, setMessage] = useState('');
   
@@ -56,7 +57,7 @@ const Profile = () => {
       <Container className="my-5">
         <Card className="shadow-sm profile-card mb-4">
           <Card.Header className="profile-header">
-            <h3 className="mb-0">User Profile</h3>
+            <h3 className="mb-0">Your Profile</h3>
           </Card.Header>
           <Card.Body>
             <Row className="align-items-center">
@@ -129,11 +130,11 @@ const Profile = () => {
             Member since: {new Date(created_at).toLocaleDateString()}
           </Card.Footer>
         </Card>
-  
+        
         {/* JSON Section */}
-        <Card className="shadow-sm">
+        {/*<Card className="shadow-sm">
           <Card.Header className="bg-secondary text-white">
-            <h4 className="mb-0">User Information (JSON)</h4>
+            <h4 className="mb-0">User Information</h4>
           </Card.Header>
           <Card.Body className="bg-light">
             <pre
@@ -149,6 +150,7 @@ const Profile = () => {
             </pre>
           </Card.Body>
         </Card>
+        */}
       </Container>
     );
   };

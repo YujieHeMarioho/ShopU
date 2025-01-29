@@ -42,8 +42,15 @@
   .add-community-section {
     margin-top: 20px;
   }
+  .create-community-section {
+    margin-top: 20px;
+  }
   
   .add-community-form {
+    display: flex;
+    gap: 10px;
+  }
+  .create-community-form {
     display: flex;
     gap: 10px;
   }
@@ -52,6 +59,13 @@
     border: 1px solid #ddd;
     border-radius: 4px;
     padding: 8px;
+  }
+  .create-community-form input {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 8px;
+    display: block;
+    white-space: pre-wrap;
   }
   
   .add-community-form button {
@@ -62,8 +76,22 @@
     border-radius: 4px;
     cursor: pointer;
   }
+
+  .create-community-form button {
+    background: #28a745; /* Green background for the "Add Friend" button */
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: block;
+  }
   
   .add-community-form button:hover {
+    background: #218838; /* Darker green on hover */
+  }
+
+  .create-community-form button:hover {
     background: #218838; /* Darker green on hover */
   }
   

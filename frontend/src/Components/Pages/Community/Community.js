@@ -1,5 +1,5 @@
 import { Banner, CommunityCardGrid} from '../../Common';
-import React, { useState, useLayoutEffect } from 'react';
+import React, { useState, useLayoutEffect, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import axios from 'axios';
 import './Community.css';
@@ -11,11 +11,13 @@ const Communities = () => {
   /*const { user, isLoading: authLoading } = useAuth0();*/
   const [userInfo, setUserInfo] = useState(null);
   const [communities, setCommunities] = useState([]);
+  const [otherCommunities, setOtherCommunities] = useState([]);
+  const [createdCommunities, setCreatedCommunities] = useState([]);
   const [newCommunityId, setNewCommunityId] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [newCommunityName, setNewCommunityName] = useState('');
+  const [newCommunityDescription, setNewCommunityDescription] = useState('');
 
-  const user_id = 32
-  const user_email = "u1275258@utah.edu"
   const { getAccessTokenSilently } = useAuth0();  
 
   useLayoutEffect(() => {
@@ -34,21 +36,107 @@ const Communities = () => {
                       'Authorization': `Bearer ${token}`,
                     }
                   }
+                //other communities
+                );
+                const otherCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/all`,
+                  {
+                    headers: {
+                      'Authorization': `Bearer ${token}`,
+                    }
+                  }
+                );
+                //created communities
+                const createdCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/created`,
+                  {
+                    headers: {
+                      'Authorization': `Bearer ${token}`,
+                    }
+                  }
                 );
 
                 setCommunities(communityResponse.data);
+                setOtherCommunities(otherCommunityResponse.data);
+                setCreatedCommunities(createdCommunityResponse.data);
+
             } catch (error) {
                 console.error('Error fetching user info or communities:', error);
             } finally {
                 setIsLoading(false);
             }
+
         };
 
         fetchUserInfo();
     }
   }, [isLoading]);
 
+  //Create a community
+  const createCommunity = async () => {
+    if (!newCommunityName)
+    {
+      alert('Please name your community.');
+      return;
+    }
+    if (!newCommunityDescription)
+    {
+      alert('Please give your community a description.');
+      return;
+    }
+    //prevent duplicate names
+    if (communities.some(community => community.name === newCommunityName)) {
+      alert('Community Already Exists.');
+      return;
+    }
 
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/communities/add`, {
+        name: newCommunityName,
+        description: newCommunityDescription
+      }, 
+      {    
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      }
+    );
+      alert("Community created successfully"); // Success message
+      setNewCommunityName(''); // Clear input field
+      setNewCommunityDescription('');
+
+      // Fetch the updated communities list with details
+      const communityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        }
+      );
+      //other communities
+      const otherCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/all`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        }
+      );
+      //created communities
+      const createdCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/created`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        }
+      );
+      setOtherCommunities(otherCommunityResponse.data);
+      setCommunities(communityResponse.data); // Update state with full details
+      setCreatedCommunities(createdCommunityResponse.data);
+    } catch (error) {
+      console.error('Error creating community:', error);
+      //alert(error)
+      alert('Error creating community.');
+    }
+  }
   // Add a community
   const addCommunity = async () => {
     if (!newCommunityId) {
@@ -83,6 +171,14 @@ const Communities = () => {
           }
         }
       );
+      const otherCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/all`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        }
+      );
+      setOtherCommunities(otherCommunityResponse.data);
       setCommunities(communityResponse.data); // Update state with full details
     } catch (error) {
       console.error('Error adding community:', error);
@@ -112,6 +208,14 @@ const Communities = () => {
           }
         }
       );
+      const otherCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/all`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        }
+      );
+      setOtherCommunities(otherCommunityResponse.data);
       setCommunities(communityResponse.data); // Update state with full details
     } catch (error) {
       console.error('Error removing community:', error);
@@ -119,34 +223,20 @@ const Communities = () => {
     }
   };
 
-  // Sample Community data
-  const communities_data = [
-    {
-      image: 'https://via.placeholder.com/300x200',
-      title: 'Community 1',
-      description: 'This is a description for community 1.',
-    },
-    {
-      image: 'https://via.placeholder.com/300x200',
-      title: 'Community 2',
-      description: 'This is a description for community 2.',
-    },
-    {
-      image: 'https://via.placeholder.com/300x200',
-      title: 'Community 3',
-      description: 'This is a description for community 3.',
-    },
-    {
-      image: 'https://via.placeholder.com/300x200',
-      title: 'Community 4',
-      description: 'This is a description for community 4.',
-    },
-    {
-      image: 'https://via.placeholder.com/300x200',
-      title: 'Community 5',
-      description: 'This is a description for community 5.',
-    },
-  ];
+
+  // Map the data to match the desired format
+  const formattedOtherCommunities = otherCommunities.map(comm => ({
+    title: comm.name,
+    description: comm.description,
+    image: "https://via.placeholder.com/300x200",
+    communityId: comm.community_id
+  }));
+  const formattedCreatedCommunities = createdCommunities.map(comm => ({
+    title: comm.name,
+    description: comm.description,
+    image: "https://via.placeholder.com/300x200",
+    communityId: comm.community_id
+  }));
 
   /*if (isLoading) {
     return <div className="loading">Loading user information...</div>;
@@ -160,12 +250,13 @@ const Communities = () => {
     <div>
       <Banner
         title="Communities"
-        description="Here are some communities you might like."
+        description="Here are some communities in your orbit."
+        showConnectButton={false}
       />
 
       {/* Add Community Section */}
-      <div className="add-community-section">
-        <h2>Add a New Community</h2>
+      {/*<div className="add-community-section">
+        <h2>Join a New Community</h2>
         <div className="add-community-form">
           <input
             type="text"
@@ -175,7 +266,7 @@ const Communities = () => {
           />
           <button onClick={addCommunity}>Add Community</button>
         </div>
-      </div>
+      </div>*/}
 
       <div className="your-community-grid">
       <h2>Your Communities</h2>
@@ -201,8 +292,53 @@ const Communities = () => {
           ))
       )}
       </div>
+      <div className="community-browse">
         {/* Render CardGrid with listings */}
-        <CommunityCardGrid communities={communities_data} />
+        <h2>Browse Communities</h2>
+        <CommunityCardGrid communities={formattedOtherCommunities} />
+      </div>
+      <div className="create-community-section">
+        <h2>Create a New Community</h2>
+        <div className="create-community-form">
+          <input
+            type="text"
+            placeholder="Enter Community Name"
+            value={newCommunityName}
+            onChange={(e) => setNewCommunityName(e.target.value)}
+          />
+          <input
+            type="text"
+            placeholder="Enter Community Description"
+            value={newCommunityDescription}
+            onChange={(e) => setNewCommunityDescription(e.target.value)}
+            />
+          <button onClick={createCommunity}>Create Community</button>
+        </div>
+      </div>
+      <div className="your-community-grid">
+      <h2>Your Communities</h2>
+      {communities.length === 0 ? (
+          <p>You haven't created any communities.</p>
+      ) : (
+          createdCommunities.map((community) => (
+              <div key={community.community_id} className="your-community-card">
+                  <img
+                      src={'https://via.placeholder.com/100'}
+                      alt={community.community_id}
+                      className="community-image"
+                  />
+                  <div className="community-info">
+                      <h3>{community.name || `Community ${community.community_id}`}</h3>
+                      <p>Created At: {new Date(community.created_at).toLocaleString()}</p>
+                      {/*<p>Joined At: {new Date(community.joined_at).toLocaleString()}</p>*/}
+                  </div>
+                  <button className="leave-button" onClick={() => leaveCommunity(community.community_id)}>
+                      Delete Permanently {/*FIXME: doesn't actually delete the community, just leaves it*/}
+                  </button>
+              </div>
+          ))
+      )}
+      </div>
     </div>
 
     

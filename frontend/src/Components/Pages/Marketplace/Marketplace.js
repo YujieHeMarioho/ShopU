@@ -111,7 +111,7 @@ export const Marketplace = () => {
     const fetchListings = async () => {
       try {
         const token = await getAccessTokenSilently();
-
+  
         const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings`, {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -129,7 +129,7 @@ export const Marketplace = () => {
           type: item.item_type,
           rating: item.star_rating,
           price: item.price,
-          image: item.image_url,
+          image: item.file_keys,
         }));
     
         setListings(formattedData);
