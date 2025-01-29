@@ -1,5 +1,5 @@
 import React, { act, useState, useEffect } from 'react';
-import { Card, Button, Alert } from 'react-bootstrap';
+import { Card, Button, Alert, Carousel } from 'react-bootstrap';
 import styles from './Card.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
 
@@ -9,6 +9,7 @@ export const CardComponent = ({ image, title, description, price, onListingClick
   const [isFavorited, setIsFavorited] = useState(false);
   const [alertMessage, setAlertMessage] = useState(null);
 
+  console.log("this is Image", image);
     // Fetch the current favorite status when the component loads
     useEffect(() => {
       const fetchFavoriteStatus = async () => {
@@ -30,7 +31,7 @@ export const CardComponent = ({ image, title, description, price, onListingClick
     try {
       const token = await getAccessTokenSilently();
       const action = isFavorited ? 'remove' : 'add';
-      const success = await favoriteAPICall( listingId, action, token);
+      const success = await favoriteAPICall(listingId, action, token);
 
 
       if (success) {
@@ -48,6 +49,15 @@ export const CardComponent = ({ image, title, description, price, onListingClick
     }
   };
 
+  const handleCardClick = (e) => {
+    // Prevent clicks from carousel controls or buttons
+    if (e.target.closest('.carousel-control-prev, .carousel-control-next, .btn')) {
+      return;
+    }
+
+    onListingClick(e);
+  };
+
   return (
     <div>
       {/* Display alert if there is a message */}
@@ -56,10 +66,27 @@ export const CardComponent = ({ image, title, description, price, onListingClick
           {alertMessage}
         </Alert>
       )}
-
-      <Card className={styles.card} onClick={onListingClick}>
+      <Card className={styles.card} onClick={handleCardClick}>
         <div className={styles.imageContainer}>
-          <Card.Img variant="top" src={image} alt={title} className={styles.cardImage} />
+          {image.length > 1 ? (
+              <Carousel interval={null} className={styles.carousel}>
+                {image.map((img, index) => (
+                  <Carousel.Item key={index}>
+                    <img
+                      src={img}
+                      alt={`Slide ${index}`}
+                      className={styles.cardImage}
+                    />
+                  </Carousel.Item>
+                ))}
+              </Carousel>
+            ) : (
+              <img
+                src={image[0]}
+                alt={title}
+                className={styles.cardImage}
+              />
+            )}
           <Button
             variant="light"
             className={`${styles.favoriteButton} ${isFavorited ? styles.favorited : ''}`}
