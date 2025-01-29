@@ -12,6 +12,7 @@ const Communities = () => {
   const [userInfo, setUserInfo] = useState(null);
   const [communities, setCommunities] = useState([]);
   const [otherCommunities, setOtherCommunities] = useState([]);
+  const [createdCommunities, setCreatedCommunities] = useState([]);
   const [newCommunityId, setNewCommunityId] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [newCommunityName, setNewCommunityName] = useState('');
@@ -35,8 +36,17 @@ const Communities = () => {
                       'Authorization': `Bearer ${token}`,
                     }
                   }
+                //other communities
                 );
                 const otherCommunityResponse = await axios.get(`http://localhost:8080/api/communities/all`,
+                  {
+                    headers: {
+                      'Authorization': `Bearer ${token}`,
+                    }
+                  }
+                );
+                //created communities
+                const createdCommunityResponse = await axios.get(`http://localhost:8080/api/communities/created`,
                   {
                     headers: {
                       'Authorization': `Bearer ${token}`,
@@ -46,6 +56,7 @@ const Communities = () => {
 
                 setCommunities(communityResponse.data);
                 setOtherCommunities(otherCommunityResponse.data);
+                setCreatedCommunities(createdCommunityResponse.data);
 
             } catch (error) {
                 console.error('Error fetching user info or communities:', error);
@@ -101,7 +112,16 @@ const Communities = () => {
           }
         }
       );
+      //other communities
       const otherCommunityResponse = await axios.get(`http://localhost:8080/api/communities/all`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        }
+      );
+      //created communities
+      const createdCommunityResponse = await axios.get(`http://localhost:8080/api/communities/created`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -110,6 +130,7 @@ const Communities = () => {
       );
       setOtherCommunities(otherCommunityResponse.data);
       setCommunities(communityResponse.data); // Update state with full details
+      setCreatedCommunities(createdCommunityResponse.data);
     } catch (error) {
       console.error('Error creating community:', error);
       //alert(error)
@@ -202,11 +223,15 @@ const Communities = () => {
     }
   };
 
-  // Sample Community data
-
 
   // Map the data to match the desired format
   const formattedOtherCommunities = otherCommunities.map(comm => ({
+    title: comm.name,
+    description: comm.description,
+    image: "https://via.placeholder.com/300x200",
+    communityId: comm.community_id
+  }));
+  const formattedCreatedCommunities = createdCommunities.map(comm => ({
     title: comm.name,
     description: comm.description,
     image: "https://via.placeholder.com/300x200",
@@ -289,6 +314,30 @@ const Communities = () => {
             />
           <button onClick={createCommunity}>Create Community</button>
         </div>
+      </div>
+      <div className="your-community-grid">
+      <h2>Your Communities</h2>
+      {communities.length === 0 ? (
+          <p>You haven't created any communities.</p>
+      ) : (
+          createdCommunities.map((community) => (
+              <div key={community.community_id} className="your-community-card">
+                  <img
+                      src={'https://via.placeholder.com/100'}
+                      alt={community.community_id}
+                      className="community-image"
+                  />
+                  <div className="community-info">
+                      <h3>{community.name || `Community ${community.community_id}`}</h3>
+                      <p>Created At: {new Date(community.created_at).toLocaleString()}</p>
+                      {/*<p>Joined At: {new Date(community.joined_at).toLocaleString()}</p>*/}
+                  </div>
+                  <button className="leave-button" onClick={() => leaveCommunity(community.community_id)}>
+                      Delete Permanently
+                  </button>
+              </div>
+          ))
+      )}
       </div>
     </div>
 

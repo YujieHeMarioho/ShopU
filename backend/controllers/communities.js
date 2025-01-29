@@ -59,6 +59,35 @@ export const getAllCommunities = async (req, res) => {
     }
 };
 
+//get communities for user
+export const getCreatedCommunities = async (req, res) => {
+    const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+    let user_id;
+    try {
+        const decodedToken = jwtDecode(token); // Decode the token
+        user_id = decodedToken.sub;
+    } catch (err) {
+        console.error('Error decoding token:', err);
+        return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    const query = 'SELECT * FROM public.communities AS comms WHERE comms.created_by = $1';
+    try {
+        const result = await pool.query(query, [user_id]);
+        const communities = result.rows.map(row => ({
+            community_id: row.community_id,
+            name: row.name,
+            description: row.description,
+            created_at: row.created_at,
+          }));
+
+        res.status(200).json(communities);
+    } catch (err) {
+        console.error('Error running query:', err);
+        res.status(500).json({ error: 'Database error' });
+    }
+};
+
 //endpoint to add a community
 export const addCommunity = async (req, res) => {
     const name = req.body.name;
