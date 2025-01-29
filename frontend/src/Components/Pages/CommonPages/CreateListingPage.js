@@ -138,7 +138,7 @@ const CreateListingPage = () => {
     const jsonString = JSON.stringify(Object.fromEntries(formDataToSubmit.entries()));
     try {
       const token = await getAccessTokenSilently();
-      const response = await fetch('http://localhost:8080/api/listings/create', {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
