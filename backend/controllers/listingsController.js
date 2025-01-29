@@ -124,22 +124,22 @@ export const getFavoritedListings = async (req, res) => {
 
 //Endpoint for create a listing
 export const createListing = async (req, res) => {
-    try {
-        const { title, description, category, type, rating, price, condition, images} = req.body;
-        const parsedImages  =  images ? JSON.parse(images) : [];
+  try {
+    const { title, description, category, type, rating, price, condition, images } = req.body;
+    const parsedImages = images ? JSON.parse(images) : [];
 
-        let userId;
-        const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
-        try {
-            const decodedToken = jwtDecode(token); // Decode the token
-            userId = decodedToken.sub;
-        } catch (err) {
-            console.error('Error decoding token:', err);
-            return res.status(401).json({ message: 'Invalid token' });
-        }
-      
-        //database call to create listing in listing table
-        const listingQuery = `
+    let userId;
+    const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+    try {
+      const decodedToken = jwtDecode(token); // Decode the token
+      userId = decodedToken.sub;
+    } catch (err) {
+      console.error('Error decoding token:', err);
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    //database call to create listing in listing table
+    const listingQuery = `
             INSERT INTO public.listings (title, description, category_id, item_type, star_rating, price, condition, date_posted, user_id)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING *;
