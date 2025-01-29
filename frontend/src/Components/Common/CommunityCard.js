@@ -65,7 +65,7 @@ export const CommunityCardComponent = ({ image, title, description, communityId}
 const joinAPICall = async (communityId, action, token) => {
   try {
     communityId = 1;
-    const URL = `http://localhost:8080/api/communities/${communityId}`;
+    const URL = `${process.env.REACT_APP_BACKEND_URL}/api/communities/${communityId}`;
     const method = action === 'add' ? 'POST' : 'DELETE';
     const response = await fetch(URL, {
       method: method,
