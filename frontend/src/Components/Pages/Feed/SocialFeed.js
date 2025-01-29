@@ -27,7 +27,7 @@ const SocialFeed = () => {
         try {
             const token = await getAccessTokenSilently();
 
-            const response = await fetch('http://localhost:8080/api/feed', {
+            const response = await fetch('${process.env.REACT_APP_BACKEND_URL}/api/feed', {
                 headers: {
                   'Authorization': `Bearer ${token}`,
                 },
@@ -48,7 +48,7 @@ const SocialFeed = () => {
         if (!userId) return;
 
         try {
-            const response = await fetch(`http://localhost:8080/api/feed/user/${userId}`);
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/user/${userId}`);
             if (!response.ok) throw new Error(`Failed to fetch user feed: ${response.statusText}`);
             const rawUserFeed = await response.json();
             setUserFeed(rawUserFeed);
@@ -64,7 +64,7 @@ const SocialFeed = () => {
         // setIsPostLoading(true);
         // const uId = userId;
         // try {
-        //     const response = await fetch('http://localhost:8080/api/feed/create', {
+        //     const response = await fetch('${process.env.REACT_APP_BACKEND_URL}/api/feed/create', {
         //         method: 'POST',
         //         headers: { 'Content-Type': 'application/json' },
         //         body: JSON.stringify({ ...newPost, uId }),
@@ -83,7 +83,7 @@ const SocialFeed = () => {
 
     const handlePostOperation = async (postId, method, updatedPost = null) => {
         setIsPostLoading(true);
-        const url = `http://localhost:8080/api/feed/${postId}`;
+        const url = `${process.env.REACT_APP_BACKEND_URL}/api/feed/${postId}`;
         const options = {
             method,
             headers: { 'Content-Type': 'application/json' },
@@ -115,7 +115,7 @@ const SocialFeed = () => {
         );
 
         try {
-            const response = await fetch(`http://localhost:8080/api/feed/like/${postId}`, {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/like/${postId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ is_liked: !isLiked }),
@@ -132,7 +132,7 @@ const SocialFeed = () => {
 
     const shareFeedPost = async (postId) => {
         try {
-            const response = await fetch(`http://localhost:8080/api/feed/share/${postId}`, { method: 'POST' });
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/share/${postId}`, { method: 'POST' });
             if (!response.ok) throw new Error('Failed to share post');
             alert('Post shared successfully!');
         } catch (err) {
