@@ -164,3 +164,10 @@ CREATE TABLE reviews(
     FOREIGN KEY (reviewee_id) REFERENCES users (user_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+CREATE TABLE listing_images (
+    id SERIAL PRIMARY KEY, 
+    listing_id INT NOT NULL,
+    file_key VARCHAR(255) NOT NULL, 
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  
+    CONSTRAINT fk_listing FOREIGN KEY (listing_id) REFERENCES listings(listing_id) ON DELETE CASCADE
+);
