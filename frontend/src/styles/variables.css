@@ -1,15 +1,21 @@
 :root {
     /* Colors */
     --primary-color: #02AE5E;
-    --secondary-color: #018045;
+    --primary-color-dark: #067742;
+    --secondary-color: #6c757d;
     --background-color: #F5F5F5;
     --text-color: #333333;
+    --text-color-light: #adb5bd;
+    --background-color-light: #f8f9fa;
+    --border-color: #dee2e6;
 
     /* Fonts */
     --font-family: 'Roboto', sans-serif;
     --font-size-base: 16px;
     --font-weight-regular: 400;
     --font-weight-bold: 600;
+    --font-size-lg: 1.25rem;
+    --font-size-sm: 0.875rem;
 
     /* Spacing */
     --padding-small: 8px;
