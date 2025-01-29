@@ -333,7 +333,7 @@ const Communities = () => {
                       {/*<p>Joined At: {new Date(community.joined_at).toLocaleString()}</p>*/}
                   </div>
                   <button className="leave-button" onClick={() => leaveCommunity(community.community_id)}>
-                      Delete Permanently
+                      Delete Permanently {/*FIXME: doesn't actually delete the community, just leaves it*/}
                   </button>
               </div>
           ))
