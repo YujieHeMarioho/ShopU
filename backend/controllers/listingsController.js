@@ -95,31 +95,66 @@ export const getFavoritedListings = async (req, res) => {
   }
 
   const query = `
-        SELECT
-          l.listing_id,
-          l.title,
-          l.description,
-          c.name AS category,  -- Get the category name
-          l.item_type,
-          l.star_rating,
-          l.price;
-        FROM
-          listings l
-        JOIN
-          categories c ON l.category_id = c.category_id
-        JOIN
-          favorites f ON l.listing_id = f.listing_id
-        WHERE
-          f.user_id = $1; 
-        `;
+  SELECT
+    l.listing_id,
+    l.title,
+    l.description,
+    c.name AS category,  -- Get the category name
+    l.item_type,
+    l.star_rating,
+    l.price,
+    ARRAY_AGG(li.file_key) AS file_keys 
+  FROM
+    listings l
+  JOIN
+    categories c ON l.category_id = c.category_id
+  INNER JOIN
+    listing_images li ON l.listing_id = li.listing_id
+  JOIN
+    favorites f ON l.listing_id = f.listing_id
+  WHERE
+    f.user_id = $1 
+  GROUP BY
+    l.listing_id, 
+    l.title, 
+    l.description, 
+    c.name, 
+    l.item_type, 
+    l.star_rating, 
+    l.price;
+`;
 
-  try {
-    const result = await pool.query(query, [userId]);
-    res.status(200).json(result.rows);
-  } catch (err) {
-    console.error('Error running query:', err);
-    res.status(500).json({ error: 'Database error' });
-  }
+try {
+  const result = await pool.query(query, [userId]);
+
+  // Loop through each listing and generate signed URLs
+  const listingsWithUrls = await Promise.all(
+    result.rows.map(async (listing) => {
+      // Generate pre-signed URLs for file_keys
+      const signedUrls = await Promise.all(
+        (listing.file_keys || []).map(async (fileKey) => {
+          const command = new GetObjectCommand({
+            Bucket: bucketName,
+            Key: fileKey,
+          });
+
+          return getSignedUrl(s3, command, { expiresIn: 86400 }); // URL expires in 1 day
+        })
+      );
+
+      // Return the listing with the signed URLs
+      return {
+        ...listing,
+        file_keys: signedUrls,
+      };
+    })
+  );
+
+  res.status(200).json(listingsWithUrls);
+} catch (err) {
+  console.error('Error running query:', err);
+  res.status(500).json({ error: 'Database error' });
+}
 };
 
 //Endpoint for create a listing
