@@ -90,5 +90,5 @@ app.use('/api/conversations', (req, res, next) => {
 
 // Start Server
 app.listen(port, () => {
-  console.log(`Server is running on ${process.env.BACKEND_URL}:${port}`);
+  console.log(`Server is running on ${process.env.BACKEND_URL}`);
 });
