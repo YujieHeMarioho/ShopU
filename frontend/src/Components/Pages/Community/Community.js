@@ -38,7 +38,7 @@ const Communities = () => {
                   }
                 //other communities
                 );
-                const otherCommunityResponse = await axios.get(`http://localhost:8080/api/communities/all`,
+                const otherCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/all`,
                   {
                     headers: {
                       'Authorization': `Bearer ${token}`,
@@ -46,7 +46,7 @@ const Communities = () => {
                   }
                 );
                 //created communities
-                const createdCommunityResponse = await axios.get(`http://localhost:8080/api/communities/created`,
+                const createdCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/created`,
                   {
                     headers: {
                       'Authorization': `Bearer ${token}`,
@@ -90,7 +90,7 @@ const Communities = () => {
 
     try {
       const token = await getAccessTokenSilently();
-      const response = await axios.post('http://localhost:8080/api/communities/add', {
+      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/communities/add`, {
         name: newCommunityName,
         description: newCommunityDescription
       }, 
@@ -105,7 +105,7 @@ const Communities = () => {
       setNewCommunityDescription('');
 
       // Fetch the updated communities list with details
-      const communityResponse = await axios.get(`http://localhost:8080/api/communities`,
+      const communityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -113,7 +113,7 @@ const Communities = () => {
         }
       );
       //other communities
-      const otherCommunityResponse = await axios.get(`http://localhost:8080/api/communities/all`,
+      const otherCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/all`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -121,7 +121,7 @@ const Communities = () => {
         }
       );
       //created communities
-      const createdCommunityResponse = await axios.get(`http://localhost:8080/api/communities/created`,
+      const createdCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/created`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -171,7 +171,7 @@ const Communities = () => {
           }
         }
       );
-      const otherCommunityResponse = await axios.get(`http://localhost:8080/api/communities/all`,
+      const otherCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/all`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -208,7 +208,7 @@ const Communities = () => {
           }
         }
       );
-      const otherCommunityResponse = await axios.get(`http://localhost:8080/api/communities/all`,
+      const otherCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/all`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
