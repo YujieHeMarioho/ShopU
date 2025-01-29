@@ -1,22 +1,21 @@
-// controllers/users.js
-
 import pool from '../pool.js';
 import axios from 'axios';
 import qs from 'qs';
-import jwtDecode from "jwt-decode"; // Correct default import
+//correct with import 
+import {jwtDecode} from "jwt-decode"; 
 
 // Your Auth0 domain and client credentials
-const auth0URL = process.env.AUTH0_ISSUER_BASE_URL; // e.g., 'https://your-domain.auth0.com/'
+const auth0URL = process.env.AUTH0_ISSUER_BASE_URL; 
 const clientId = process.env.AUTH0_CLIENT_ID;
 const clientSecret = process.env.AUTH0_CLIENT_SECRET;
-const audience = process.env.AUTH0_AUDIENCE; // e.g., 'https://your-domain.auth0.com/api/v2/'
+const audience = process.env.AUTH0_AUDIENCE; 
 
 // Get All Users
 export const getAllAuth0Users = async (req, res) => {
     try {
         const accessToken = await getManagementApiAccessToken();
         const response = await axios.get(
-            `${audience}users`, // Ensure audience ends with '/'
+            `${audience}users`, 
             {
                 headers: {
                     'Authorization': `Bearer ${accessToken}`,
