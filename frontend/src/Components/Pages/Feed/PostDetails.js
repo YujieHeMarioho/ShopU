@@ -28,7 +28,7 @@ function PostDetails() {
     try {
       const token = await getAccessTokenSilently();
       // Send the post data to the backend using fetch
-      const response = await fetch("http://localhost:8080/api/feed/create", {
+      const response = await fetch("${process.env.REACT_APP_BACKEND_URL}/api/feed/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
