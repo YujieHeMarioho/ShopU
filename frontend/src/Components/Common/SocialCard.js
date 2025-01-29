@@ -160,7 +160,7 @@ export const SocialCard = ({
 
 const likeAPICall = async (post_id, isLiked, token, userId) => {
   try {
-    const URL = `http://localhost:8080/api/feed/${post_id}/like`;
+    const URL = `${process.env.REACT_APP_BACKEND_URL}/api/feed/${post_id}/like`;
     const method = isLiked ? 'POST' : 'POST'; // Keep it POST for both like/unlike
     const response = await fetch(URL, {
       method,
@@ -186,7 +186,7 @@ const likeAPICall = async (post_id, isLiked, token, userId) => {
 
 const shareAPICall = async (post_id, token, userId) => {
   try {
-    const URL = `http://localhost:8080/api/feed/${post_id}/share`;
+    const URL = `${process.env.REACT_APP_BACKEND_URL}/api/feed/${post_id}/share`;
     const response = await fetch(URL, {
       method: 'POST',
       headers: {
