@@ -41,7 +41,7 @@ const CreateListingPage = () => {
       try {
         const token = await getAccessTokenSilently();
 
-        const response = await fetch('http://localhost:8080/api/marketplace/categories', {
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/marketplace/categories`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -123,7 +123,7 @@ const CreateListingPage = () => {
       images.forEach((image) => formData.append('images', image));
       
       const token = await getAccessTokenSilently();
-      const response = await fetch('http://localhost:8080/api/listings/uploadImages', {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings/uploadImages`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
