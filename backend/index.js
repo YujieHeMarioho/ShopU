@@ -11,6 +11,7 @@ import userRoutes from './routes/users.js';
 import friendsRoutes from './routes/friends.js';
 import communityRoutes from './routes/communities.js'
 import privacyPolicies from './routes/privacyPolicies.js';
+import feed from './routes/feed.js';
 import listings from './routes/listings.js';
 import filters from './routes/filters.js';
 import messagesRoutes from './routes/messages.js';
@@ -66,6 +67,8 @@ app.get('/test', async (req, res) => {
     res.status(500).json({ message: 'Error getting users', error });
   }
 });
+
+app.use('/api', feed);
 
 // enforce on all endpoints to validate the signed in user
 app.use(authMiddleware);
