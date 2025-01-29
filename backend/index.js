@@ -80,7 +80,6 @@ app.use('/api', friendsRoutes)
 app.use('/api', privacyPolicies)
 app.use('/api', listings);
 app.use('/api', filters);
-app.use('/api', favorites);
 
 app.use('/api/messages', messagesRoutes);
 

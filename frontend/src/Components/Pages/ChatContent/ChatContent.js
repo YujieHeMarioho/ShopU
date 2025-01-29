@@ -25,7 +25,7 @@ const ChatContent = () => {
         const token = await getAccessTokenSilently();
         console.log(`Fetching messages for conversation ID: ${conversation_id}`);
         const response = await axios.get(
-          `http://localhost:8080/api/messages/${conversation_id}/messages`, // Ensure the URL is correct
+          `${process.env.REACT_APP_BACKEND_URL}/api/messages/${conversation_id}/messages`, // Ensure the URL is correct
           { headers: { Authorization: `Bearer ${token}` } }
         );
         console.log('Fetched messages:', response.data); // Debugging log
@@ -58,7 +58,7 @@ const ChatContent = () => {
       const token = await getAccessTokenSilently();
       console.log('Sending message:', { conversation_id, senderId: user.sub, content: newMessage });
       const response = await axios.post(
-        `http://localhost:8080/api/messages/${conversation_id}/messages`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/messages/${conversation_id}/messages`,
         { senderId: user.sub, content: newMessage },
         { headers: { Authorization: `Bearer ${token}` } }
       );

@@ -5,6 +5,7 @@ import { FaSearch, FaShoppingCart, FaHeart, FaBars, FaUser, FaTimes, FaEnvelope 
 import { useLocation, useNavigate } from 'react-router-dom';
 import styles from './Header.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
+import { useEffect, useCallback } from 'react';
 
 const Header = () => {
     const [showCategoriesPopup, setShowCategoriesPopup] = useState(false);

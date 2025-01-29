@@ -15,7 +15,7 @@ const MessagesPage = () => {
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
-  const BACKEND_URL = 'http://localhost:8080'; // Update this if your backend runs elsewhere
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL; // Update this if your backend runs elsewhere
 
   const userCache = useRef({}); // Initialize an empty cache
   const messagesEndRef = useRef(null); // Ref for auto-scrolling
