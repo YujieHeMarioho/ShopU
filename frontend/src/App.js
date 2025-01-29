@@ -15,10 +15,15 @@ import Profile from './Components/Pages/Profile/Profile';
 import SocialFeed from './Components/Pages/Feed/SocialFeed';
 import PrivateRoute from './Components/Common/PrivateRoute';
 import CreateListingPage from './Components/Pages/CommonPages/CreateListingPage';
+import EditImage from './Components/Pages/Feed/EditImage';
+import PostDetails from './Components/Pages/Feed/PostDetails';
 import Friends from './Components/Pages/Friends/Friends';
+import BecomeASeller from './Components/Pages/SellerPage/becomeASeller';
 import { AuthenticationGuard } from "./Components/authentication-guard";
 import { useAuth0 } from '@auth0/auth0-react';
 import CheckOut from './Components/Pages/CheckOut/CheckOut'; // Import CheckOut page
+import MessagesPage from './Components/Pages/MessagesPage/MessagesPage';
+import ChatContent from './Components/Pages/ChatContent/ChatContent';
 
 function App() {
   const { loginWithRedirect, logout, user, isAuthenticated } = useAuth0();
@@ -46,9 +51,15 @@ function App() {
         <Route path="/friends" element={<AuthenticationGuard component={Friends} />} />
         <Route path="/community" element={<AuthenticationGuard component={Communities} />} />
         <Route path="/profile" element={<AuthenticationGuard component={Profile} />} />
+        <Route path="/edit-image" element={<AuthenticationGuard component={EditImage} />} />
+        <Route path="/post-details" element={<AuthenticationGuard component={PostDetails} />} />
+        <Route path="/Become A Seller" element={<BecomeASeller />} />
         
         {/* New Checkout Page */}
         <Route path="/cart" element={<AuthenticationGuard component={CheckOut} />} />
+        <Route path="/messages" element={<AuthenticationGuard component={MessagesPage} />} />
+        <Route path="/chat/:conversation_id" element={<ChatContent />} />
+
       </Routes>
 
       {/* Footer */}

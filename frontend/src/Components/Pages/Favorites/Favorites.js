@@ -116,7 +116,7 @@ export const Favorites = () => {
     const fetchListings = async () => {
       try {
         const token = await getAccessTokenSilently();
-        const response = await fetch(`http://localhost:8080/api/listings/favorites/`,{
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings/favorites/`,{
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,

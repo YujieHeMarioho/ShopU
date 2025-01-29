@@ -11,6 +11,7 @@
   "author": "Yujie He",
   "license": "MIT",
   "dependencies": {
+    "@paypal/react-paypal-js": "^8.8.1",
     "axios": "^1.7.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -19,7 +20,8 @@
     "jwks-rsa": "^3.1.0",
     "jwt-decode": "^4.0.0",
     "multer": "^1.4.5-lts.1",
-    "pg": "^8.13.1"
+    "pg": "^8.13.1",
+    "socket.io": "^4.8.1"
   },
   "devDependencies": {
     "concurrently": "^9.1.0",

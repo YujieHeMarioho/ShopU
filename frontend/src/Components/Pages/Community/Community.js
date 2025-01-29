@@ -26,11 +26,11 @@ const Communities = () => {
             try {
               const token = await getAccessTokenSilently();
                 // Get the current user's ID from the backend
-                //const userResponse = await axios.get(`http://localhost:8080/api/user-id/${user_email}`);
+                //const userResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/user-id/${user_email}`);
                 //setUserInfo(userResponse.data);
 
                 // Fetch communities for the current user
-                const communityResponse = await axios.get(`http://localhost:8080/api/communities`,
+                const communityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities`,
                   {
                     headers: {
                       'Authorization': `Bearer ${token}`,
@@ -151,7 +151,7 @@ const Communities = () => {
     }
     try {
       const token = await getAccessTokenSilently();
-      const response = await axios.post('http://localhost:8080/api/communities', {
+      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/communities`, {
         community_id: newCommunityId
       }, 
       {    
@@ -164,7 +164,7 @@ const Communities = () => {
       setNewCommunityId(''); // Clear input field
 
       // Fetch the updated communities list with details
-      const communityResponse = await axios.get(`http://localhost:8080/api/communities`,
+      const communityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -191,7 +191,7 @@ const Communities = () => {
   const leaveCommunity = async (communityId) => {
     try {
       const token = await getAccessTokenSilently();
-      const response = await axios.delete(`http://localhost:8080/api/communities/${communityId}`,
+      const response = await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/communities/${communityId}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -201,7 +201,7 @@ const Communities = () => {
       alert(response.data.message);
   
       // Fetch the updated communities list with details
-      const communityResponse = await axios.get(`http://localhost:8080/api/communities`,
+      const communityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
