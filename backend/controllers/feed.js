@@ -147,25 +147,67 @@ export const getUserFeedPosts = async (req, res) => {
   }
 };
 
-// Create a new feed post
+// Create a new feed post  (TODO Need to handle linking to items)
 export const createFeedPost = async (req, res) => {
-  const { title, content, imageUrl } = req.body;
+  const { title, content, tags, imageUrl } = req.body;
 
   try {
     const userId = extractUserIdFromToken(req); // Extract user_id from token
-    const query = `
+
+    // Begin a transaction
+    await pool.query("BEGIN");
+
+    // Insert the post into the feed_posts table
+    const postQuery = `
       INSERT INTO feed_posts (title, content, image_url, user_id, date_created)
       VALUES ($1, $2, $3, $4, NOW())
-      RETURNING *;
+      RETURNING post_id;
     `;
+    const postResult = await pool.query(postQuery, [title, content, imageUrl, userId]);
+    const postId = postResult.rows[0].post_id;
 
-    const result = await pool.query(query, [title, content, imageUrl, userId]);
-    res.status(201).json(result.rows[0]);
+    // Split tags and handle each tag
+    const tagList = tags.split(",").map(tag => tag.trim()); // Split and trim tags
+    for (const tag of tagList) {
+      // Insert the tag into the tags table if it doesn't already exist
+      const tagQuery = `
+        INSERT INTO tags (tag_name)
+        VALUES ($1)
+        ON CONFLICT (tag_name) DO NOTHING
+        RETURNING tag_id;
+      `;
+      const tagResult = await pool.query(tagQuery, [tag]);
+
+      // Get the tag_id (either from the insert or by querying the existing tag)
+      let tagId;
+      if (tagResult.rows.length > 0) {
+        tagId = tagResult.rows[0].tag_id;
+      } else {
+        const existingTagQuery = `SELECT tag_id FROM tags WHERE tag_name = $1`;
+        const existingTagResult = await pool.query(existingTagQuery, [tag]);
+        tagId = existingTagResult.rows[0].tag_id;
+      }
+
+      // Associate the tag with the post in post_tags
+      const postTagQuery = `
+        INSERT INTO post_tags (post_id, tag_id)
+        VALUES ($1, $2);
+      `;
+      await pool.query(postTagQuery, [postId, tagId]);
+    }
+
+    // Commit the transaction
+    await pool.query("COMMIT");
+
+    res.status(201).json({ post_id: postId, message: "Post created successfully!" });
   } catch (err) {
-    console.error('Error creating feed post:', err);
-    res.status(500).json({ error: 'Database error' });
+    // Rollback the transaction in case of an error
+    await pool.query("ROLLBACK");
+    console.error("Error creating feed post:", err);
+    res.status(500).json({ error: "Database error" });
   }
 };
+
 
 // Delete a feed post by ID
 export const deleteFeedPost = async (req, res) => {

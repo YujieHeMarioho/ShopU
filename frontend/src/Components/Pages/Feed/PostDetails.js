@@ -1,14 +1,16 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Form, Button } from "react-bootstrap";
+import { useAuth0 } from "@auth0/auth0-react";
 
 function PostDetails() {
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [content, setContent] = useState("");
   const [link, setLink] = useState("");
   const [tags, setTags] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, isAuthenticated, getAccessTokenSilently, isLoading: authLoading } = useAuth0();
 
   // Retrieve the edited image from the previous step
   const { image } = location.state || {};
@@ -17,18 +19,20 @@ function PostDetails() {
     // Prepare the data to send
     const postData = {
       title,
-      description,
+      content,
       link,
       tags,
       image, // Include the image URL or base64 string
     };
 
     try {
+      const token = await getAccessTokenSilently();
       // Send the post data to the backend using fetch
       const response = await fetch("http://localhost:8080/api/feed/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(postData), // Convert the post data to JSON
       });
@@ -79,8 +83,8 @@ function PostDetails() {
           <Form.Control
             as="textarea"
             rows={3}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
           />
         </Form.Group>
         <Form.Group className="mb-3">

@@ -51,7 +51,7 @@ function App() {
         <Route path="/profile" element={<AuthenticationGuard component={Profile} />} />
         <Route path="/edit-image" element={<AuthenticationGuard component={EditImage} />} />
         <Route path="/post-details" element={<AuthenticationGuard component={PostDetails} />} />
-        <Route path="/become-a-seller" element={<BecomeASeller />} />
+        <Route path="/Become A Seller" element={<BecomeASeller />} />
         
         {/* New Checkout Page */}
         <Route path="/cart" element={<AuthenticationGuard component={CheckOut} />} />
