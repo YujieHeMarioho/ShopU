@@ -12,8 +12,7 @@ export const CommunityCardGrid = ({ communities }) => {
               image={community.image}
               title={community.title}
               description={community.description}
-              onCardClick={() => openCommunityDetails(community)}
-              onFavoriteClick={() => saveToJoined(community)}
+              communityId={community.communityId}
             />
 
           </Col>
@@ -21,13 +20,4 @@ export const CommunityCardGrid = ({ communities }) => {
       </Row>
     </Container>
   );
-};
-
-// Example functions (define these in your component or context)
-const openCommunityDetails = (listing) => {
-  // Logic to open a modal or navigate to a details page
-};
-
-const saveToJoined = (listing) => {
-  // Logic to save the item to favorites
 };

@@ -27,7 +27,7 @@ const SocialFeed = () => {
         try {
             const token = await getAccessTokenSilently();
 
-            const response = await fetch('${process.env.REACT_APP_BACKEND_URL}/api/feed', {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed`, {
                 headers: {
                   'Authorization': `Bearer ${token}`,
                 },
