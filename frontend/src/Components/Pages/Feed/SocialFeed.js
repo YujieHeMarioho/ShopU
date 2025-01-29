@@ -1,242 +1,300 @@
-import React, { useState } from 'react';
-import { CardGrid, SocialCard } from '../../Common';
-import styles from './SocialFeed.module.css'; // Import CSS module for styling
-import { Button, Badge } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import styles from './SocialFeed.module.css';
+import { Button } from 'react-bootstrap';
+import { SocialCard } from '../../Common'; // Import the SocialCard component
+import { useAuth0 } from '@auth0/auth0-react';
+import { Route, Routes } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
+import { Modal } from 'react-bootstrap';
 
-// Dummy data for the social feed
-const dummyPosts = [
-  {
-    id: 1,
-    author: 'Alice',
-    profilePic: 'https://via.placeholder.com/50',
-    title: 'Exploring the mountains today! 🏔️',
-    description: 'Had an amazing hike in the mountains with stunning views!',
-    image: 'https://via.placeholder.com/400x300',
-    likes: 25,
-    shares: 5,
-    isLiked: false,
-    isShared: false,
-    tags: ['adventure', 'hiking', 'nature'],
-  },
-  {
-    id: 2,
-    author: 'Bob',
-    profilePic: 'https://via.placeholder.com/50',
-    title: 'Look at this cute puppy I found! 🐶',
-    description: 'This little puppy is the cutest thing ever!',
-    image: 'https://via.placeholder.com/400x300',
-    likes: 40,
-    shares: 8,
-    isLiked: false,
-    isShared: false,
-    tags: ['pets', 'dogs', 'cute'],
-  },
-  {
-    id: 3,
-    author: 'Carol',
-    profilePic: 'https://via.placeholder.com/50',
-    title: 'Had a blast at the beach today! 🌊',
-    description: 'The sun, the sea, and the sand – perfect day!',
-    image: 'https://via.placeholder.com/400x300',
-    likes: 18,
-    shares: 2,
-    isLiked: false,
-    isShared: false,
-    tags: ['beach', 'summer', 'sunshine'],
-  },
-  {
-    id: 4,
-    author: 'David',
-    profilePic: 'https://via.placeholder.com/50',
-    title: 'Just baked some homemade cookies! 🍪',
-    description: 'Fresh, warm, and delicious cookies just out of the oven!',
-    image: 'https://via.placeholder.com/400x300',
-    likes: 30,
-    shares: 4,
-    isLiked: false,
-    isShared: false,
-    tags: ['baking', 'cookies', 'food'],
-  },
-  {
-    id: 5,
-    author: 'Emma',
-    profilePic: 'https://via.placeholder.com/50',
-    title: 'New art project completed! 🎨',
-    description: 'Finished my latest painting. It turned out beautifully!',
-    image: 'https://via.placeholder.com/400x300',
-    likes: 50,
-    shares: 10,
-    isLiked: false,
-    isShared: false,
-    tags: ['art', 'painting', 'creativity'],
-  },
-  {
-    id: 6,
-    author: 'Frank',
-    profilePic: 'https://via.placeholder.com/50',
-    title: 'Workout complete! Feeling great! 💪',
-    description: 'Just finished an intense workout session. Feeling stronger!',
-    image: 'https://via.placeholder.com/400x300',
-    likes: 45,
-    shares: 6,
-    isLiked: false,
-    isShared: false,
-    tags: ['fitness', 'workout', 'health'],
-  },
-  {
-    id: 7,
-    author: 'Grace',
-    profilePic: 'https://via.placeholder.com/50',
-    title: 'Trying out a new recipe for dinner. 🍝',
-    description: 'Cooking up something delicious for dinner tonight!',
-    image: 'https://via.placeholder.com/400x300',
-    likes: 20,
-    shares: 3,
-    isLiked: false,
-    isShared: false,
-    tags: ['cooking', 'recipes', 'food'],
-  },
-  {
-    id: 8,
-    author: 'Hannah',
-    profilePic: 'https://via.placeholder.com/50',
-    title: 'Morning yoga session by the lake. 🧘',
-    description: 'Started my day with some peaceful yoga by the lake.',
-    image: 'https://via.placeholder.com/400x300',
-    likes: 35,
-    shares: 7,
-    isLiked: false,
-    isShared: false,
-    tags: ['yoga', 'wellness', 'mindfulness'],
-  },
-];
+const SocialFeed = () => {
+    const [feed, setFeed] = useState([]);
+    const [userFeed, setUserFeed] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [newPost, setNewPost] = useState({ title: '', content: '', imageUrl: '' });
+    const [editPost, setEditPost] = useState(null);
+    const [isPostLoading, setIsPostLoading] = useState(false);
+    const [showModal, setShowModal] = useState(false); // State to toggle the modal
+    const [selectedImage, setSelectedImage] = useState(null); // State for uploaded image
+    const [isGridLayout, setIsGridLayout] = useState(true); // State to toggle layout
+    const { user, isAuthenticated, getAccessTokenSilently, isLoading: authLoading } = useAuth0();
+    const navigate = useNavigate();
+
+    const userId = isAuthenticated ? user?.sub : null;
+
+    const fetchFeed = async () => {
+        try {
+            const token = await getAccessTokenSilently();
+
+            const response = await fetch('${process.env.REACT_APP_BACKEND_URL}/api/feed', {
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                },
+              });
+            if (!response.ok) throw new Error(`Failed to fetch feed: ${response.statusText}`);
+            const rawFeed = await response.json();
+            setFeed(rawFeed);
+            console.log('Raw Feed:', rawFeed);
+        } catch (err) {
+            console.error('Error fetching feed:', err);
+            setError('Failed to load feed. Please try again later.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchUserFeed = async () => {
+        if (!userId) return;
+
+        try {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/user/${userId}`);
+            if (!response.ok) throw new Error(`Failed to fetch user feed: ${response.statusText}`);
+            const rawUserFeed = await response.json();
+            setUserFeed(rawUserFeed);
+        } catch (err) {
+            console.error('Error fetching user feed:', err);
+        }
+    };
+
+    const createFeedPost = async () => {
+        handleCreateNewPost();
 
 
-export const SocialFeed = () => {
-  const [posts, setPosts] = useState(dummyPosts);
-  const [isGridLayout, setIsGridLayout] = useState(true); // State to toggle layout
-  const navigate = useNavigate();
+        // setIsPostLoading(true);
+        // const uId = userId;
+        // try {
+        //     const response = await fetch('${process.env.REACT_APP_BACKEND_URL}/api/feed/create', {
+        //         method: 'POST',
+        //         headers: { 'Content-Type': 'application/json' },
+        //         body: JSON.stringify({ ...newPost, uId }),
+        //     });
+        //     if (!response.ok) throw new Error('Failed to create post');
+        //     const createdPost = await response.json();
+        //     setFeed((prev) => [createdPost, ...prev]);
+        //     setUserFeed((prev) => [createdPost, ...prev]);
+        //     setNewPost({ title: '', content: '', imageUrl: '' });   // TODO: Update method with fillable form
+        // } catch (err) {
+        //     console.error('Error creating post:', err);
+        // } finally {
+        //     setIsPostLoading(false);
+        // }
+    };
 
-  // Handle liking a post
-  const handleLike = (postId) => {
-    setPosts((prevPosts) =>
-      prevPosts.map((post) =>
-        post.id === postId
-          ? {
-              ...post,
-              isLiked: !post.isLiked,
-              likes: post.isLiked ? post.likes - 1 : post.likes + 1,
-            }
-          : post
-      )
-    );
-  };
+    const handlePostOperation = async (postId, method, updatedPost = null) => {
+        setIsPostLoading(true);
+        const url = `${process.env.REACT_APP_BACKEND_URL}/api/feed/${postId}`;
+        const options = {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: updatedPost ? JSON.stringify(updatedPost) : null,
+        };
 
-  // Handle sharing a post
-  const handleShare = (postId) => {
-    setPosts((prevPosts) =>
-      prevPosts.map((post) =>
-        post.id === postId && !post.isShared
-          ? {
-              ...post,
-              isShared: true,
-              shares: post.shares + 1,
-            }
-          : post
-      )
-    );
-  };
+        try {
+            const response = await fetch(url, options);
+            if (!response.ok) throw new Error(`Failed to ${method.toLowerCase()} post`);
+            const updatedData = await response.json();
+            setFeed((prev) => prev.map((post) => (post.post_id === postId ? updatedData : post)));
+            setUserFeed((prev) => prev.map((post) => (post.post_id === postId ? updatedData : post)));
+            setEditPost(null);
+        } catch (err) {
+            console.error('Error updating post:', err);
+        } finally {
+            setIsPostLoading(false);
+        }
+    };
 
-  // Navigate to marketplace with filtered search by tag
-  const handleTagClick = (tag) => {
-    navigate(`/marketplace?tag=${encodeURIComponent(tag)}`);
-  };
+    const handleLike = async (postId, currentLikes, isLiked) => {
+        // Optimistic UI update for likes count
+        setFeed((prev) =>
+            prev.map((post) =>
+                post.post_id === postId
+                    ? { ...post, likes: isLiked ? currentLikes + 1 : currentLikes - 1, is_liked: !isLiked }
+                    : post
+            )
+        );
 
-  // Map posts into the format for CardGrid
-  const formattedPosts = posts.map((post) => ({
+        try {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/like/${postId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_liked: !isLiked }),
+            });
+            if (!response.ok) throw new Error('Failed to like post');
+            const updatedData = await response.json();
+            setFeed((prev) =>
+                prev.map((post) => (post.post_id === postId ? updatedData : post))
+            );
+        } catch (err) {
+            console.error('Error liking post:', err);
+        }
+    };
+
+    const shareFeedPost = async (postId) => {
+        try {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/share/${postId}`, { method: 'POST' });
+            if (!response.ok) throw new Error('Failed to share post');
+            alert('Post shared successfully!');
+        } catch (err) {
+            console.error('Error sharing post:', err);
+        }
+    };
+
+    const toggleLayout = () => {
+        setIsGridLayout((prev) => !prev); // Toggle between grid and scroll view
+    };
+
+    const handleCreateNewPost = () => {
+        setShowModal(true); // Show the modal when the button is clicked
+      };
     
-    image: post.image,
-    title: post.title,
-    description: (
-      <>
-        <p>{post.description}</p>
-      </>
-    ),
-    customFooter: (
-      <div className={styles.postFooter}>
-        <Button
-          variant={post.isLiked ? 'danger' : 'outline-danger'}
-          onClick={() => handleLike(post.id)}
-          className={styles.likeButton}
-        >
-          {post.isLiked ? 'Unlike' : 'Like'}
-        </Button>
-        <span className={styles.likesCount}>{post.likes} Likes</span>
+      const handleCloseModal = () => {
+        setShowModal(false);
+        setSelectedImage(null);
+      };
+    
+      const proceedToEditImage = () => {
+        setShowModal(false);
+        navigate("/edit-image", { state: { image: selectedImage } });
+      };
+    
+      const handleImageChange = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            setSelectedImage(reader.result); // Set image as a base64 data URL
+          };
+          reader.readAsDataURL(file);
+        }
+      };
 
-        <Button
-          variant={post.isShared ? 'success' : 'outline-success'}
-          onClick={() => handleShare(post.id)}
-          className={styles.shareButton}
-        >
-          {post.isShared ? 'Shared' : 'Share'}
-        </Button>
-        <span className={styles.sharesCount}>{post.shares} Shares</span>
-      </div>
-    ),
-    likes: post.likes,
-    shares: post.shares,
-    isLiked: post.isLiked,
-    isShared: post.isShared,
-    tags: post.tags
-  }));
+    // useEffect(() => {
+    //     if (userId) {
+    //         fetchUserFeed();  // Fetch user feed if user is logged in
+    //     } else {
+    //         fetchFeed();      // Fetch general feed if user is not logged in
+    //     }
+    // }, [userId]);
+    useEffect(()=>{
+        fetchFeed();
+    })
+    
 
-  return (
-    <div className={styles.socialFeedContainer}>
-      {/* Create Post Button */}
-      <div className={styles.createPostWrapper}>
-        <Button
-          onClick={() => navigate('/create-post')}
-          className={styles.createPostButton}
-        >
-          Create Post
-        </Button>
-      </div>
+    if (loading) return <p>Loading feed...</p>;
+    if (error) return <p>{error}</p>;
 
-      {/* Toggle Layout Button */}
-      <div className={styles.layoutToggleButton}>
-        <Button
-          onClick={() => setIsGridLayout(!isGridLayout)}
-          variant="outline-primary"
-        >
-          {isGridLayout ? 'Switch to Scrolling Layout' : 'Switch to Grid Layout'}
-        </Button>
-      </div>
+    return (
+        <div className={styles.socialFeedContainer}>
+            <h2>Social Feed</h2>
+            
+            {/* Toggle Layout Button */}
+            <div className={styles.layoutToggleButton}>
+                <Button
+                    onClick={toggleLayout}
+                    variant="outline-primary"
+                >
+                    {isGridLayout ? 'Switch to Scrolling Layout' : 'Switch to Grid Layout'}
+                </Button>
+            </div>
 
-      {/* Card Grid for Posts */}
-      {isGridLayout ? (
-        <CardGrid listings={formattedPosts} variant="socialFeed" />
-      ) : (
-        <div className="single-column-layout">
-          {posts.map((post) => (
-            <SocialCard
-              key={post.id}
-              image={post.image}
-              title={post.title}
-              description={post.description}
-              profilePic={post.profilePic}
-              author={post.author}
-              initialLikes={post.likes}
-              initialShares={post.shares}
-              isLiked={post.isLiked}
-              isShared={post.isShared}
-              tags={post.tags}
-            />
-          ))}
+            <Button onClick={createFeedPost} variant="outline-primary"> Create new Post
+
+            </Button>
+
+            {/* Display the feed */}
+            <div className={`${styles.feedContainer} ${isGridLayout ? styles.gridView : styles.scrollView}`}>
+                {feed.length === 0 ? (
+                    <p>No posts available.</p>
+                ) : (
+                    feed.map((post) => (
+                        <div key={post.post_id} className={styles.gridItem}> 
+                            <SocialCard
+                                post_id={post.post_id}                // Directly passing post_id
+                                image={post.image_url}                 // Passing image URL
+                                title={post.title}                     // Passing title
+                                description={post.content}             // Passing content as description
+                                profilePic={post.profile_pic_url}      // Passing profile picture URL
+                                author={post.author}                   // Passing author name
+                                initialLikes={post.likes_count}        // Mapping likes_count to initialLikes
+                                initialShares={post.shares}            // Mapping shares to initialShares
+                                isLikedAlready={post.isliked}                 // Check if post already liked by user
+                                tags={post.tags}                       // Passing tags
+                                onLike={() => handleLike(post.post_id, post.likes_count, post.is_liked)} // Handling like action
+                                onShare={() => shareFeedPost(post.post_id)}  // Handling share action
+                            />
+                        </div>
+                    ))
+                )}
+            </div>
+            {/* Modal for Image Upload */}
+            <Modal show={showModal} onHide={handleCloseModal} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title style={{ color: "#000000" }}>New Post</Modal.Title>
+                </Modal.Header>
+                <Modal.Body 
+                    style={{ 
+                    color: "#000000", 
+                    textAlign: "center", 
+                    display: "flex", 
+                    justifyContent: "center", 
+                    flexDirection: "column" 
+                    }}
+                >
+                    <p style={{ marginBottom: "20px" }}>Upload an Image</p>
+                    <div style={{ marginBottom: "20px" }}>
+                    <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleImageChange} 
+                        style={{ display: "inline-block" }} 
+                    />
+                    </div>
+                    {selectedImage && (
+                    <div 
+                        style={{
+                        marginTop: "20px",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        overflow: "visible", // Allow the image to expand without clipping
+                        }}
+                    >
+                        <img
+                        src={selectedImage}
+                        alt="Preview"
+                        style={{
+                            maxWidth: "100%", // Ensures it scales down to fit the width of the modal
+                            maxHeight: "90vh", // Ensures the image doesn't overflow the height of the viewport
+                            width: "auto", // Maintain aspect ratio
+                            height: "auto", // Maintain aspect ratio
+                            borderRadius: "12px",
+                            boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
+                        }}
+                        />
+                    </div>
+                    )}
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={handleCloseModal}>
+                    Cancel
+                    </Button>
+                    <Button
+                    variant="primary"
+                    onClick={proceedToEditImage}
+                    disabled={!selectedImage} // Disable if no image is uploaded
+                    >
+                    Next
+                    </Button>
+                </Modal.Footer>
+                </Modal>
+
+
+
+
+
         </div>
-      )}
-    </div>
-  );
+    );
 };
 
 export default SocialFeed;
