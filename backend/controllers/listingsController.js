@@ -7,7 +7,6 @@ import sharp from 'sharp';
 import dotenv from 'dotenv';
 
 dotenv.config();
-
 const bucketName = process.env.BUCKET_NAME_LISTINGS
 const bucketRegion = process.env.BUCKET_REGION
 const accessKey = process.env.BUCKET_ACCESS_KEY
