@@ -49,19 +49,19 @@ h2 {
 }
 /*TODO ADJUST ACCORDING TO VIEW BASED ON image size*/
 /* Responsive Layout for Grid View */  
-@media (min-width: 1500px) { 
+@media (min-width: 1800px) { 
   .gridView {
-    grid-template-columns: repeat(8, 1fr); /* 8 columns for massive screens */
+    grid-template-columns: repeat(6, 1fr); /* 8 columns for massive screens */
   }
 }
 
-@media (min-width: 1200px) and (max-width: 1499px){
+@media (min-width: 1500px) and (max-width: 1799px){
   .gridView {
     grid-template-columns: repeat(5, 1fr); /* 8 columns for large screens */
   }
 }
 
-@media (max-width: 1199px) and (min-width: 992px) {
+@media (max-width: 1499px) and (min-width: 992px) {
   .gridView {
     grid-template-columns: repeat(4, 1fr); /* 4 columns for medium screens */
   }

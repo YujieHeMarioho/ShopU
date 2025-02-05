@@ -148,9 +148,6 @@ export const SocialCard = ({
         >
           {isFavorited ? <FaHeart /> : <FaRegHeart />}
         </Button>
-        <Button variant="primary" onClick={handleNavigateToItem} className={styles.viewItemButton}>
-          View Item
-        </Button>
       </div>
 
       {alertMessage && <div className={styles.alert}>{alertMessage}</div>}
