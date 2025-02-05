@@ -24,6 +24,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import CheckOut from './Components/Pages/CheckOut/CheckOut'; // Import CheckOut page
 import MessagesPage from './Components/Pages/MessagesPage/MessagesPage';
 import ChatContent from './Components/Pages/ChatContent/ChatContent';
+import AdminDashboard from './Components/Pages/Administration/AdminDashboard';
 
 function App() {
   const { loginWithRedirect, logout, user, isAuthenticated } = useAuth0();
@@ -54,6 +55,7 @@ function App() {
         <Route path="/edit-image" element={<AuthenticationGuard component={EditImage} />} />
         <Route path="/post-details" element={<AuthenticationGuard component={PostDetails} />} />
         <Route path="/Become A Seller" element={<BecomeASeller />} />
+        <Route path="/admin-dashboard" element={<AuthenticationGuard component={AdminDashboard} />} />
         
         {/* New Checkout Page */}
         <Route path="/cart" element={<AuthenticationGuard component={CheckOut} />} />
