@@ -36,16 +36,6 @@ const Footer = () => (
                     <li><a href="#help">Help</a></li>
                 </ul>
             </div>
-
-            {/* Rightmost: Newsletter */}
-            <div className={styles.section}>
-                <h3>Newsletter</h3>
-                <p>Subscribe to our newsletter to stay updated.</p>
-                <form className={styles.newsletterForm}>
-                    <input type="email" placeholder="Enter your email" />
-                    <button type="submit">Subscribe</button>
-                </form>
-            </div>
         </div>
 
         {/* Bottom bar with payment logos */}

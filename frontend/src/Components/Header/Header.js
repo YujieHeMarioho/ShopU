@@ -14,7 +14,8 @@ const Header = () => {
 
     const location = useLocation();
     const navigate = useNavigate();
-    const { loginWithRedirect, logout, isAuthenticated, user, isLoading } = useAuth0();
+    const { loginWithRedirect, logout, getAccessTokenSilently, isAuthenticated, user, isLoading } = useAuth0();
+    const [categories, setCategories] = useState([]); // State to store categories fetched from the API
 
     // Update screen size on mount and resize
     useEffect(() => {
@@ -24,7 +25,7 @@ const Header = () => {
 
         handleResize(); // Initial check
         window.addEventListener('resize', handleResize); // Update on resize
-
+        fetchFilters();
         return () => window.removeEventListener('resize', handleResize); // Cleanup
     }, []);
 
@@ -52,7 +53,28 @@ const Header = () => {
     const getActiveLinkClass = useCallback(
         (path) => (location.pathname === path ? styles.activeLink : ''),
         [location.pathname]
-    );
+    );    
+      // Fetch the most recent listings from the server
+      const fetchFilters = async () => {
+        try {
+          const token = await getAccessTokenSilently();
+          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/filters`,
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+              }
+            }
+          );
+          const rawData = await response.json();
+          
+          // set all the filters with what gets returned
+          setCategories(rawData.categories || []);
+    
+        } catch (error) {
+          console.error('Error fetching filters:', error);
+        }
+      };
+    
 
     return (
         <div className={styles.headerWrapper}>
@@ -124,18 +146,9 @@ const Header = () => {
                 {showCategoriesPopup && (
                     <div className={styles.categoriesPopup}>
                         <ul>
-                            {[
-                                'furniture',
-                                'electronics',
-                                'clothing',
-                                'hobbies',
-                                'family',
-                                'free-stuff',
-                                'services',
-                                'events',
-                            ].map((category) => (
+                            {categories.map((category) => (
                                 <li key={category}>
-                                    <a href={`/${category}`}>{category.replace('-', ' ')}</a>
+                                    <a href={`/MarketPlace?category=${encodeURIComponent(category)}`}>{category}</a>
                                 </li>
                             ))}
                         </ul>
@@ -151,7 +164,6 @@ const Header = () => {
                         'Community',
                         'Resources',
                         'Become A Seller',
-                        'Contact',
                         'Friends',
                     ].map((link) => (
                         <a
@@ -162,11 +174,6 @@ const Header = () => {
                             {link.replace('-', ' ')}
                         </a>
                     ))}
-                </div>
-
-                {/* Contact Info */}
-                <div className={styles.contactPhoneAndText}>
-                    <div className={styles.contactPhone}>Contact Us: (555) 123-4567</div>
                 </div>
 
                 {/* Auth Buttons */}
