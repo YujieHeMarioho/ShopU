@@ -1,6 +1,6 @@
 // MessagesPage.js
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import axios from 'axios';
 import './MessagesPage.css';
@@ -15,19 +15,37 @@ const MessagesPage = () => {
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
-  const BACKEND_URL = 'http://localhost:8080'; // Update this if your backend runs elsewhere
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL; // Update this if your backend runs elsewhere
 
-  // Function to fetch a user's details by Auth0 ID
+  const userCache = useRef({}); // Initialize an empty cache
+  const messagesEndRef = useRef(null); // Ref for auto-scrolling
+
+  // Function to fetch a user's details by Auth0 ID with caching
   const fetchUserDetails = async (userId, token) => {
+    if (userCache.current[userId]) {
+      return userCache.current[userId];
+    }
     try {
       const response = await axios.get(`${BACKEND_URL}/api/user/${encodeURIComponent(userId)}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      return response.data.username || userId; // Fallback to ID if username is missing
+      const userData = {
+        username: response.data.username || userId, // Fallback to ID if username is missing
+        picture: response.data.picture || 'https://via.placeholder.com/40', // Fallback image
+      };
+      userCache.current[userId] = userData; // Cache the result
+      return userData;
     } catch (err) {
       console.error(`Error fetching user details for ${userId}:`, err);
-      return userId; // Fallback to ID in case of error
+      const fallbackData = { username: userId, picture: 'https://via.placeholder.com/40' };
+      userCache.current[userId] = fallbackData; // Cache the fallback
+      return fallbackData;
     }
+  };
+
+  // Function to scroll to the bottom of the messages
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   // Fetch conversations and associated usernames
@@ -47,33 +65,36 @@ const MessagesPage = () => {
 
         // Step 2: Identify the other participant's Auth0 ID in each conversation
         const otherUserIds = conversationsData.map((conv) =>
-          conv.user1_id === user.sub ? conv.user2_id : conv.user1_id
+          conv.user1_id.toLowerCase() === user.sub.toLowerCase() ? conv.user2_id : conv.user1_id
         );
 
         // Step 3: Remove duplicate IDs to optimize API calls
         const uniqueOtherUserIds = [...new Set(otherUserIds)];
 
-        // Step 4: Fetch usernames for all unique other user IDs
-        const usernamesPromises = uniqueOtherUserIds.map((id) => fetchUserDetails(id, token));
-        const usernames = await Promise.all(usernamesPromises);
+        // Step 4: Fetch usernames and profile pictures for all unique other user IDs
+        const userDetailsPromises = uniqueOtherUserIds.map((id) => fetchUserDetails(id, token));
+        const userDetails = await Promise.all(userDetailsPromises);
 
-        // Step 5: Create a mapping from user ID to username
-        const userIdToUsernameMap = {};
+        // Step 5: Create a mapping from user ID to user details
+        const userIdToDetailsMap = {};
         uniqueOtherUserIds.forEach((id, index) => {
-          userIdToUsernameMap[id] = usernames[index];
+          userIdToDetailsMap[id] = userDetails[index];
         });
 
         // Step 6: Enhance conversations with the other participant's username and profile picture
         const enhancedConversations = conversationsData.map((conv) => {
-          const otherUserId = conv.user1_id === user.sub ? conv.user2_id : conv.user1_id;
-          const otherUsername = userIdToUsernameMap[otherUserId] || otherUserId; // Fallback to ID if username is missing
-          const otherProfilePicture = conv.user1_id === user.sub ? conv.user2_picture : conv.user1_picture; // Assuming profile pictures are included
+          const otherUserId =
+            conv.user1_id.toLowerCase() === user.sub.toLowerCase() ? conv.user2_id : conv.user1_id;
+          const { username, picture } = userIdToDetailsMap[otherUserId] || {
+            username: 'Unknown User',
+            picture: 'https://via.placeholder.com/40',
+          };
 
           return {
             ...conv,
             otherUserId,
-            otherUsername,
-            otherProfilePicture, // Include profile picture
+            otherUsername: username,
+            otherProfilePicture: picture,
           };
         });
 
@@ -107,6 +128,10 @@ const MessagesPage = () => {
         );
         setMessages(response.data);
         setError(null); // Reset error on success
+        // Scroll to bottom after fetching messages
+        setTimeout(() => {
+          scrollToBottom();
+        }, 100);
       } catch (err) {
         console.error('Error fetching messages:', err);
         setError('Failed to load messages. Please try again later.');
@@ -117,6 +142,11 @@ const MessagesPage = () => {
 
     fetchMessages();
   }, [selectedConversation, getAccessTokenSilently]);
+
+  // Scroll to bottom whenever messages change
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   // Handle sending a new message
   const handleSendMessage = async () => {
@@ -132,9 +162,21 @@ const MessagesPage = () => {
       setMessages((prev) => [...prev, response.data]);
       setNewMessage(''); // Clear input field
       setError(null); // Reset error on success
+      // Scroll to bottom after sending a message
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100);
     } catch (err) {
       console.error('Error sending message:', err);
       setError('Failed to send message. Please try again.');
+    }
+  };
+
+  // Handle pressing "Enter" key to send message
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { // Allow Shift+Enter for new lines
+      e.preventDefault();
+      handleSendMessage();
     }
   };
 
@@ -145,7 +187,7 @@ const MessagesPage = () => {
         <h3>Conversations</h3>
         {error && <p className="error-message">{error}</p>}
         {isLoadingConversations ? (
-          <p>Loading conversations...</p>
+          <div className="spinner">Loading conversations...</div>
         ) : conversations.length === 0 ? (
           <p>No conversations found. Start chatting with your friends!</p>
         ) : (
@@ -163,7 +205,7 @@ const MessagesPage = () => {
                 <div className="conversation-info">
                   <img
                     src={conversation.otherProfilePicture || 'https://via.placeholder.com/40'}
-                    alt={conversation.otherUsername}
+                    alt={`Avatar of ${conversation.otherUsername}`}
                     className="conversation-avatar"
                   />
                   <div>
@@ -183,25 +225,30 @@ const MessagesPage = () => {
           <>
             <h3>Chat with {selectedConversation.otherUsername}</h3>
             {isLoadingMessages ? (
-              <p>Loading messages...</p>
+              <div className="spinner">Loading messages...</div>
             ) : (
               <div className="messages">
-                {messages.map((message) => (
-                  <div
-                    key={message.message_id}
-                    className={message.sender_id === user.sub ? 'sent' : 'received'}
-                  >
-                    <div className="message-bubble">
-                      <p>{message.content}</p>
-                      <span className="message-time">
-                        {new Date(message.created_at).toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </span>
+                {messages.map((message) => {
+                  const isSent = message.sender_id.toLowerCase() === user.sub.toLowerCase();
+                  return (
+                    <div
+                      key={message.message_id}
+                      className={isSent ? 'sent' : 'received'}
+                    >
+                      <div className="message-bubble">
+                        <p>{message.content}</p>
+                        <span className="message-time">
+                          {new Date(message.created_at).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
+                {/* Dummy div to scroll into view */}
+                <div ref={messagesEndRef} />
               </div>
             )}
             <div className="message-input">
@@ -210,12 +257,7 @@ const MessagesPage = () => {
                 placeholder="Type a message..."
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSendMessage();
-                  }
-                }}
+                onKeyDown={handleKeyPress}
               />
               <button onClick={handleSendMessage}>Send</button>
             </div>
