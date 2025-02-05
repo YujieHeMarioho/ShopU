@@ -1,9 +1,15 @@
 // pool.js
 import pkg from 'pg';
 import dotenv from 'dotenv';
+import { S3Client } from '@aws-sdk/client-s3';
 dotenv.config();
 
 const { Pool } = pkg;
+
+
+const bucketRegion = process.env.BUCKET_REGION
+const accessKey = process.env.BUCKET_ACCESS_KEY
+const secretAccessKey = process.env.BUCKET_SECRET_KEY
 
 const pool = new Pool({
     user: process.env.DB_USER,
@@ -16,4 +22,12 @@ const pool = new Pool({
     }
 });
 
-export default pool;
+const s3 = new S3Client({
+    region: bucketRegion,
+    credentials: {
+      accessKeyId: accessKey,
+      secretAccessKey: secretAccessKey
+    }
+  });
+
+export { pool, s3 };

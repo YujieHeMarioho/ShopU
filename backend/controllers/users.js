@@ -1,4 +1,4 @@
-import pool from '../pool.js';
+import { pool } from '../pool.js'; 
 import axios from 'axios';
 import qs from 'qs';
 import { jwtDecode } from "jwt-decode";
