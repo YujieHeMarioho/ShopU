@@ -1,16 +1,16 @@
-import { s3, pool } from '../pool.js';
+import { s3, pool, buckets } from '../pool.js';
 import { jwtDecode } from "jwt-decode";
 import { PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
 import sharp from 'sharp';
 
-const bucketName = process.env.BUCKET_NAME_COMMUNITES
+const bucketName = buckets.community;
 
 //get communities for user
 export const getUserCommunities = async (req, res) => {
     const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
-    let user_id;
+    let user_id;  
     try {
         const decodedToken = jwtDecode(token); // Decode the token
         user_id = decodedToken.sub;
@@ -19,18 +19,44 @@ export const getUserCommunities = async (req, res) => {
         return res.status(401).json({ message: 'Invalid token' });
     }
 
-    const query = 'SELECT * FROM public.communities AS comms JOIN public.community_members AS mems ON comms.community_id = mems.community_id WHERE mems.user_id = $1';
+    const query = `
+    SELECT comms.community_id, comms.name, comms.description, comm_img.file_key
+    FROM public.communities AS comms
+    JOIN public.community_members AS mems ON comms.community_id = mems.community_id
+    LEFT JOIN public.community_images AS comm_img ON comms.community_id = comm_img.community_id
+    WHERE mems.user_id = $1;`;
+
     try {
         const result = await pool.query(query, [user_id]);
-        const communities = result.rows.map(row => ({
-            user_id: row.user_id,
-            community_id: row.community_id,
-            name: row.name,
-            description: row.description,
-            joined_at: row.joined_at,
-          }));
-
-        res.status(200).json(communities);
+        // Loop through each community and generate signed URLs for the image file_key
+        const communitiesWithUrls = await Promise.all(
+            result.rows.map(async (community) => {
+            // Generate a pre-signed URL for the community's image file_key (if it exists)
+            let imageUrl = null;
+            if (community.file_key) {
+                const command = new GetObjectCommand({
+                Bucket: bucketName,
+                Key: community.file_key, // The file_key from the community_images table
+                });
+        
+                // Generate the signed URL
+                imageUrl = await getSignedUrl(s3, command, { expiresIn: 86400 }); // URL expires in 1 day
+            }
+        
+            // Return the community with the signed URL for the image (if it exists)
+            return {
+                user_id: community.user_id,
+                community_id: community.community_id,
+                name: community.name,
+                description: community.description,
+                joined_at: community.joined_at,
+                imageUrl: imageUrl, // Add image URL to the community data
+            };
+            })
+        );
+        
+        // Return the response with the communities and their image URLs
+        res.status(200).json(communitiesWithUrls);
     } catch (err) {
         console.error('Error running query:', err);
         res.status(500).json({ error: 'Database error' });
@@ -49,16 +75,44 @@ export const getAllCommunities = async (req, res) => {
         return res.status(401).json({ message: 'Invalid token' });
     }
 
-    const query = 'SELECT DISTINCT comms.community_id, comms.name, comms.description FROM public.communities as comms LEFT OUTER JOIN public.community_members AS mems ON comms.community_id = mems.community_id WHERE mems.user_id != $1 OR mems.user_id IS NULL'
+    const query = `
+        SELECT DISTINCT comms.community_id, comms.name, comms.description, comm_img.file_key 
+        FROM public.communities AS comms
+        LEFT OUTER JOIN public.community_members AS mems 
+        ON comms.community_id = mems.community_id
+        LEFT OUTER JOIN public.community_images AS comm_img
+        ON comms.community_id = comm_img.community_id
+        WHERE mems.user_id != $1 OR mems.user_id IS NULL;`;
+
     try {
         const result = await pool.query(query, [user_id]); //user_id
-        const communities = result.rows.map(row => ({
-            community_id: row.community_id,
-            name: row.name,
-            description: row.description,
-          }));
 
-        res.status(200).json(communities);
+        // Loop through each community and generate signed URLs for the image file_key
+        const communitiesWithUrls = await Promise.all(
+            result.rows.map(async (community) => {
+            // Generate a pre-signed URL for the community's image file_key (if it exists)
+            let imageUrl = null;
+            if (community.image_key) {
+                const command = new GetObjectCommand({
+                Bucket: bucketName,
+                Key: community.image_key, // The file_key from the community_images table
+                });
+        
+                // Generate the signed URL
+                imageUrl = await getSignedUrl(s3, command, { expiresIn: 86400 }); // URL expires in 1 day
+            }
+
+            return {
+                community_id: community.community_id,
+                name: community.name,
+                description: community.description,
+                imageUrl: imageUrl, 
+            };
+            })
+        );
+        
+        // Return the response with the communities and their image URLs
+        res.status(200).json(communitiesWithUrls);
     } catch (err) {
         console.error('Error running query:', err);
         res.status(500).json({ error: 'Database error' });
@@ -77,27 +131,86 @@ export const getCreatedCommunities = async (req, res) => {
         return res.status(401).json({ message: 'Invalid token' });
     }
 
-    const query = 'SELECT * FROM public.communities AS comms WHERE comms.created_by = $1';
+    const query = `
+    SELECT comms.community_id, comms.name, comms.description, comm_img.file_key
+    FROM public.communities AS comms
+    LEFT JOIN public.community_images AS comm_img ON comms.community_id = comm_img.community_id
+    WHERE comms.created_by = $1;`;
+    
     try {
         const result = await pool.query(query, [user_id]);
-        const communities = result.rows.map(row => ({
-            community_id: row.community_id,
-            name: row.name,
-            description: row.description,
-            created_at: row.created_at,
-          }));
+        // Loop through each community and generate signed URLs for the image file_key
+        const communitiesWithUrls = await Promise.all(
+            result.rows.map(async (community) => {
+            // Generate a pre-signed URL for the community's image file_key (if it exists)
+            let imageUrl = null;
+            if (community.file_key) {
+                const command = new GetObjectCommand({
+                Bucket: bucketName,
+                Key: community.file_key, // The file_key from the community_images table
+                });
+        
+                // Generate the signed URL
+                imageUrl = await getSignedUrl(s3, command, { expiresIn: 86400 }); // URL expires in 1 day
+            }
 
-        res.status(200).json(communities);
+            return {
+                community_id: community.community_id,
+                name: community.name,
+                description: community.description,
+                created_at: community.created_at,
+                imageUrl: imageUrl, // Add image URL to the community data
+            };
+            })
+        );
+        
+        // Return the response with the communities and their image URLs
+        res.status(200).json(communitiesWithUrls);
     } catch (err) {
         console.error('Error running query:', err);
         res.status(500).json({ error: 'Database error' });
     }
 };
 
+//endpoint to upload an image to the bucket
+export const uploadCommunityImage = async (req, res) => {
+  try {
+    if (!req.file){
+        return res.status(400).json({ message: "No files uploaded" });
+    }
+
+    // Preproccess the images
+    const buffer = await sharp(req.file.buffer).resize({ height: 1080, width: 1920, fit: "cover" }).toBuffer();
+
+    //Create unique image names so no collusion within the bucket
+    const fileName = `${uuidv4()}-${req.file.originalname}`;
+
+    //upload params 
+    const params = {
+    Bucket: bucketName,
+    Key: fileName,
+    Body: buffer,
+    ContentType: req.file.mimetype,
+    };
+
+    // Upload to S3
+    await s3.send(new PutObjectCommand(params));
+
+    res.status(200).json({
+      message: "Files uploaded successfully",
+      fileKey: fileName,
+    });
+  } catch (err) {
+    console.error("Error uploading images:", err);
+    res.status(500).json({ message: "Error uploading files", error: err });
+  }
+};
+
 //endpoint to add a community
 export const addCommunity = async (req, res) => {
     const name = req.body.name;
     const description = req.body.description;
+    const image = req.body.imageKey;
     const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
     let user_id;
     let comm_id;
@@ -129,6 +242,18 @@ export const addCommunity = async (req, res) => {
         console.error(err);
         return res.status(500).json({ error: 'Internal Server Error' });
     }
+
+    try{
+        await pool.query(
+            'INSERT INTO community_images (community_id, file_key) VALUES ($1, $2);',
+            [comm_id, image]
+        );
+    }
+    catch(error){
+        console.error(error)
+        return res.status(500).json({ error: 'Internal Server Error' });
+    }
+
     if (comm_id == -1)
         return res.status(500).json({ error: 'Internal Server Error' });
 
@@ -217,4 +342,4 @@ export const leaveCommunity = async (req, res) => {
     }
 };
 
-export default {getAllCommunities, joinCommunity, leaveCommunity };
+export default {getAllCommunities, joinCommunity, leaveCommunity, uploadCommunityImage };
