@@ -33,7 +33,8 @@ export const SocialCard = ({
     }
   }, [user]);
 
-  const handleLikeClick = async () => {
+  const handleLikeClick = async (e) => {
+    e.stopPropagation();
     const newLikeStatus = !isLiked;
     setIsLiked(newLikeStatus);
   
@@ -52,7 +53,8 @@ export const SocialCard = ({
   
   
 
-  const handleShareClick = async () => {
+  const handleShareClick = async (e) => {
+    e.stopPropagation();
     try {
       const token = await getAccessTokenSilently();
       const response = await shareAPICall(post_id, token, user.sub); // Pass user.sub
