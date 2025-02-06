@@ -15,6 +15,10 @@ function ListingModal({ show, onHide, listing }) {
     <Modal show={show} onHide={onHide} dialogClassName='modal' centered>
       <Modal.Header closeButton>
           <Modal.Title className='card-title'>{listing.title}</Modal.Title>
+          <div className='edit-buttons'>
+          <Button variant="secondary">Edit</Button>
+          <Button variant="danger">Delete</Button>
+          </div>
       </Modal.Header>
       <Modal.Body className='modal-body'>
           <div className='carousel-container'>
