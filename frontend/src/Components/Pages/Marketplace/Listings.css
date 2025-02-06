@@ -11,49 +11,55 @@
     box-sizing: border-box;
 }
 
+.modal-header {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.modal-header .edit-buttons{
+	display: flex;
+	gap: 10px; /* Adds spacing between buttons */
+	margin-left: auto; /* Pushes the buttons to the right */
+}
 
 /* Styling the modal body */
 .modal-body {
 	display: flex;
-	/* Use flexbox for horizontal layout */
 	flex-direction: row;
-	/* Horizontal layout: image on the left, content on the right */
 	gap: 20px;
-	/* Space between image and content */
 	align-items: flex-start;
-	/* Align items to the top */
+	width: 100%;
+	height: auto; /* Allow dynamic height */
 }
 
-/* Flexbox for the image */
-.modal-body .image-container {
-	flex: 1;
-	/* Ensure it takes up proportional space */
+/* Image container takes 60% of the modal */
+.modal-body .carousel-container {
+	flex: 60%;
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	max-width: 60%;
 }
 
-/* Styling the image */
+/* Ensure the image scales properly */
 .modal-body .img {
-	width: 100%;
-	/* Image takes up 60% of the modal width */
-	width: 1200px;
-	height: 800px;
-	/* Maintain aspect ratio */
+	width: 100%; /* Image scales with container */
+	height: auto; /* Maintain aspect ratio */
+	max-height: 80vh; /* Prevents image from being too tall */
 	border-radius: 8px;
 	object-fit: cover;
 }
 
-/* Container for content on the right */
+/* Content container takes 40% */
 .modal-body .content {
+	flex: 40%;
 	display: flex;
-	/* Use flexbox for stacking content */
 	flex-direction: column;
-	/* Stack items vertically */
 	gap: 10px;
-	/* Space between each content item */
 	width: 100%;
-	/* Ensure it takes up remaining space */
+	max-width: 40%;
 }
 
 /* Styling for individual content elements */
