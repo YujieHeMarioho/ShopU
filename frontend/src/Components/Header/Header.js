@@ -1,11 +1,11 @@
 // frontend/src/Components/Header/Header.js
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FaSearch, FaShoppingCart, FaHeart, FaBars, FaUser, FaTimes, FaEnvelope } from 'react-icons/fa';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import styles from './Header.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
-import { useEffect, useCallback } from 'react';
+import { PageLoader } from '../Pages/Loading/PageLoader';
 
 const Header = () => {
     const [showCategoriesPopup, setShowCategoriesPopup] = useState(false);
@@ -38,13 +38,9 @@ const Header = () => {
         setShowSidebar(prevState => !prevState);
     }, []);
 
-    const handleAuthAction = useCallback(() => {
-        if (isAuthenticated) {
-            navigate('/profile');
-        } else {
-            loginWithRedirect();
-        }
-    }, [isAuthenticated, loginWithRedirect, navigate]);
+    useEffect(() => {
+        fetchFilters();
+    }, []);
 
     const handleLogout = useCallback(() => {
         logout({ returnTo: window.location.origin });
@@ -53,28 +49,33 @@ const Header = () => {
     const getActiveLinkClass = useCallback(
         (path) => (location.pathname === path ? styles.activeLink : ''),
         [location.pathname]
-    );    
-      // Fetch the most recent listings from the server
-      const fetchFilters = async () => {
+    );
+    // Fetch the most recent listings from the server
+    const fetchFilters = useCallback(async () => {
         try {
-          const token = await getAccessTokenSilently();
-          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/filters`,
-            {
-              headers: {
-                'Authorization': `Bearer ${token}`,
-              }
-            }
-          );
-          const rawData = await response.json();
-          
-          // set all the filters with what gets returned
-          setCategories(rawData.categories || []);
-    
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/filters`);
+            const rawData = await response.json();
+
+            // set all the filters with what gets returned
+            setCategories(rawData.categories || []);
+
         } catch (error) {
-          console.error('Error fetching filters:', error);
+            console.error('Error fetching filters:', error);
         }
-      };
-    
+
+    }, []);
+
+    const handleAuthAction = useCallback(() => {
+        if (isAuthenticated) {
+            navigate('/profile');
+        } else {
+            loginWithRedirect();
+        }
+    }, [isAuthenticated, loginWithRedirect, navigate]);
+
+    if (isLoading) {
+        return <div>{PageLoader}</div>;
+    }
 
     return (
         <div className={styles.headerWrapper}>
@@ -148,7 +149,7 @@ const Header = () => {
                         <ul>
                             {categories.map((category) => (
                                 <li key={category}>
-                                    <a href={`/MarketPlace?category=${encodeURIComponent(category)}`}>{category}</a>
+                                    <Link to={`/marketplace?category=${encodeURIComponent(category)}`}>{category}</Link>
                                 </li>
                             ))}
                         </ul>

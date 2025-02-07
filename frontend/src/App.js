@@ -41,24 +41,24 @@ function App() {
       {/* Routing Setup */}
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/home" element={<Home />} />
+        <Route path="/home" element={<AuthenticationGuard component={Home} />} />
         <Route path="/favorites" element={<AuthenticationGuard component={Favorites} />} />
         <Route path="/marketplace" element={<AuthenticationGuard component={Marketplace} />} />
-        <Route path="/resources" element={<Resources />} />
+        <Route path="/resources" element={<AuthenticationGuard component={Resources} />} />
         <Route path="/feed" element={<AuthenticationGuard component={SocialFeed} />} />
-        <Route path="/create-item-listing" element={<CreateListingPage />} />
-        <Route path="/create-service-listing" element={<CreateListingPage />} />
+        <Route path="/create-item-listing" element={<AuthenticationGuard component={CreateListingPage} />} />
+        <Route path="/create-service-listing" element={<AuthenticationGuard component={CreateListingPage} />} />
         <Route path="/friends" element={<AuthenticationGuard component={Friends} />} />
         <Route path="/community" element={<AuthenticationGuard component={Communities} />} />
         <Route path="/profile" element={<AuthenticationGuard component={Profile} />} />
         <Route path="/edit-image" element={<AuthenticationGuard component={EditImage} />} />
         <Route path="/post-details" element={<AuthenticationGuard component={PostDetails} />} />
-        <Route path="/Become A Seller" element={<BecomeASeller />} />
-        
+        <Route path="/Become A Seller" element={<AuthenticationGuard component={BecomeASeller} />} />
+
         {/* New Checkout Page */}
         <Route path="/cart" element={<AuthenticationGuard component={CheckOut} />} />
         <Route path="/messages" element={<AuthenticationGuard component={MessagesPage} />} />
-        <Route path="/chat/:conversation_id" element={<ChatContent />} />
+        <Route path="/chat/:conversation_id" element={<AuthenticationGuard component={ChatContent} />} />
 
       </Routes>
 
