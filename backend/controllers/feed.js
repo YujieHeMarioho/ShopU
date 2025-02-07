@@ -60,16 +60,68 @@ export const getAllFeedPosts = async (req, res) => {
       ORDER BY
           f.date_created DESC;
     `;
+    
+    // USE THIS ONE WHEN YOU'RE READY THE OTHER QUERY IS ONLY GOING TO PULL POSTS THAT HAVE IMAGES
+    //   const query = `
+    //   SELECT
+    //     f.post_id,
+    //     f.title,
+    //     f.content,
+    //     f.image_url as profile,
+    //     fi.file_key as image,
+    //     f.date_created,
+    //     u.user_id AS author,
+    //     f.likes_count,
+    //     ARRAY_AGG(t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL) AS tags, -- Aggregate tags into an array
+    //     EXISTS (
+    //         SELECT 1
+    //         FROM post_likes pl
+    //         WHERE pl.post_id = f.post_id AND pl.user_id = $1
+    //     ) AS isLiked -- Check if the current user liked the post
+    //   FROM
+    //       feed_posts f
+    //   JOIN
+    //       users u ON f.user_id = u.user_id
+    //   JOIN
+    //       post_images fi ON f.post_id = fi.post_id
+    //   LEFT JOIN
+    //       post_tags pt ON f.post_id = pt.post_id -- Join with post_tags
+    //   LEFT JOIN
+    //       tags t ON pt.tag_id = t.tag_id -- Join with tags
+    //   GROUP BY
+    //       f.post_id, u.user_id, fi.file_key -- Group by post and user to aggregate tags
+    //   ORDER BY
+    //       f.date_created DESC;
+    // `;
+
 
     // Execute the query
     const result = await pool.query(query, [userId]);
 
-    if (result.rowCount === 0) {
+    const feedWithUrls = await Promise.all(
+      result.rows.map(async (feed) => {
+          // Generate a pre-signed URL for the image file_key (if it exists)
+          if (feed.image) {
+              const command = new GetObjectCommand({
+                  Bucket: bucketName,
+                  Key: feed.image,
+              });
+  
+              // Generate the signed URL
+              feed.image = await getSignedUrl(s3, command, { expiresIn: 86400 });
+          }
+  
+          // Return the modified row
+          return feed;
+       })
+    );
+
+    if (feedWithUrls.rowCount === 0) {
       console.log('No feed posts found.');
     }
 
     // Respond with the results
-    res.status(200).json(result.rows);
+    res.status(200).json(feedWithUrls);
   } catch (err) {
     console.error('Error fetching feed posts:', err.message); // Log specific error message
     res.status(500).json({ error: err.message || 'Database error' });
@@ -155,8 +207,9 @@ export const getUserFeedPosts = async (req, res) => {
 
 // Create a new feed post  (TODO Need to handle linking to items)
 export const createFeedPost = async (req, res) => {
-  const { title, content, tags, imageUrl } = req.body;
-
+  const { title, content, tags, image } = req.body;
+  //Image is the actual image uploaded no the profile picture 
+  
   try {
     const userId = extractUserIdFromToken(req); // Extract user_id from token
 
@@ -169,8 +222,18 @@ export const createFeedPost = async (req, res) => {
       VALUES ($1, $2, $3, $4, NOW())
       RETURNING post_id;
     `;
-    const postResult = await pool.query(postQuery, [title, content, imageUrl, userId]);
+
+    //will need to replace the placeholder with profile image, will get to that later 
+    const postResult = await pool.query(postQuery, [title, content, 'https://via.placeholder.com/300x200', userId]);
     const postId = postResult.rows[0].post_id;
+
+    // Inserts image into the post_image table
+    const imgQuery = `
+    INSERT INTO post_images (post_id, file_key)
+    VALUES ($1, $2)
+    `;
+
+    await pool.query(imgQuery, [postId, image]);
 
     // Split tags and handle each tag
     const tagList = tags.split(",").map(tag => tag.trim()); // Split and trim tags
@@ -312,5 +375,35 @@ export const shareFeedPost = async (req, res) => {
     await pool.query('ROLLBACK');
     console.error('Error sharing feed post:', err);
     res.status(500).json({ error: 'An error occurred while sharing the post' });
+  }
+};
+
+export const uploadImage = async (req, res) => {
+  try {
+    if (!req.file){
+        return res.status(400).json({ message: "No files uploaded" });
+    }
+
+    //Create unique image names so no collusion within the bucket
+    const fileName = `${uuidv4()}-${req.file.originalname}`;
+
+    //upload params 
+    const params = {
+    Bucket: bucketName,
+    Key: fileName,
+    Body: req.file.buffer,
+    ContentType: req.file.mimetype,
+    };
+
+    // Upload to S3
+    await s3.send(new PutObjectCommand(params));
+
+    res.status(200).json({
+      message: "Files uploaded successfully",
+      fileKey: fileName,
+    });
+  } catch (err) {
+    console.error("Error uploading images:", err);
+    res.status(500).json({ message: "Error uploading files", error: err });
   }
 };
