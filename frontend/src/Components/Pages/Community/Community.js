@@ -17,6 +17,7 @@ const Communities = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [newCommunityName, setNewCommunityName] = useState('');
   const [newCommunityDescription, setNewCommunityDescription] = useState('');
+  const [communityImage, setCommunityImage] = useState(null);
 
   const { getAccessTokenSilently } = useAuth0();  
 
@@ -57,6 +58,7 @@ const Communities = () => {
                 setCommunities(communityResponse.data);
                 setOtherCommunities(otherCommunityResponse.data);
                 setCreatedCommunities(createdCommunityResponse.data);
+                console.log('the raw returned data',communityResponse.data);
 
             } catch (error) {
                 console.error('Error fetching user info or communities:', error);
@@ -82,6 +84,10 @@ const Communities = () => {
       alert('Please give your community a description.');
       return;
     }
+    if (!communityImage){
+      alert('Please give your community an image.');
+      return;
+    }
     //prevent duplicate names
     if (communities.some(community => community.name === newCommunityName)) {
       alert('Community Already Exists.');
@@ -90,9 +96,24 @@ const Communities = () => {
 
     try {
       const token = await getAccessTokenSilently();
+
+      const imageForm = new FormData();
+      imageForm.append('communityImage', communityImage);
+      
+      const returnedImageKey = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/communities/upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: imageForm,
+      });
+
+      const imageData = await returnedImageKey.json(); 
+
       const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/communities/add`, {
         name: newCommunityName,
-        description: newCommunityDescription
+        description: newCommunityDescription,
+        imageKey: imageData.fileKey
       }, 
       {    
         headers: {
@@ -137,6 +158,7 @@ const Communities = () => {
       alert('Error creating community.');
     }
   }
+
   // Add a community
   const addCommunity = async () => {
     if (!newCommunityId) {
@@ -228,13 +250,13 @@ const Communities = () => {
   const formattedOtherCommunities = otherCommunities.map(comm => ({
     title: comm.name,
     description: comm.description,
-    image: "https://via.placeholder.com/300x200",
+    image: comm.imageUrl,
     communityId: comm.community_id
   }));
   const formattedCreatedCommunities = createdCommunities.map(comm => ({
     title: comm.name,
     description: comm.description,
-    image: "https://via.placeholder.com/300x200",
+    image: comm.imageUrl,
     communityId: comm.community_id
   }));
 
@@ -245,6 +267,10 @@ const Communities = () => {
   /*if (!userInfo) {
     return <div className="error">Error: Unable to load user information.</div>;
   }*/
+
+    console.log(communities);
+    console.log(otherCommunities);
+    console.log(createdCommunities);
 
   return (
     <div>
@@ -276,7 +302,7 @@ const Communities = () => {
           communities.map((community) => (
               <div key={community.community_id} className="your-community-card">
                   <img
-                      src={'https://via.placeholder.com/100'}
+                      src={community.imageUrl}
                       alt={community.community_id}
                       className="community-image"
                   />
@@ -312,6 +338,8 @@ const Communities = () => {
             value={newCommunityDescription}
             onChange={(e) => setNewCommunityDescription(e.target.value)}
             />
+            <label for="community-image">Add A Community Image</label>
+            <input type='file' id="community-image" name="community-image" accept="image/jpeg, image/png, image/jpg, image/gif" onChange={(e) => setCommunityImage(e.target.files[0])}/>
           <button onClick={createCommunity}>Create Community</button>
         </div>
       </div>
@@ -323,7 +351,7 @@ const Communities = () => {
           createdCommunities.map((community) => (
               <div key={community.community_id} className="your-community-card">
                   <img
-                      src={'https://via.placeholder.com/100'}
+                      src={community.imageUrl}
                       alt={community.community_id}
                       className="community-image"
                   />

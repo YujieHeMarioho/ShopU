@@ -80,7 +80,9 @@ app.use('/api', friendsRoutes)
 app.use('/api', privacyPolicies)
 app.use('/api', listings);
 app.use('/api', filters);
+
 app.use('/api/messages', messagesRoutes);
+
 app.use('/api/conversations', (req, res, next) => {
   console.log('Conversations route hit');
   next();
@@ -88,5 +90,5 @@ app.use('/api/conversations', (req, res, next) => {
 
 // Start Server
 app.listen(port, () => {
-  console.log(`Server is running on ${process.env.BACKEND_URL}:${port}`);
+  console.log(`Server is running on ${process.env.BACKEND_URL}`);
 });

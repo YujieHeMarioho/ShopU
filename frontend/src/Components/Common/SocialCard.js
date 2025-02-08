@@ -166,9 +166,8 @@ const likeAPICall = async (post_id, isLiked, token, userId) => {
       method,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-        'User-ID': userId, // Pass user ID as a custom header if needed
-      },
+        'Authorization': `Bearer ${token}`
+        },
     });
 
     if (!response.ok) {

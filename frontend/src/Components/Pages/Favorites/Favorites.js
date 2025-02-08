@@ -133,7 +133,7 @@ export const Favorites = () => {
           type: item.item_type,
           rating: item.star_rating,
           price: item.price,
-          image: item.image_url,
+          image: item.file_keys,
         }));
     
         setListings(formattedData);
