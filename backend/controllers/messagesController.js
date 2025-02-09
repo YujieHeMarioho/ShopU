@@ -1,4 +1,4 @@
-import pool from '../pool.js'; // Use the centralized pool instance
+import { pool } from '../pool.js'; 
 
 // Get all conversations for a user
 export const getConversations = async (req, res) => {

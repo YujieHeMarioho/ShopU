@@ -1,4 +1,4 @@
-import pool from '../pool.js';
+import { pool } from '../pool.js'; 
 
 //Endpoint for fetching rows
 export const getAllfilters = async (req, res) => {

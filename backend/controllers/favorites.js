@@ -1,4 +1,4 @@
-import pool from '../pool.js';
+import { pool } from '../pool.js'; 
 import { jwtDecode } from "jwt-decode";
 
 export const getAllFavorites = async (req, res) => {

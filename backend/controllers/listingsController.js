@@ -1,25 +1,11 @@
-import pool from '../pool.js';
+import { s3, pool, buckets } from '../pool.js';
 import { jwtDecode } from 'jwt-decode';
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
 import sharp from 'sharp';
-import dotenv from 'dotenv';
 
-dotenv.config();
-
-const bucketName = process.env.BUCKET_NAME_LISTINGS
-const bucketRegion = process.env.BUCKET_REGION
-const accessKey = process.env.BUCKET_ACCESS_KEY
-const secretAccessKey = process.env.BUCKET_SECRET_KEY
-
-const s3 = new S3Client({
-  region: bucketRegion,
-  credentials: {
-    accessKeyId: accessKey,
-    secretAccessKey: secretAccessKey
-  }
-});
+const bucketName = buckets.listings;
 
 //Endpoint for fetching rows
 export const getAllListings = async (req, res) => {
