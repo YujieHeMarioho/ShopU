@@ -1,12 +1,19 @@
 import React, { useState } from 'react';
-import { Modal, Button, Dropdown, DropdownButton, DropdownItem, Carousel } from 'react-bootstrap';
+import { Modal, Button, Dropdown, Carousel } from 'react-bootstrap';
 import './Listings.css'; 
+import { useAuth0 } from '@auth0/auth0-react';
 
 function ListingModal({ show, onHide, listing }) {
- const [dropDownTitle, setDropDownTitle] = useState('Select an Option')
+  const [dropDownTitle, setDropDownTitle] = useState('Select an Option')
+  const { getAccessTokenSilently, user, isAuthenticated } = useAuth0();  
 
   if (!listing) return null; // If no listing data, render nothing
 
+  console.log(listing);
+  const isOwner = isAuthenticated && listing.created_by === user?.sub; // Check if user is owner
+
+  console.log(user.sub);
+  console.log(listing.user_id);
   const handleDropDownClick = (option) => {
     setDropDownTitle(option);
   };
@@ -41,10 +48,12 @@ function ListingModal({ show, onHide, listing }) {
        <div className='content'>
           <div className='price-and-buttons'>
              <h5 className='card-price'>${listing.price}</h5>
-             <div className='edit-buttons'>
-                <Button variant="secondary">Edit</Button>
-                <Button variant="danger">Delete</Button>
-             </div>
+             {isOwner && (
+              <div className='edit-buttons'>
+                <Button variant='secondary'>Edit</Button>
+                <Button variant='danger'>Delete</Button>
+              </div>
+            )}
           </div>
           <div className='product-options'>
              <label htmlFor='product-options-dropdown' className='card-text'> Product Options </label>
@@ -67,6 +76,6 @@ function ListingModal({ show, onHide, listing }) {
     </Modal.Footer>
  </Modal>
   );
-}
+};
 
 export default ListingModal;

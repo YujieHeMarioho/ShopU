@@ -12,6 +12,7 @@ export const getAllListings = async (req, res) => {
   const query = `
         SELECT
           l.listing_id,
+          l.user_id,
           l.title,
           l.description,
           c.name AS category,  -- Get the category name
@@ -252,8 +253,6 @@ export const uploadImages = async (req, res) => {
       // Upload to S3
       await s3.send(new PutObjectCommand(params));
 
-      // Store the S3 URL in the response
-      const fileUrl = `https://${process.env.BUCKET_NAME}.s3.${process.env.BUCKET_REGION}.amazonaws.com/${fileName}`;
       uploadedFiles.push(fileName);
     }
 

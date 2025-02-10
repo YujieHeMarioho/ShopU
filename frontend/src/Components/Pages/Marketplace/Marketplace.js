@@ -123,6 +123,7 @@ export const Marketplace = () => {
         // Map the data to match the desired format
         const formattedData = rawData.map(item => ({
           id: item.listing_id,
+          created_by: item.user_id,
           title: item.title,
           description: item.description,
           category: item.category,
