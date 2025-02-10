@@ -3,9 +3,8 @@ import { Card, Button, Alert } from 'react-bootstrap';
 import styles from './CommunityCard.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
 
-export const CommunityCardComponent = ({ image, title, description, communityId}) => {
+export const CommunityCardComponent = ({ image, title, description, communityId, onCommunityClick}) => {
   const { getAccessTokenSilently } = useAuth0();
-
   const [isJoined, setIsJoined] = useState(false);
   const [alertMessage, setAlertMessage] = useState(null);
 
@@ -40,6 +39,15 @@ export const CommunityCardComponent = ({ image, title, description, communityId}
     }
   };
 
+  const handleCardClick = (e) => {
+    // Prevent clicks from buttons
+    if (e.target.closest('.btn')) {
+      return;
+    }
+
+    onCommunityClick(e);
+  };
+
   return (
     <div>
       {/* Display alert if there is a message */}
@@ -49,7 +57,7 @@ export const CommunityCardComponent = ({ image, title, description, communityId}
         </Alert>
       )}
       
-      <Card className={styles.card}>
+      <Card className={styles.card} onClick={handleCardClick}>
         <div className={styles.imageContainer}>
           <Card.Img variant="top" src={image} alt={title} className={styles.cardImage} />
           

@@ -3,13 +3,14 @@ import React, { useState, useLayoutEffect, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import axios from 'axios';
 import './Community.css';
+import CommunityModal from './CommunityModal';
 
 const Communities = () => {
 
 // Fetch user info and their friends
 
   /*const { user, isLoading: authLoading } = useAuth0();*/
-  const [userInfo, setUserInfo] = useState(null);
+  //const [userInfo, setUserInfo] = useState(null);
   const [communities, setCommunities] = useState([]);
   const [otherCommunities, setOtherCommunities] = useState([]);
   const [createdCommunities, setCreatedCommunities] = useState([]);
@@ -18,6 +19,9 @@ const Communities = () => {
   const [newCommunityName, setNewCommunityName] = useState('');
   const [newCommunityDescription, setNewCommunityDescription] = useState('');
   const [communityImage, setCommunityImage] = useState(null);
+
+  const [showCommunityModal, setShowCommunityModal] = useState(false);
+  const [selectedCommunity, setSelectedCommunity] = useState(null);
 
   const { getAccessTokenSilently } = useAuth0();  
 
@@ -245,6 +249,18 @@ const Communities = () => {
     }
   };
 
+  // Handler when user clicks a community
+  const handleCardClick = (comm) => {
+    setSelectedCommunity(comm);
+    setShowCommunityModal(true);
+  };
+
+  // Close modal for community popup
+  const handleCloseCommunityModal = () => {
+    setShowCommunityModal(false);
+    setSelectedCommunity(null);
+  };
+
 
   // Map the data to match the desired format
   const formattedOtherCommunities = otherCommunities.map(comm => ({
@@ -321,7 +337,7 @@ const Communities = () => {
       <div className="community-browse">
         {/* Render CardGrid with listings */}
         <h2>Browse Communities</h2>
-        <CommunityCardGrid communities={formattedOtherCommunities} />
+        <CommunityCardGrid communities={formattedOtherCommunities} openCommunityDetails={handleCardClick}/>
       </div>
       <div className="create-community-section">
         <h2>Create a New Community</h2>
@@ -361,12 +377,13 @@ const Communities = () => {
                       {/*<p>Joined At: {new Date(community.joined_at).toLocaleString()}</p>*/}
                   </div>
                   <button className="leave-button" onClick={() => leaveCommunity(community.community_id)}>
-                      Delete Permanently {/*FIXME: doesn't actually delete the community, just leaves it*/}
+                      Leave {/*FIXME: add delete community ability*/}
                   </button>
               </div>
           ))
       )}
       </div>
+      <CommunityModal show={showCommunityModal} onHide={handleCloseCommunityModal} community={selectedCommunity} />
     </div>
 
     
