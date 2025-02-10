@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button } from 'react-bootstrap';
+import { Button, Modal, Form } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { FaThumbsUp, FaShare, FaHeart, FaRegHeart } from 'react-icons/fa';
 import styles from './SocialCard.module.css';
@@ -26,12 +26,37 @@ export const SocialCard = ({
   const [isShared, setIsShared] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [alertMessage, setAlertMessage] = useState(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [selectedFriend, setSelectedFriend] = useState(null);
+  const [selectedCommunity, setSelectedCommunity] = useState(null);
+  //const [friends, setFriends] = useState([]);
+  const [communities, setCommunities] = useState(['Tech Group', 'Gaming Hub']);
+  const [selectedOption, setSelectedOption] = useState('');
+
+  const friends = [
+    { id: 1, name: "Alice", profilePic: "https://randomuser.me/api/portraits/women/1.jpg" },
+    { id: 2, name: "Bob", profilePic: "https://randomuser.me/api/portraits/men/2.jpg" },
+    { id: 3, name: "Charlie", profilePic: "https://randomuser.me/api/portraits/men/3.jpg" },
+    { id: 4, name: "Diana", profilePic: "https://randomuser.me/api/portraits/women/4.jpg" },
+    { id: 5, name: "Ethan", profilePic: "https://randomuser.me/api/portraits/men/5.jpg" },
+    { id: 6, name: "Fiona", profilePic: "https://randomuser.me/api/portraits/women/6.jpg" },
+  ];
 
   useEffect(() => {
     if (user) {
       console.log('User ID:', user.sub); // Access the user ID (sub) here
     }
   }, [user]);
+
+
+  const handleClose = () => {
+    // Reset all states to null when closing the modal
+    setSelectedOption(null);
+    setSelectedFriend(null);
+    setSelectedCommunity("");
+    setShowShareModal(false);
+  };
+
 
   const handleLikeClick = async (e) => {
     e.stopPropagation();
@@ -50,24 +75,33 @@ export const SocialCard = ({
       setTimeout(() => setAlertMessage(null), 3000);
     }
   };
-  
-  
 
-  const handleShareClick = async (e) => {
-    e.stopPropagation();
-    try {
-      const token = await getAccessTokenSilently();
-      const response = await shareAPICall(post_id, token, user.sub); // Pass user.sub
-
-      if (response.success) {
-        setAlertMessage('Item shared successfully!');
-        setTimeout(() => setAlertMessage(null), 3000);
-      }
-    } catch (error) {
-      setAlertMessage('Failed to share item. Please try again later.');
-      setTimeout(() => setAlertMessage(null), 3000);
-    }
+  const handleConfirmShare = async () => {
+    setShowShareModal(false);
+    setAlertMessage('Post shared successfully!');
+    setTimeout(() => setAlertMessage(null), 3000);
   };
+
+  const handleShareClick = (e) => {
+    e.stopPropagation();
+    setShowShareModal(true);
+  };
+  
+  // const handleShareClick = async (e) => {
+  //   e.stopPropagation();
+  //   try {
+  //     const token = await getAccessTokenSilently();
+  //     const response = await shareAPICall(post_id, token, user.sub); // Pass user.sub
+
+  //     if (response.success) {
+  //       setAlertMessage('Item shared successfully!');
+  //       setTimeout(() => setAlertMessage(null), 3000);
+  //     }
+  //   } catch (error) {
+  //     setAlertMessage('Failed to share item. Please try again later.');
+  //     setTimeout(() => setAlertMessage(null), 3000);
+  //   }
+  // };
 
   const handleFavoriteClick = async (e) => {
     e.stopPropagation();
@@ -153,6 +187,78 @@ export const SocialCard = ({
       </div>
 
       {alertMessage && <div className={styles.alert}>{alertMessage}</div>}
+
+      <Modal show={showShareModal} onHide={handleClose}>
+        <Modal.Header closeButton>
+          <Modal.Title className={styles.modalTitle}>Share Post</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className={styles.modalBody}>
+        <Form>
+        <Button
+          variant={selectedOption === "friend" ? "primary" : "outline-primary"}
+          onClick={() => setSelectedOption("friend")}
+          className="form-check mb-2"
+        >
+          Select a Friend
+        </Button>
+
+        {/* Community Share Option */}
+        <Button
+          variant={selectedOption === "community" ? "primary" : "outline-primary"}
+          onClick={() => setSelectedOption("community")}
+          className="form-check mb-2"
+        >
+          Community Share
+        </Button>
+
+
+          {/* Friend Selection Grid */}
+          {selectedOption === "friend" && (
+            <div className={styles.friendGrid}>
+            {friends.map((friend) => (
+              <div key={friend.id} className={styles.friendItem}>
+                <img
+                  src={friend.profilePic}
+                  alt={`${friend.name}'s profile`}
+                  className={`${styles.profilePic} ${
+                    selectedFriend === friend.id ? styles.selected : ""
+                  }`}
+                  onClick={() => setSelectedFriend(friend.id)}
+                />
+                <span className={styles.friendName}>{friend.name}</span> {/* Display name */}
+              </div>
+            ))}
+          </div>
+          )}
+
+          {/* Community Dropdown */}
+          {selectedOption === "community" && (
+            <Form.Group controlId="communitySelect" className="mt-3">
+              <Form.Label>Select a Community</Form.Label>
+              <Form.Control
+                as="select"
+                value={selectedCommunity}
+                onChange={(e) => setSelectedCommunity(e.target.value)}
+              >
+                <option value="">Choose...</option>
+                {communities.map((community) => (
+                  <option key={community.id} value={community.id}>
+                    {community.name}
+                  </option>
+                ))}
+              </Form.Control>
+            </Form.Group>
+          )}
+        </Form>
+        
+      </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleClose}>Cancel</Button>
+          <Button variant="primary" onClick={handleConfirmShare} disabled={!selectedFriend && !selectedCommunity}>
+            Share
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };
