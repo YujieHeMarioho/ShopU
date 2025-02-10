@@ -82,26 +82,10 @@ export const SocialCard = ({
     setTimeout(() => setAlertMessage(null), 3000);
   };
 
-  const handleShareClick = (e) => {
+  const handleShareClick = async (e) => {
     e.stopPropagation();
     setShowShareModal(true);
   };
-  
-  // const handleShareClick = async (e) => {
-  //   e.stopPropagation();
-  //   try {
-  //     const token = await getAccessTokenSilently();
-  //     const response = await shareAPICall(post_id, token, user.sub); // Pass user.sub
-
-  //     if (response.success) {
-  //       setAlertMessage('Item shared successfully!');
-  //       setTimeout(() => setAlertMessage(null), 3000);
-  //     }
-  //   } catch (error) {
-  //     setAlertMessage('Failed to share item. Please try again later.');
-  //     setTimeout(() => setAlertMessage(null), 3000);
-  //   }
-  // };
 
   const handleFavoriteClick = async (e) => {
     e.stopPropagation();
@@ -120,10 +104,6 @@ export const SocialCard = ({
       setAlertMessage('Failed to update favorite. Please try again later.');
       setTimeout(() => setAlertMessage(null), 3000);
     }
-  };
-
-  const handleNavigateToItem = () => {
-    navigate(`/item/${post_id}`);
   };
 
   return (
@@ -188,7 +168,7 @@ export const SocialCard = ({
 
       {alertMessage && <div className={styles.alert}>{alertMessage}</div>}
 
-      <Modal show={showShareModal} onHide={handleClose}>
+      <Modal show={showShareModal} onHide={handleClose}  onClick={(e) => e.stopPropagation()}>
         <Modal.Header closeButton>
           <Modal.Title className={styles.modalTitle}>Share Post</Modal.Title>
         </Modal.Header>
@@ -283,30 +263,6 @@ const likeAPICall = async (post_id, isLiked, token, userId) => {
     return await response.json();
   } catch (error) {
     console.error('API Error:', error);
-    throw error;
-  }
-};
-
-
-const shareAPICall = async (post_id, token, userId) => {
-  try {
-    const URL = `${process.env.REACT_APP_BACKEND_URL}/api/feed/${post_id}/share`;
-    const response = await fetch(URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-        'User-ID': userId, // Pass user ID as a custom header if needed
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error('Error sharing post.');
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error:', error);
     throw error;
   }
 };
