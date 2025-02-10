@@ -219,7 +219,7 @@ const SocialFeed = () => {
                     <p>No posts available.</p>
                 ) : (
                     feed.map((post) => (
-                        <div key={post.post_id} className={styles.gridItem}> 
+                        <div key={post.post_id} className={styles.gridItem} onClick={() => handleCardClick(post)}>
                             <SocialCard
                                 post_id={post.post_id}                // Directly passing post_id
                                 image={post.image}                 // Passing image URL
@@ -238,31 +238,7 @@ const SocialFeed = () => {
                     ))
                 )}
             </div>
-    {/* Display the feed */}
-    <div className={`${styles.feedContainer} ${isGridLayout ? styles.gridView : styles.scrollView}`}>
-        {feed.length === 0 ? (
-            <p>No posts available.</p>
-        ) : (
-            feed.map((post) => (
-                <div key={post.post_id} className={styles.gridItem} onClick={() => handleCardClick(post)}>
-                    <SocialCard
-                        post_id={post.post_id}                // Directly passing post_id
-                        image={post.image_url}                 // Passing image URL
-                        title={post.title}                     // Passing title
-                        description={post.content}             // Passing content as description
-                        profilePic={post.profile_pic_url}      // Passing profile picture URL
-                        author={post.author}                   // Passing author name
-                        initialLikes={post.likes_count}        // Mapping likes_count to initialLikes
-                        initialShares={post.shares}            // Mapping shares to initialShares
-                        isLikedAlready={post.isliked}          // Check if post already liked by user
-                        tags={post.tags}                       // Passing tags
-                        onLike={() => handleLike(post.post_id, post.likes_count, post.is_liked)} // Handling like action
-                        onShare={() => shareFeedPost(post.post_id)}  // Handling share action
-                    />
-                </div>
-            ))
-        )}
-    </div>
+
 
     {/* Post Modal */}
     <Modal show={!!selectedCard} onHide={closeCardModal} centered>
@@ -281,7 +257,7 @@ const SocialFeed = () => {
             {selectedCard && (
                 <SocialCard
                     post_id={selectedCard.post_id}
-                    image={selectedCard.image_url}
+                    image={selectedCard.image}
                     title={selectedCard.title}
                     description={selectedCard.content}
                     profilePic={selectedCard.profile_pic_url}
