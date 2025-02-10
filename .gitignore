@@ -2,3 +2,4 @@ node_modules
 /backend/.env
 frontend/.env
 awsdb.session.sql
+ShopUAWS.session.sql
