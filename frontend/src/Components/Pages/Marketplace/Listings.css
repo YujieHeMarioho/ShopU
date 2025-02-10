@@ -12,17 +12,17 @@
 }
 
 .modal-header {
-	display: flex;
-	flex-direction: row;
-	justify-content: space-between;
-	align-items: center;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
 }
 
-.modal-header .edit-buttons{
-	display: flex;
-	gap: 10px; /* Adds spacing between buttons */
-	margin-left: auto; /* Pushes the buttons to the right */
+.modal-header .card-title {
+    flex-grow: 1; /* Allows the title to take up available space */
 }
+
+
 
 /* Styling the modal body */
 .modal-body {
@@ -60,6 +60,25 @@
 	gap: 10px;
 	width: 100%;
 	max-width: 40%;
+}
+
+.price-and-buttons {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	width: 100%; /* Ensure it spans the full width */
+  }
+
+  
+.price-and-buttons .card-price {
+	margin: 0; /* Remove margin so it's aligned properly */
+  }
+
+  
+.modal-body .edit-buttons{
+	display: flex;
+	gap: 5px; /* Adds spacing between buttons */
+	margin-left: auto; /* Pushes the buttons to the right */
 }
 
 /* Styling for individual content elements */
