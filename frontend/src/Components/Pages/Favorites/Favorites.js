@@ -205,9 +205,9 @@ export const Favorites = () => {
       <div className={styles.layoutContainer}>
         {/* Filter Sidebar */}
         <div className={styles.filterSidebarContainer}>
-          <FilterSidebar
-            activeFilters={activeFilters}
-            onFilterChange={handleFilterChange}
+          <FilterSidebar 
+            onFilterChange={handleFilterChange} 
+            initialFilters={activeFilters} 
             className={styles.filterSidebar}
           />
         </div>

@@ -7,13 +7,9 @@ import Footer from './Components/Footer/Footer';
 import Favorites from './Components/Pages/Favorites/Favorites';
 import Communities from './Components/Pages/Community/Community';
 import Marketplace from './Components/Pages/Marketplace/Marketplace';
-import Banner from './Components/Common/Banner';
-import Statistics from './Components/Common/Statistics';
 import Home from './Components/Pages/Home/Home';
-import Resources from './Components/Pages/Resources/Resources';
 import Profile from './Components/Pages/Profile/Profile';
 import SocialFeed from './Components/Pages/Feed/SocialFeed';
-import PrivateRoute from './Components/Common/PrivateRoute';
 import CreateListingPage from './Components/Pages/CommonPages/CreateListingPage';
 import EditImage from './Components/Pages/Feed/EditImage';
 import PostDetails from './Components/Pages/Feed/PostDetails';
@@ -55,7 +51,6 @@ function App() {
         <Route path="/home" element={<AuthenticationGuard component={Home} />} />
         <Route path="/favorites" element={<AuthenticationGuard component={Favorites} />} />
         <Route path="/marketplace" element={<AuthenticationGuard component={Marketplace} />} />
-        <Route path="/resources" element={<AuthenticationGuard component={Resources} />} />
         <Route path="/feed" element={<AuthenticationGuard component={SocialFeed} />} />
         <Route path="/create-item-listing" element={<AuthenticationGuard component={CreateListingPage} />} />
         <Route path="/create-service-listing" element={<AuthenticationGuard component={CreateListingPage} />} />

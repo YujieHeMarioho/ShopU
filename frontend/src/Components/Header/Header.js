@@ -163,7 +163,6 @@ const Header = () => {
                         'Marketplace',
                         'Feed',
                         'Community',
-                        'Resources',
                         'Become A Seller',
                         'Friends',
                     ].map((link) => (
