@@ -25,6 +25,7 @@ import CheckOut from './Components/Pages/CheckOut/CheckOut'; // Import CheckOut 
 import MessagesPage from './Components/Pages/MessagesPage/MessagesPage';
 import ChatContent from './Components/Pages/ChatContent/ChatContent';
 import EmailVerificationRequired from './Components/Utilities/EmailVerificationRequired';
+import AdminDashboard from './Components/Pages/Administration/AdminDashboard';
 
 function App() {
   const { loginWithRedirect, logout, user, isAuthenticated } = useAuth0();
@@ -63,8 +64,9 @@ function App() {
         <Route path="/profile" element={<AuthenticationGuard component={Profile} />} />
         <Route path="/edit-image" element={<AuthenticationGuard component={EditImage} />} />
         <Route path="/post-details" element={<AuthenticationGuard component={PostDetails} />} />
-        <Route path="/Become A Seller" element={<AuthenticationGuard component={BecomeASeller} />} />
-
+        <Route path="/Become A Seller" element={<BecomeASeller />} />
+        <Route path="/admin-dashboard" element={<AuthenticationGuard component={AdminDashboard} />} />
+        
         {/* New Checkout Page */}
         <Route path="/cart" element={<AuthenticationGuard component={CheckOut} />} />
         <Route path="/messages" element={<AuthenticationGuard component={MessagesPage} />} />

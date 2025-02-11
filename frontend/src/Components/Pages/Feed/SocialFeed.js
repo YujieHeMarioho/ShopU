@@ -15,6 +15,7 @@ const SocialFeed = () => {
     const [newPost, setNewPost] = useState({ title: '', content: '', imageUrl: '' });
     const [editPost, setEditPost] = useState(null);
     const [isPostLoading, setIsPostLoading] = useState(false);
+    const [selectedCard, setSelectedCard] = useState(null);
     const [showModal, setShowModal] = useState(false); // State to toggle the modal
     const [selectedImage, setSelectedImage] = useState(null); // State for uploaded image
     const [isGridLayout, setIsGridLayout] = useState(true); // State to toggle layout
@@ -22,6 +23,15 @@ const SocialFeed = () => {
     const navigate = useNavigate();
 
     const userId = isAuthenticated ? user?.sub : null;
+
+    const handleCardClick = (post) => {
+        console.log("Card clicked:", post);
+        setSelectedCard(post);
+      };
+    
+    const closeCardModal = () => {
+        setSelectedCard(null);
+    };
 
     const fetchFeed = async () => {
         try {
@@ -46,9 +56,13 @@ const SocialFeed = () => {
 
     const fetchUserFeed = async () => {
         if (!userId) return;
-
         try {
-            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/user/${userId}`);
+            const token = await getAccessTokenSilently();
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/user/${userId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
             if (!response.ok) throw new Error(`Failed to fetch user feed: ${response.statusText}`);
             const rawUserFeed = await response.json();
             setUserFeed(rawUserFeed);
@@ -56,6 +70,7 @@ const SocialFeed = () => {
             console.error('Error fetching user feed:', err);
         }
     };
+    
 
     const createFeedPost = async () => {
         handleCreateNewPost();
@@ -176,31 +191,27 @@ const SocialFeed = () => {
     //         fetchFeed();      // Fetch general feed if user is not logged in
     //     }
     // }, [userId]);
-    useEffect(()=>{
+    useEffect(() => {
         fetchFeed();
-    })
+    }, []);  // Runs only once when the component mounts
+    
     
 
     if (loading) return <p>Loading feed...</p>;
     if (error) return <p>{error}</p>;
 
     return (
-        <div className={styles.socialFeedContainer}>
-            <h2>Social Feed</h2>
-            
-            {/* Toggle Layout Button */}
-            <div className={styles.layoutToggleButton}>
-                <Button
-                    onClick={toggleLayout}
-                    variant="outline-primary"
-                >
-                    {isGridLayout ? 'Switch to Scrolling Layout' : 'Switch to Grid Layout'}
-                </Button>
-            </div>
+<div className={styles.socialFeedContainer}>
+    <h2>Social Feed</h2>
 
-            <Button onClick={createFeedPost} variant="outline-primary"> Create new Post
+    {/* Toggle Layout Button */}
+    <div className={styles.layoutToggleButton}>
+        <Button onClick={toggleLayout} variant="outline-primary">
+            {isGridLayout ? 'Switch to Scrolling Layout' : 'Switch to Grid Layout'}
+        </Button>
+    </div>
 
-            </Button>
+    <Button onClick={createFeedPost} variant="outline-primary"> Create new Post</Button>
 
             {/* Display the feed */}
             <div className={`${styles.feedContainer} ${isGridLayout ? styles.gridView : styles.scrollView}`}>
@@ -208,7 +219,7 @@ const SocialFeed = () => {
                     <p>No posts available.</p>
                 ) : (
                     feed.map((post) => (
-                        <div key={post.post_id} className={styles.gridItem}> 
+                        <div key={post.post_id} className={styles.gridItem} onClick={() => handleCardClick(post)}>
                             <SocialCard
                                 post_id={post.post_id}                // Directly passing post_id
                                 image={post.image}                 // Passing image URL
@@ -227,6 +238,41 @@ const SocialFeed = () => {
                     ))
                 )}
             </div>
+
+
+    {/* Post Modal */}
+    <Modal show={!!selectedCard} onHide={closeCardModal} centered>
+        <Modal.Header closeButton>
+        </Modal.Header>
+
+        <Modal.Body
+            style={{
+                color: "#000000",
+                textAlign: "center",
+                display: "flex",
+                justifyContent: "center",
+                flexDirection: "column",
+            }}
+        >
+            {selectedCard && (
+                <SocialCard
+                    post_id={selectedCard.post_id}
+                    image={selectedCard.image}
+                    title={selectedCard.title}
+                    description={selectedCard.content}
+                    profilePic={selectedCard.profile_pic_url}
+                    author={selectedCard.author}
+                    initialLikes={selectedCard.likes_count}
+                    initialShares={selectedCard.shares}
+                    isLikedAlready={selectedCard.isliked}
+                    tags={selectedCard.tags}
+                    onLike={() => handleLike(selectedCard.post_id, selectedCard.likes_count, selectedCard.is_liked)}
+                    onShare={() => shareFeedPost(selectedCard.post_id)}
+                />
+            )}
+        </Modal.Body>
+    </Modal>
+
             {/* Modal for Image Upload */}
             <Modal show={showModal} onHide={handleCloseModal} centered>
                 <Modal.Header closeButton>
