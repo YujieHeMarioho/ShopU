@@ -27,12 +27,18 @@ h2 {
 /* Instagram-style Scroll View (for phone) */
 .scrollView {
   display: block;
+  justify-content: center;
+  align-items: center;  
+  margin: 0 auto;              /* Center the content */
 }
 
+/* Grid item styling in the scroll view */
 .scrollView .gridItem {
   margin-bottom: 20px;
-  width: 100%; /* Full width in scroll view */
+  width: 100%;                 /* Full width of the container */
+  max-width: 800px;            /* Limit the maximum width of each grid item */
   transition: transform 0.3s ease;
+  
 }
 
 /* Disable hover effect in scroll view */
