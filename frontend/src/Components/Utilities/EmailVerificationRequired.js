@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
-import './EmailVerificationRequired.css'; 
+import styles from './EmailVerificationRequired.module.css';
 
 const EmailVerificationRequired = () => {
   const { logout } = useAuth0();
@@ -16,29 +16,25 @@ const EmailVerificationRequired = () => {
     // Redirect to the profile page for the user to finish setting up their profile
     navigate('/profile');
   };
-
-  return (
-    <div className="email-verification-container">
-      <div className="email-verification-card">
-        <h1>Email Verification Required</h1>
-        <p>Please verify your email address to continue using our services.</p>
-        <p>We've sent a verification email to your registered email address. Please check your inbox and follow the instructions to verify your account.</p>
-        {/* Not sure if we need this but will leave it commented out incase we decide to implement
-         <button className="resend-button" onClick={handleResendVerification}>
-          Resend Verification Email
-        </button> */}
-        <button className="return-button" onClick={handleReturnToApp}>
-          Return to Application
-        </button>
-        <p className="small-text">
-          Didn't receive the email? Check your spam folder or try logging in with a different email.
-        </p>
-        <button className="logout-button" onClick={() => logout({ returnTo: window.location.origin })}>
-          Log Out
-        </button>
-      </div>
+  
+return (
+  <div className={styles.emailVerificationContainer}>
+    <div className={styles.emailVerificationCard}>
+      <h1 className={styles.title}>Email Verification Required</h1>
+      <p className={styles.description}>Please verify your email address to continue using our services.</p>
+      <p className={styles.instructions}>We've sent a verification email to your registered email address. Please check your inbox and follow the instructions to verify your account.</p>
+      <button className={styles.returnButton} onClick={handleReturnToApp}>
+        Return to Application
+      </button>
+      <p className={styles.smallText}>
+        Didn't receive the email? Check your spam folder or try logging in with a different email.
+      </p>
+      <button className={styles.logoutButton} onClick={() => logout({ returnTo: window.location.origin })}>
+        Log Out
+      </button>
     </div>
-  );
+  </div>
+);
 };
 
 export default EmailVerificationRequired;
