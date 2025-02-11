@@ -34,7 +34,7 @@ build:
   stage: build
   image: node:20  # Use Node.js Docker image for the build
   script:
-    - cd frontend && npm install && npm run build  # Build React app
+    - cd frontend && npm install && npm install recharts && npm run build  # Build React app
   artifacts:
     paths:
       - frontend/build/
