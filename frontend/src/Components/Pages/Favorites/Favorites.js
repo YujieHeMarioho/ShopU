@@ -15,7 +15,6 @@ export const Favorites = () => {
   const [isDropdownVisible, setDropdownVisible] = useState(false); // Control visibility of suggestions
   const [showListingModal, setShowListingModal] = useState(false);
   const [selectedListing, setSelectedListing] = useState(null);
-
   const { user, getAccessTokenSilently } = useAuth0();  
 
   // Fuse.js setup for fuzzy search
@@ -30,6 +29,11 @@ export const Favorites = () => {
     };
     return new Fuse(listings, options);
   }, []);
+
+  const handleUnfavorite = (unfavoritedId) => {
+    // Remove unfavorited listing from favorited listings 
+    setListings(listings => listings.filter(fav => fav.id !== unfavoritedId));
+  };
 
   // Handle search input changes
   const handleSearchChange = (e) => {
@@ -210,7 +214,7 @@ export const Favorites = () => {
 
         {/* Card Grid displaying filtered results */}
         <div className={styles.cardGridContainer}>
-          <CardGrid listings={filteredResults} className={styles.cardGrid} openListingDetails={handleCardClick} />
+          <CardGrid listings={filteredResults} onUnfavorite={handleUnfavorite} className={styles.cardGrid} openListingDetails={handleCardClick} />
         </div>
       </div>
 
