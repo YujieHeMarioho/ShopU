@@ -32,43 +32,12 @@ export const getAllFeedPosts = async (req, res) => {
   try {
     const userId = extractUserIdFromToken(req); // Extract user ID from token
 
-    const query = `
-      SELECT
-        f.post_id,
-        f.title,
-        f.content,
-        f.image_url,
-        f.date_created,
-        u.user_id AS author,
-        f.likes_count,
-        ARRAY_AGG(t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL) AS tags, -- Aggregate tags into an array
-        EXISTS (
-            SELECT 1
-            FROM post_likes pl
-            WHERE pl.post_id = f.post_id AND pl.user_id = $1
-        ) AS isLiked -- Check if the current user liked the post
-      FROM
-          feed_posts f
-      JOIN
-          users u ON f.user_id = u.user_id
-      LEFT JOIN
-          post_tags pt ON f.post_id = pt.post_id -- Join with post_tags
-      LEFT JOIN
-          tags t ON pt.tag_id = t.tag_id -- Join with tags
-      GROUP BY
-          f.post_id, u.user_id -- Group by post and user to aggregate tags
-      ORDER BY
-          f.date_created DESC;
-    `;
-    
-    // USE THIS ONE WHEN YOU'RE READY THE OTHER QUERY IS ONLY GOING TO PULL POSTS THAT HAVE IMAGES
-    //   const query = `
+    // const query = `
     //   SELECT
     //     f.post_id,
     //     f.title,
     //     f.content,
-    //     f.image_url as profile,
-    //     fi.file_key as image,
+    //     f.image_url,
     //     f.date_created,
     //     u.user_id AS author,
     //     f.likes_count,
@@ -82,17 +51,48 @@ export const getAllFeedPosts = async (req, res) => {
     //       feed_posts f
     //   JOIN
     //       users u ON f.user_id = u.user_id
-    //   JOIN
-    //       post_images fi ON f.post_id = fi.post_id
     //   LEFT JOIN
     //       post_tags pt ON f.post_id = pt.post_id -- Join with post_tags
     //   LEFT JOIN
     //       tags t ON pt.tag_id = t.tag_id -- Join with tags
     //   GROUP BY
-    //       f.post_id, u.user_id, fi.file_key -- Group by post and user to aggregate tags
+    //       f.post_id, u.user_id -- Group by post and user to aggregate tags
     //   ORDER BY
     //       f.date_created DESC;
     // `;
+    
+    // USE THIS ONE WHEN YOU'RE READY THE OTHER QUERY IS ONLY GOING TO PULL POSTS THAT HAVE IMAGES
+      const query = `
+      SELECT
+        f.post_id,
+        f.title,
+        f.content,
+        f.image_url as profile,
+        fi.file_key as image,
+        f.date_created,
+        u.user_id AS author,
+        f.likes_count,
+        ARRAY_AGG(t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL) AS tags, -- Aggregate tags into an array
+        EXISTS (
+            SELECT 1
+            FROM post_likes pl
+            WHERE pl.post_id = f.post_id AND pl.user_id = $1
+        ) AS isLiked -- Check if the current user liked the post
+      FROM
+          feed_posts f
+      JOIN
+          users u ON f.user_id = u.user_id
+      JOIN
+          post_images fi ON f.post_id = fi.post_id
+      LEFT JOIN
+          post_tags pt ON f.post_id = pt.post_id -- Join with post_tags
+      LEFT JOIN
+          tags t ON pt.tag_id = t.tag_id -- Join with tags
+      GROUP BY
+          f.post_id, u.user_id, fi.file_key -- Group by post and user to aggregate tags
+      ORDER BY
+          f.date_created DESC;
+    `;
 
 
     // Execute the query

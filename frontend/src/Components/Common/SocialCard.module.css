@@ -162,3 +162,147 @@
   font-size: 14px;
   border-radius: 8px;
 }
+
+/* Modal Customization */
+.modalContent {
+  border-radius: 16px;
+  border: none;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, #ffffff, #f7f7f7);
+  padding: 20px;
+  color: #000;
+}
+
+.modalHeader {
+  border-bottom: none;
+  padding-bottom: 10px;
+  color: #000;
+}
+
+.modalTitle {
+  font-size: 22px;
+  font-weight: bold;
+  color: #000;
+}
+
+.modalBody {
+  padding: 20px;
+  color: #000;
+}
+
+/* Form Radio Buttons */
+.form-check {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(0, 123, 255, 0.05);
+  transition: background 0.3s ease, transform 0.2s ease;
+  cursor: pointer;
+}
+
+.form-check:hover {
+  background: rgba(0, 123, 255, 0.1);
+  transform: scale(1.02);
+}
+
+.form-check-input {
+  margin-right: 10px;
+  width: 18px;
+  height: 18px;
+  accent-color: #007bff;
+}
+
+.form-check-label {
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* Hide dropdowns initially */
+.hidden {
+  display: none;
+}
+
+/* Form Fields */
+.form-control {
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  padding: 10px;
+  font-size: 16px;
+  transition: border-color 0.3s ease;
+}
+
+.form-control:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+}
+
+/* Button Styles */
+.modal-footer {
+  border-top: none;
+  padding-top: 10px;
+}
+
+.modal-footer .btn {
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 12px;
+  padding: 10px 18px;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.modal-footer .btn-primary {
+  background: linear-gradient(90deg, #6a11cb, #2575fc);
+  border: none;
+  color: white;
+}
+
+.modal-footer .btn-primary:hover {
+  background: linear-gradient(90deg, #2575fc, #6a11cb);
+  transform: scale(1.05);
+}
+
+.modal-footer .btn-secondary {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.modal-footer .btn-secondary:hover {
+  background: #e0e0e0;
+}
+
+.friendGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.friendName {
+  margin-top: 5px;
+  font-size: 14px;
+  color: #333;
+}
+
+
+.friendItem {
+  text-align: center;
+}
+
+.profilePic {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out, border 0.2s;
+}
+
+.profilePic:hover {
+  transform: scale(1.1);
+}
+
+.selected {
+  border: 3px solid #007bff;
+}

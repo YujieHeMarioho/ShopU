@@ -3,6 +3,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { Container, Row, Col, Card, Button, InputGroup, Form } from 'react-bootstrap';
 import { FaEnvelope, FaUser, FaEdit } from 'react-icons/fa';
 import './Profile.module.css'; // Optional: Custom CSS
+import UserPreferences from './UserPreferences';
 
 const Profile = () => {
   const { user, getAccessTokenSilently } = useAuth0();  
@@ -130,6 +131,8 @@ const Profile = () => {
             Member since: {new Date(created_at).toLocaleDateString()}
           </Card.Footer>
         </Card>
+
+        <UserPreferences></UserPreferences>
         
         {/* JSON Section */}
         {/*<Card className="shadow-sm">
