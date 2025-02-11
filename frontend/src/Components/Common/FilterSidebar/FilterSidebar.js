@@ -3,12 +3,12 @@ import { Button, Form, ButtonGroup } from 'react-bootstrap';
 import styles from './FilterSidebar.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
 
-const FilterSidebar = ({ onFilterChange }) => {
-  const [selectedCategories, setSelectedCategories] = useState([]);
+const FilterSidebar = ({ onFilterChange, initialFilters }) => {
   const [selectedType, setSelectedType] = useState(''); // Initially no selection
   const [selectedRatings, setSelectedRatings] = useState([]); // Multiple ratings selection
   const [categories, setCategories] = useState([]); // State to store categories fetched from the API
   const { getAccessTokenSilently } = useAuth0();  
+  const [selectedCategories, setSelectedCategories] = useState(initialFilters.categories || []);
 
   // Fetch the most recent listings from the server
   const fetchFilters = async () => {
@@ -40,6 +40,10 @@ const FilterSidebar = ({ onFilterChange }) => {
   useEffect(() => {
     fetchFilters();
   }, []); // Empty dependency array ensures this runs only once when the component mounts
+
+  useEffect(() => {
+    setSelectedCategories(initialFilters.categories || []);
+  }, [initialFilters]);
 
 
   const handleCategoryChange = (e) => {

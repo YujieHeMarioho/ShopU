@@ -1,85 +1,28 @@
-/* src/components/Footer/Footer.module.css */
-
+/* frontend/src/Components/Footer/Footer.module.css */
 .footer {
     background-color: var(--background-color);
     color: var(--text-color);
-    padding: var(--padding-large) 0;
     border-top: 2px solid var(--primary-color);
-}
-
-.footerContent {
-    display: flex;
-    justify-content: space-between;
-    padding: 0 var(--padding-medium);
-    flex-wrap: wrap;
-}
-
-.section {
-    flex: 1;
-    min-width: 200px;
-    margin: var(--padding-small) 0;
 }
 
 .logo {
     font-size: 1.5rem;
     color: var(--primary-color);
-    margin-bottom: var(--padding-small);
+    margin-bottom: 0.5rem;
 }
 
-.linkList {
-    list-style: none;
-    padding: 0;
-    font-size: 0.9rem;
-}
-
-.linkList li {
-    margin-bottom: 0.5em;
-}
-
-.linkList li a {
-    text-decoration: none;
+.linkList a {
     color: var(--text-color);
+    text-decoration: none;
     transition: color 0.3s ease;
 }
 
-.linkList li a:hover {
+.linkList a:hover {
     color: var(--primary-color);
 }
 
-/* Newsletter form */
-.newsletterForm {
-    display: flex;
-    gap: var(--padding-small);
-}
-
-.newsletterForm input[type="email"] {
-    padding: 0.5em;
-    border-radius: 4px;
-    border: 1px solid var(--text-color-light);
-    flex: 1;
-}
-
-.newsletterForm button {
-    padding: 0.5em 1em;
-    border: none;
-    background-color: var(--primary-color);
-    color: #fff;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.newsletterForm button:hover {
-    background-color: var(--secondary-color);
-}
-
-/* Bottom bar with logos */
 .footerBottom {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--padding-small) var(--padding-medium);
-    border-top: 1px solid var(--text-color-light);
-    font-size: 0.85rem;
+    color: var(--text-color-light);
 }
 
 .footerLogo {
@@ -88,6 +31,12 @@
 }
 
 .paymentLogos img {
-    height: 24px;
-    margin-left: var(--padding-small);
+    max-height: 24px;
+    width: auto;
+}
+
+@media (max-width: 767px) {
+    .paymentLogos {
+        margin-top: 1rem;
+    }
 }
