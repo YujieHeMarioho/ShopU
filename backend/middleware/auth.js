@@ -25,13 +25,7 @@ const openPaths = [
     if (!token) {
         return res.status(401).json({ message: 'Authorization token is missing' });
     }
-
-    checkJwt(req, res, (err) => {
-      if (err) {
-        return res.status(401).json({ message: 'Invalid token' });
-      }
-      next();
-    });
+    next();
   };
   
   export default authMiddleware;
