@@ -1,4 +1,4 @@
-/* css for listing cards */
+
 .card-title {
 	color: black;
 	font-weight: bold;
@@ -11,9 +11,13 @@
     box-sizing: border-box;
 }
 
-
-/* Styling the modal body */
 .modal-body {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+/* Styling the modal body */
+.information {
 	display: flex;
 	/* Use flexbox for horizontal layout */
 	flex-direction: row;
@@ -26,19 +30,21 @@
 
 /* Flexbox for the image */
 .modal-body .image-container {
-	flex: 1;
+	/*flex: 1;*/
 	/* Ensure it takes up proportional space */
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	width: 100%;
+	height: auto;
 }
 
 /* Styling the image */
 .modal-body .img {
-	width: 100%;
+	/*width: 100%;*/
 	/* Image takes up 60% of the modal width */
-	width: 1200px;
-	height: 800px;
+	width: 100%;
+	height: auto;
 	/* Maintain aspect ratio */
 	border-radius: 8px;
 	object-fit: cover;
@@ -58,14 +64,8 @@
 
 /* Styling for individual content elements */
 .modal-body .card-text {
-	font-size: 1rem;
-	color: #555;
-}
-
-.modal-body .card-price {
-	font-size: 1.25rem;
-	font-weight: bold;
-	color: #333;
+	font-size: 2rem;
+	color: #000;
 }
 
 .modal-body .dropdown-text {
@@ -78,3 +78,8 @@
 	font-size: 1rem;
 }
 
+/*member list stuff*/
+.no-members {
+  color: #6b7280;
+  text-align: center;
+}

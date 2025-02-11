@@ -26,7 +26,6 @@
 
 /* Flexbox for the image */
 .modal-body .image-container {
-	flex: 1;
 	/* Ensure it takes up proportional space */
 	display: flex;
 	align-items: center;

@@ -3,6 +3,7 @@ import { Card, Button, Alert } from 'react-bootstrap';
 import styles from './CommunityCard.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
 
+
 export const CommunityCardComponent = ({ image, title, description, communityId, onCommunityClick}) => {
   const { getAccessTokenSilently } = useAuth0();
   const [isJoined, setIsJoined] = useState(false);
@@ -45,7 +46,7 @@ export const CommunityCardComponent = ({ image, title, description, communityId,
       return;
     }
 
-    onCommunityClick(e);
+    window.location.href=`/Community/${communityId}`;
   };
 
   return (

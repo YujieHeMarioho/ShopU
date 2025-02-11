@@ -4,6 +4,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import axios from 'axios';
 import './Community.css';
 import CommunityModal from './CommunityModal';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const Communities = () => {
 
@@ -163,7 +164,7 @@ const Communities = () => {
     }
   }
 
-  // Add a community
+  // join a community
   const addCommunity = async () => {
     if (!newCommunityId) {
       alert('Please enter a valid Community ID.');
@@ -251,8 +252,7 @@ const Communities = () => {
 
   // Handler when user clicks a community
   const handleCardClick = (comm) => {
-    setSelectedCommunity(comm);
-    setShowCommunityModal(true);
+    window.location.href=`/${comm.id}`;
   };
 
   // Close modal for community popup
@@ -383,7 +383,9 @@ const Communities = () => {
           ))
       )}
       </div>
-      <CommunityModal show={showCommunityModal} onHide={handleCloseCommunityModal} community={selectedCommunity} />
+      <CommunityModal show={showCommunityModal} 
+      onHide={handleCloseCommunityModal} 
+      community={selectedCommunity} />
     </div>
 
     

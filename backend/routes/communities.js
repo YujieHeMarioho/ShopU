@@ -1,13 +1,15 @@
 import express from 'express';
-import { getUserCommunities, getAllCommunities, getCreatedCommunities, joinCommunity, leaveCommunity, addCommunity, uploadCommunityImage } from '../controllers/communities.js';  
+import { getCommunityDetails, getUserCommunities, getAllCommunities, getCreatedCommunities, getCommunityMembers, joinCommunity, leaveCommunity, addCommunity, uploadCommunityImage } from '../controllers/communities.js';  
 import upload from '../middleware/multer.js';
 
 const router = express.Router();
 
 // Define routes
+router.get('/community', getCommunityDetails)
 router.get('/communities', getUserCommunities)
 router.get('/communities/all', getAllCommunities)
 router.get('/communities/created', getCreatedCommunities)
+router.get('/communities/members', getCommunityMembers)
 router.post('/communities', joinCommunity)
 router.post('/communities/add', addCommunity)
 router.post('/communities/upload', upload.single('communityImage'), uploadCommunityImage)
