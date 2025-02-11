@@ -1,14 +1,16 @@
 import express from 'express';
-import { getAllListings, createListing, getFavoritedListings, uploadImages, getAllCategories } from '../controllers/listingsController.js';
+import { getAllListings, createListing, getFavoritedListings, uploadImages, getAllCategories, editListing, deleteListing } from '../controllers/listingsController.js';
 import upload from '../middleware/multer.js';
 
 const router = express.Router();
 
-// Define the route for fetching all listings
-router.get('/listings', getAllListings);  // When a GET request is made to /api/listings, run getAllListings
+// Fetch all listings route
+router.get('/listings', getAllListings);  
 
-router.get('/listings/favorites', getFavoritedListings);  // get all favorited listings for a specific user
+// get all favorited listings for a specific user
+router.get('/listings/favorites', getFavoritedListings);  
 
+// Route to get all categories to display
 router.get('/marketplace/categories', getAllCategories);
 
 //route to create a service listing
@@ -19,8 +21,14 @@ router.get('/marketplace/categories', getAllCategories);
 
 router.post('/listings/create', createListing);
 
-//route to upload images to S3
+// route to upload images to S3
 router.post('/listings/uploadImages', upload.array('images', 5), uploadImages);
+
+// route to edit a listing
+router.put('/listings/:id/edit', editListing);
+
+// route to delete a listing 
+router.delete('/listings/:id/delete/', deleteListing);
 
 export default router;
 

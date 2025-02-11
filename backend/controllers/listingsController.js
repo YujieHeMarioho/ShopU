@@ -190,6 +190,15 @@ export const createListing = async (req, res) => {
   }
 };
 
+export const editListing = async (res, req) => {
+
+}
+
+export const deleteListing = async (res, req) => {
+
+}
+
+
 // //Endpoint for create a listing
 // export const createServiceListing = async (req, res) => {
 //   try {
@@ -283,5 +292,3 @@ export const getAllCategories = async (req, res) => {
     res.status(500).json({ error: 'Database error' });
   }
 };
-
-export default { createListing, getFavoritedListings, getAllListings, uploadImages, getAllCategories };
