@@ -7,6 +7,27 @@ import sharp from 'sharp';
 
 const bucketName = buckets.listings;
 
+// Helper function to extract user_id from the token
+const extractUserIdFromToken = (req) => {
+  const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+  let user_id;
+  
+  if (!token) {
+    throw new Error('Token is missing from the authorization header');
+  }
+
+  try {
+    const decodedToken = jwtDecode(token);
+    user_id = decodedToken.sub; // Assuming 'sub' is the user_id
+  } catch (err) {
+    console.error('Error decoding token:', err); // Log the error for debugging
+    throw new Error('Invalid token');
+  }
+
+  return user_id;
+};
+
+
 //Endpoint for fetching rows
 export const getAllListings = async (req, res) => {
   const query = `
@@ -70,6 +91,8 @@ export const getAllListings = async (req, res) => {
 
 //Endpoint for fetching rows
 export const getAllUserListings = async (req, res) => {
+  try {
+  const userId = extractUserIdFromToken(req); // Extract user ID from token
   const query = `
         SELECT
           l.listing_id,
@@ -79,6 +102,7 @@ export const getAllUserListings = async (req, res) => {
           l.item_type,
           l.star_rating,
           l.price,
+          l.user_id,  -- Get the user ID for each listing
           ARRAY_AGG(li.file_key) AS file_keys 
         FROM
           listings l
@@ -86,6 +110,8 @@ export const getAllUserListings = async (req, res) => {
           categories c ON l.category_id = c.category_id
         INNER JOIN
           listing_images li ON l.listing_id = li.listing_id
+        WHERE
+          l.user_id = $1  -- Filter listings by user ID
         GROUP BY
           l.listing_id, 
           l.title, 
@@ -93,12 +119,10 @@ export const getAllUserListings = async (req, res) => {
           c.name, 
           l.item_type, 
           l.star_rating, 
-          l.price;
+          l.price, 
+          l.user_id;  -- Ensure user_id is included in the GROUP BY clause
       `;
-
-  try {
-    const result = await pool.query(query);
-
+    const result = await pool.query(query, [userId]);
     // Loop through each listing and generate signed URLs
     const listingsWithUrls = await Promise.all(
       result.rows.map(async (listing) => {

@@ -6,6 +6,7 @@ import './Profile.module.css'; // Optional: Custom CSS
 import UserPreferences from './UserPreferences';
 import styles from './Profile.module.css';
 import { SocialCard } from '../../Common';
+import { CardGrid } from '../../Common';
 
 const Profile = () => {
   const { user, getAccessTokenSilently } = useAuth0();  
@@ -26,6 +27,7 @@ const Profile = () => {
     const [error, setError] = useState(null);
     const [isGridLayout, setIsGridLayout] = useState(true); // State to toggle layout
     const [selectedCard, setSelectedCard] = useState(null);
+    const [listings, setListings] = useState([]);
 
      const handleCardClick = (post) => {
       console.log("Card clicked:", post);
@@ -64,10 +66,33 @@ const Profile = () => {
   
     const fetchUserListings = async () => {
       // Fetch listings logic (replace with your actual API)
-      setUserListings([
-        { id: 1, title: 'Item 1', description: 'Description of item 1' },
-        { id: 2, title: 'Item 2', description: 'Description of item 2' },
-      ]);
+      try{
+        const token = await getAccessTokenSilently();
+  
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings/user`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        const rawData = await response.json();
+    
+        // Map the data to match the desired format
+        const formattedData = rawData.map(item => ({
+          id: item.listing_id,
+          title: item.title,
+          description: item.description,
+          category: item.category,
+          type: item.item_type,
+          rating: item.star_rating,
+          price: item.price,
+          image: item.file_keys,
+        }));
+    
+        setUserListings(formattedData);
+      } catch (error) {
+        console.error('Error fetching listings:', error);
+      }
     };
 
     const fetchUserStatistics = async () => {
@@ -216,20 +241,15 @@ const Profile = () => {
                   )}
               </div>
           </Tab>
-        <Tab eventKey="listings" title="Listings">
-          <Row>
-            {userListings.map((listing) => (
-              <Col sm={4} key={listing.id}>
-                <Card className="mb-3">
-                  <Card.Body>
-                    <Card.Title>{listing.title}</Card.Title>
-                    <Card.Text>{listing.description}</Card.Text>
-                  </Card.Body>
-                </Card>
-              </Col>
-            ))}
-          </Row>
-        </Tab>
+          <Tab eventKey="listings" title="Listings">
+            <div className={styles.cardGridContainer}>
+              <CardGrid 
+                listings={userListings} // Pass the listings here
+                className={styles.cardGrid} 
+                openListingDetails={handleCardClick} // Pass the card click handler here
+              />
+            </div>
+          </Tab>
         <Tab eventKey="statistics" title="Statistics">
           <Card className="mb-3">
             <Card.Body>
