@@ -17,7 +17,7 @@ const router = express.Router();
 router.get('/feed', getAllFeedPosts);
 
 // Get feed posts for a specific user
-router.get('/feed/user/:userId', getUserFeedPosts);
+router.get('/feed/user', getUserFeedPosts);
 
 // Create a new feed post
 router.post('/feed/create', createFeedPost);

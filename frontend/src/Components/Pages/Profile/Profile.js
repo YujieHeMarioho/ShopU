@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
-import { Container, Row, Col, Card, Button, InputGroup, Form } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, InputGroup, Form, Tab, Tabs } from 'react-bootstrap';
 import { FaEnvelope, FaUser, FaEdit } from 'react-icons/fa';
 import './Profile.module.css'; // Optional: Custom CSS
 import UserPreferences from './UserPreferences';
+import styles from './Profile.module.css';
+import { SocialCard } from '../../Common';
 
 const Profile = () => {
   const { user, getAccessTokenSilently } = useAuth0();  
@@ -16,6 +18,62 @@ const Profile = () => {
       
   
     const [message, setMessage] = useState('');
+    const [key, setKey] = useState('posts'); // Default active tab
+    const [userPosts, setUserPosts] = useState([]); // Placeholder for posts
+    const [userListings, setUserListings] = useState([]); // Placeholder for listings
+    const [userStatistics, setUserStatistics] = useState({}); // Placeholder for statistics
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [isGridLayout, setIsGridLayout] = useState(true); // State to toggle layout
+    const [selectedCard, setSelectedCard] = useState(null);
+
+     const handleCardClick = (post) => {
+      console.log("Card clicked:", post);
+      setSelectedCard(post);
+    };
+
+    useEffect(() => {
+      // Fetch user posts, listings, and statistics here
+      fetchUserPosts();
+      fetchUserListings();
+      fetchUserStatistics();
+    }, []);
+
+    const fetchUserPosts = async () => {
+      try {
+          const token = await getAccessTokenSilently();
+  
+          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/user`, {
+              headers: {
+                  'Authorization': `Bearer ${token}`,
+              },
+          });
+  
+          if (!response.ok) throw new Error(`Failed to fetch user posts: ${response.statusText}`);
+  
+          const rawUserPosts = await response.json();
+          setUserPosts(rawUserPosts);
+          console.log('User Posts:', rawUserPosts);
+      } catch (error) {
+          console.error('Error fetching user posts:', error);
+          setError('Failed to load user posts. Please try again later.');
+      } finally {
+          setLoading(false);
+      }
+  };
+  
+    const fetchUserListings = async () => {
+      // Fetch listings logic (replace with your actual API)
+      setUserListings([
+        { id: 1, title: 'Item 1', description: 'Description of item 1' },
+        { id: 2, title: 'Item 2', description: 'Description of item 2' },
+      ]);
+    };
+
+    const fetchUserStatistics = async () => {
+      // Fetch statistics logic (replace with your actual API)
+      setUserStatistics({ posts: 5, listings: 10, followers: 200 });
+    };
   
     const handleInputChange = (e) => {
       const { name, value } = e.target;
@@ -132,7 +190,62 @@ const Profile = () => {
           </Card.Footer>
         </Card>
 
-        <UserPreferences></UserPreferences>
+        {/* Tabs Section */}
+        <Tabs activeKey={key} onSelect={(k) => setKey(k)} id="profile-tabs" className="mb-3">
+          <Tab eventKey="posts" title="Posts">
+              <div className={`${styles.feedContainer} ${isGridLayout ? styles.gridView : styles.scrollView}`}>
+                  {userPosts.length === 0 ? (
+                      <p>No posts available.</p>
+                  ) : (
+                      userPosts.map((post) => (
+                          <div key={post.post_id} className={styles.gridItem} onClick={() => handleCardClick(post)}>
+                              <SocialCard
+                                  post_id={post.post_id}                // Directly passing post_id
+                                  image={post.image}                   // Passing image URL
+                                  title={post.title}                   // Passing title
+                                  description={post.content}           // Passing content as description
+                                  profilePic={post.profile_pic_url}    // Passing profile picture URL
+                                  author={post.author}                 // Passing author name
+                                  initialLikes={post.likes_count}      // Mapping likes_count to initialLikes
+                                  initialShares={post.shares}          // Mapping shares to initialShares
+                                  isLikedAlready={post.is_liked}       // Check if post already liked by user
+                                  tags={post.tags}                     // Passing tags
+                              />
+                          </div>
+                      ))
+                  )}
+              </div>
+          </Tab>
+        <Tab eventKey="listings" title="Listings">
+          <Row>
+            {userListings.map((listing) => (
+              <Col sm={4} key={listing.id}>
+                <Card className="mb-3">
+                  <Card.Body>
+                    <Card.Title>{listing.title}</Card.Title>
+                    <Card.Text>{listing.description}</Card.Text>
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        </Tab>
+        <Tab eventKey="statistics" title="Statistics">
+          <Card className="mb-3">
+            <Card.Body>
+              <h5>User Statistics</h5>
+              <ul>
+                <li>Posts: {userStatistics.posts}</li>
+                <li>Listings: {userStatistics.listings}</li>
+                <li>Followers: {userStatistics.followers}</li>
+              </ul>
+            </Card.Body>
+          </Card>
+        </Tab>
+      </Tabs>
+
+      <UserPreferences></UserPreferences>
+
         
         {/* JSON Section */}
         {/*<Card className="shadow-sm">

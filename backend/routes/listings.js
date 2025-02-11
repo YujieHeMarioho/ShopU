@@ -7,6 +7,8 @@ const router = express.Router();
 // Define the route for fetching all listings
 router.get('/listings', getAllListings);  // When a GET request is made to /api/listings, run getAllListings
 
+//router.get('/listings/:userId', getAllUserListings);  // When a GET request is made to /api/listings, run getAllListings
+
 router.get('/listings/favorites', getFavoritedListings);  // get all favorited listings for a specific user
 
 router.get('/marketplace/categories', getAllCategories);
