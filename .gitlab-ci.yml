@@ -34,7 +34,7 @@ build:
   stage: build
   image: node:20  # Use Node.js Docker image for the build
   script:
-    - cd frontend && npm install && npm install recharts && npm run build  # Build React app
+    - cd frontend && npm install && npm run build  # Build React app
   artifacts:
     paths:
       - frontend/build/
@@ -74,7 +74,6 @@ deploy:
     - ./aws/install
 
     # Configure AWS CLI with environment variables stored in GitLab
-    - echo $AWS_ACCESS_KEY_ID
     - aws configure set aws_access_key_id $AWS_ACCESS_KEY_ID
     - aws configure set aws_secret_access_key $AWS_SECRET_ACCESS_KEY
     - aws configure set region $AWS_DEFAULT_REGION 

@@ -1,0 +1,71 @@
+/* frontend/src/Components/Utilities/EmailVerificationRequired.module.css */
+.emailVerificationContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #121212;
+}
+
+.emailVerificationCard {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  max-width: 400px;
+  text-align: center;
+}
+
+.title {
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.description, .instructions {
+  color: #666;
+  margin-bottom: 1rem;
+}
+
+.iconContainer {
+  font-size: 3rem;
+  color: #007bff;
+  margin: 1rem 0;
+}
+
+.resendButton, .returnButton, .logoutButton {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  margin-top: 1rem;
+}
+
+.resendButton:hover, .returnButton:hover {
+  background-color: #0056b3;
+}
+
+.returnButton {
+  background-color: #28a745;
+}
+
+.returnButton:hover {
+  background-color: #218838;
+}
+
+.logoutButton {
+  background-color: #dc3545;
+  margin-top: 0.5rem;
+}
+
+.logoutButton:hover {
+  background-color: #c82333;
+}
+
+.smallText {
+  font-size: 0.8rem;
+  color: #888;
+  margin-top: 1rem;
+}
