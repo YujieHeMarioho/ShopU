@@ -1,4 +1,4 @@
-import pool from '../pool.js';
+import { pool } from '../pool.js'; 
 
   export const getPolicies = async (req, res) => {
   const { user_id } = req.params;

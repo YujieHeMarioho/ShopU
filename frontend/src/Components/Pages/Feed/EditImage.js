@@ -60,7 +60,7 @@ function EditImage() {
     <div>
       <h1>Edit Image</h1>
       {image && (
-        <div style={{ width: "100%", height: 400, position: "relative" }}>
+        <div style={{ width: "100%", height: 400, position: "relative"}}>
           <Cropper
             image={image}
             crop={crop}

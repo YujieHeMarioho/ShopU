@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes, useLocation } from 'react-router-dom';
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Header from './Components/Header/Header';
@@ -24,10 +24,20 @@ import { useAuth0 } from '@auth0/auth0-react';
 import CheckOut from './Components/Pages/CheckOut/CheckOut'; // Import CheckOut page
 import MessagesPage from './Components/Pages/MessagesPage/MessagesPage';
 import ChatContent from './Components/Pages/ChatContent/ChatContent';
+import EmailVerificationRequired from './Components/Utilities/EmailVerificationRequired';
 
 function App() {
   const { loginWithRedirect, logout, user, isAuthenticated } = useAuth0();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const isEmailVerificationError = 
+  params.get('error') === 'access_denied' && 
+  params.get('error_description')?.includes('verify your email');
+
+  if (isEmailVerificationError) {
+    return <EmailVerificationRequired />;
+  }
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);

@@ -171,3 +171,12 @@ CREATE TABLE listing_images (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  
     CONSTRAINT fk_listing FOREIGN KEY (listing_id) REFERENCES listings(listing_id) ON DELETE CASCADE
 );
+
+CREATE TABLE community_images (
+    id SERIAL PRIMARY KEY, 
+    community_id INT NOT NULL,
+    community_post INT,
+    file_key VARCHAR(255) NOT NULL, 
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  
+    CONSTRAINT fk_community FOREIGN KEY (community_id) REFERENCES communities(community_id) ON DELETE CASCADE
+);

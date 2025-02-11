@@ -1,4 +1,4 @@
-import pool from '../pool.js'; // Ensure you have a database pool connection set up
+import { pool } from '../pool.js'; // Ensure you have a database pool connection set up
 
 export const createConversation = async (req, res) => {
   const { user1_id, user2_id } = req.body;

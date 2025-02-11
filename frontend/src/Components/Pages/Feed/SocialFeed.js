@@ -211,7 +211,7 @@ const SocialFeed = () => {
                         <div key={post.post_id} className={styles.gridItem}> 
                             <SocialCard
                                 post_id={post.post_id}                // Directly passing post_id
-                                image={post.image_url}                 // Passing image URL
+                                image={post.image}                 // Passing image URL
                                 title={post.title}                     // Passing title
                                 description={post.content}             // Passing content as description
                                 profilePic={post.profile_pic_url}      // Passing profile picture URL

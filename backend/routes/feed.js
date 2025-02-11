@@ -6,8 +6,10 @@ import {
     deleteFeedPost, 
     updateFeedPost, 
     shareFeedPost,
-    likeFeedPost
+    likeFeedPost,
+    uploadImage
 } from '../controllers/feed.js';
+import upload from '../middleware/multer.js';
 
 const router = express.Router();
 
@@ -31,5 +33,8 @@ router.post('/feed/:postId/share', shareFeedPost);
 
 // Like a post
 router.post('/feed/:id/like', likeFeedPost);
+
+// Upload image to S3
+router.post('/feed/upload', upload.single('postImage'), uploadImage);
 
 export default router;
