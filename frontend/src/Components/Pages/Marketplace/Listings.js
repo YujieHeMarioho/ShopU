@@ -52,6 +52,7 @@ function ListingModal({ show, onHide, listing }) {
     }
   };
   
+  
 
   return (
     <Modal show={show} onHide={onHide} dialogClassName='modal' centered>
