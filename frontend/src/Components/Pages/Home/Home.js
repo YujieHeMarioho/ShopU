@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Banner, Statistics } from '../../Common';
 import styles from './Home.module.css'; // Importing styles from Home.module.css
 import { useNavigate } from 'react-router-dom';
+import { useAuth0 } from '@auth0/auth0-react';
 
-function Home() {
+function Home() {    
+    const {isAuthenticated, loginWithRedirect} = useAuth0();
     const navigate = useNavigate();
     const [stats, setStats] = useState({
         listings: 0,
@@ -25,6 +27,10 @@ function Home() {
         };
         fetchStats();
     }, []);
+
+    useEffect(() => {
+        console.log('Authentication state:', isAuthenticated);
+      }, [isAuthenticated]);
 
     return (
         <div className={styles['home-container']}>
@@ -111,7 +117,7 @@ function Home() {
                 <p>Create your first listing or browse items from your campus today!</p>
                 <button
                     className={styles['cta-button']}
-                    onClick={() => navigate('/signup')}
+                    onClick={loginWithRedirect}
                 >
                     Join Now
                 </button>

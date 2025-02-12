@@ -3,7 +3,7 @@ import { Banner, CardGrid, FilterSidebar } from '../../Common';
 import { Form, ListGroup, Modal, Button } from 'react-bootstrap';
 import Fuse from 'fuse.js';  // Import Fuse.js library
 import styles from './Marketplace.module.css'; // Import CSS module for styling
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import ListingModal from './Listings';
 import { useAuth0 } from '@auth0/auth0-react';
 
@@ -17,7 +17,7 @@ export const Marketplace = () => {
   const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
   const { getAccessTokenSilently } = useAuth0();  
-
+  const location = useLocation();
 
   const [showListingModal, setShowListingModal] = useState(false);
   const [selectedListing, setSelectedListing] = useState(null);
@@ -106,6 +106,18 @@ export const Marketplace = () => {
     filterListings();
   }, [listings, searchQuery, activeFilters]);
 
+  //Sets the active filters based on the query params in the url
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const category = params.get('category');
+    if (category) {
+      setActiveFilters(prevFilters => ({
+        ...prevFilters,
+        categories: [category]
+      }));
+    }
+  }, [location]);
+
   useEffect(() => {
     // Fetch the most recent listings from the server
     const fetchListings = async () => {
@@ -117,29 +129,32 @@ export const Marketplace = () => {
             'Authorization': `Bearer ${token}`,
           },
         });
-
+  
         const rawData = await response.json();
-    
-        // Map the data to match the desired format
+  
+        // Map the data to match the desired format, now including user_id
         const formattedData = rawData.map(item => ({
           id: item.listing_id,
+          user_id: item.user_id,  // NEW: Include the seller's user_id
           title: item.title,
           description: item.description,
           category: item.category,
           type: item.item_type,
           rating: item.star_rating,
           price: item.price,
-          image: item.file_keys,
+          image: item.file_keys,  // or item.file_keys[0] if you only want one image
+          
         }));
-    
+  
         setListings(formattedData);
       } catch (error) {
         console.error('Error fetching listings:', error);
       }
     };
-
+  
     fetchListings();
   }, []);
+  
 
   // Filter change handler (when filter options are selected or modified)
   const handleFilterChange = (filter) => {
@@ -240,9 +255,9 @@ export const Marketplace = () => {
       <div className={styles.layoutContainer}>
         {/* Filter Sidebar */}
         <div className={styles.filterSidebarContainer}>
-          <FilterSidebar
-            activeFilters={activeFilters}
-            onFilterChange={handleFilterChange}
+          <FilterSidebar 
+            onFilterChange={handleFilterChange} 
+            initialFilters={activeFilters} 
             className={styles.filterSidebar}
           />
         </div>
