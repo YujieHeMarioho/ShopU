@@ -70,6 +70,16 @@ export const getAllListings = async (req, res) => {
 
 //Endpoint for fetching rows
 export const getAllUserListings = async (req, res) => {
+  let userId;
+  const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+  try {
+    const decodedToken = jwtDecode(token); // Decode the token
+    userId = decodedToken.sub;
+  } catch (err) {
+    console.error('Error decoding token:', err);
+    return res.status(401).json({ message: 'Invalid token' });
+  }
+
   const query = `
         SELECT
           l.listing_id,
@@ -86,6 +96,8 @@ export const getAllUserListings = async (req, res) => {
           categories c ON l.category_id = c.category_id
         INNER JOIN
           listing_images li ON l.listing_id = li.listing_id
+        WHERE
+          l.user_id = $1
         GROUP BY
           l.listing_id, 
           l.title, 
@@ -97,7 +109,7 @@ export const getAllUserListings = async (req, res) => {
       `;
 
   try {
-    const result = await pool.query(query);
+    const result = await pool.query(query, [userId]);
 
     // Loop through each listing and generate signed URLs
     const listingsWithUrls = await Promise.all(
@@ -349,4 +361,4 @@ export const getAllCategories = async (req, res) => {
   }
 };
 
-export default { createListing, getFavoritedListings, getAllListings, uploadImages, getAllCategories };
+export default { createListing, getFavoritedListings, getAllListings, uploadImages, getAllCategories, getAllUserListings };
