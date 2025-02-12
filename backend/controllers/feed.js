@@ -98,6 +98,18 @@ export const getAllFeedPosts = async (req, res) => {
   }
 };
 
+//Endpoint to get the total number of active posts in the feed
+export const getFeedPostCount = async (req, res) => {
+  const query = `SELECT COUNT(*) AS total_feed_posts FROM feed_posts;`;
+
+  try {
+    const result = await pool.query(query);
+    res.status(200).json({ total_feed_posts: result.rows[0].total_feed_posts });
+  } catch (err) {
+    console.error('Error running query:', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+};
 
 
 
