@@ -137,24 +137,24 @@ export const getAllUserListings = async (req, res) => {
               Key: fileKey,
             });
 
-//             return getSignedUrl(s3, command, { expiresIn: 86400 }); // URL expires in 1 day
-//           })
-//         );
+            return getSignedUrl(s3, command, { expiresIn: 86400 }); // URL expires in 1 day
+          })
+        );
 
-//         // Return the listing with the signed URLs
-//         return {
-//           ...listing,
-//           file_keys: signedUrls,
-//         };
-//       })
-//     );
+        // Return the listing with the signed URLs
+        return {
+          ...listing,
+          file_keys: signedUrls,
+        };
+      })
+    );
 
-//     res.status(200).json(listingsWithUrls);
-//   } catch (err) {
-//     console.error('Error running query:', err);
-//     res.status(500).json({ error: 'Database error' });
-//   }
-// };
+    res.status(200).json(listingsWithUrls);
+  } catch (err) {
+    console.error('Error running query:', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+};
 
 
 
