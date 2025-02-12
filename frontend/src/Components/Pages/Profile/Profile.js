@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
+import axios from 'axios';
 import { Container, Row, Col, Card, Button, InputGroup, Form, Tab, Tabs } from 'react-bootstrap';
 import { FaEnvelope, FaUser, FaEdit } from 'react-icons/fa';
 import './Profile.module.css'; // Optional: Custom CSS
@@ -7,6 +8,8 @@ import UserPreferences from './UserPreferences';
 import styles from './Profile.module.css';
 import { SocialCard } from '../../Common';
 import { CardGrid } from '../../Common';
+import leaveCommunity from '../Community/Community';
+
 
 const Profile = () => {
   const { user, getAccessTokenSilently } = useAuth0();  
@@ -28,6 +31,7 @@ const Profile = () => {
     const [isGridLayout, setIsGridLayout] = useState(true); // State to toggle layout
     const [selectedCard, setSelectedCard] = useState(null);
     const [listings, setListings] = useState([]);
+    const [createdCommunities, setCreatedCommunities] = useState([]);
 
      const handleCardClick = (post) => {
       console.log("Card clicked:", post);
@@ -94,6 +98,23 @@ const Profile = () => {
         console.error('Error fetching listings:', error);
       }
     };
+
+    const fetchUserCommunities = async()=>{
+      try{
+        const token = await getAccessTokenSilently();
+    
+        //get created communities
+        const createdCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/created`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            }
+          });
+        setCreatedCommunities(createdCommunityResponse.data);
+      } catch (error) {
+        console.error('Error fetching communities:', error);
+      }
+    }
 
     const fetchUserStatistics = async () => {
       // Fetch statistics logic (replace with your actual API)
@@ -248,6 +269,32 @@ const Profile = () => {
                 className={styles.cardGrid} 
                 openListingDetails={handleCardClick} // Pass the card click handler here
               />
+            </div>
+          </Tab>
+          <Tab eventKey="communities" title="Communities">
+          <p className='section-title'>Your Created Communities</p>
+            <div className="your-community-grid">
+            {createdCommunities.length === 0 ? (
+                <p>You haven't created any communities.</p>
+            ) : (
+                createdCommunities.map((community) => (
+                    <div key={community.community_id} className="your-community-card">
+                        <img
+                            src={community.imageUrl}
+                            alt={community.community_id}
+                            className="community-image"
+                        />
+                        <div className="community-info">
+                            <h3>{community.name || `Community ${community.community_id}`}</h3>
+                            <p>Created At: {new Date(community.created_at).toLocaleString()}</p>
+                            {`/<p>Joined At: {new Date(community.joined_at).toLocaleString()}</p>/`}
+                        </div>
+                        <button className="leave-button" onClick={() => leaveCommunity(community.community_id)}>
+                            Leave {`/FIXME: add delete community ability/`}
+                        </button>
+                    </div>
+                ))
+            )}
             </div>
           </Tab>
         <Tab eventKey="statistics" title="Statistics">
