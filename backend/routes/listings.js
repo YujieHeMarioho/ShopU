@@ -28,7 +28,7 @@ router.post('/listings/uploadImages', upload.array('images', 5), uploadImages);
 router.put('/listings/:id/edit', editListing);
 
 // route to delete a listing 
-router.delete('/listings/:id/delete/', deleteListing);
+router.delete('/listings/:id/delete', deleteListing);
 
 export default router;
 

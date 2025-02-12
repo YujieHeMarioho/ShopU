@@ -1,6 +1,6 @@
 import { s3, pool, buckets } from '../pool.js';
 import { jwtDecode } from 'jwt-decode';
-import { PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
 import sharp from 'sharp';
@@ -111,37 +111,37 @@ export const getFavoritedListings = async (req, res) => {
     l.price;
 `;
 
-try {
-  const result = await pool.query(query, [userId]);
+  try {
+    const result = await pool.query(query, [userId]);
 
-  // Loop through each listing and generate signed URLs
-  const listingsWithUrls = await Promise.all(
-    result.rows.map(async (listing) => {
-      // Generate pre-signed URLs for file_keys
-      const signedUrls = await Promise.all(
-        (listing.file_keys || []).map(async (fileKey) => {
-          const command = new GetObjectCommand({
-            Bucket: bucketName,
-            Key: fileKey,
-          });
+    // Loop through each listing and generate signed URLs
+    const listingsWithUrls = await Promise.all(
+      result.rows.map(async (listing) => {
+        // Generate pre-signed URLs for file_keys
+        const signedUrls = await Promise.all(
+          (listing.file_keys || []).map(async (fileKey) => {
+            const command = new GetObjectCommand({
+              Bucket: bucketName,
+              Key: fileKey,
+            });
 
-          return getSignedUrl(s3, command, { expiresIn: 86400 }); // URL expires in 1 day
-        })
-      );
+            return getSignedUrl(s3, command, { expiresIn: 86400 }); // URL expires in 1 day
+          })
+        );
 
-      // Return the listing with the signed URLs
-      return {
-        ...listing,
-        file_keys: signedUrls,
-      };
-    })
-  );
+        // Return the listing with the signed URLs
+        return {
+          ...listing,
+          file_keys: signedUrls,
+        };
+      })
+    );
 
-  res.status(200).json(listingsWithUrls);
-} catch (err) {
-  console.error('Error running query:', err);
-  res.status(500).json({ error: 'Database error' });
-}
+    res.status(200).json(listingsWithUrls);
+  } catch (err) {
+    console.error('Error running query:', err);
+    res.status(500).json({ error: 'Database error' });
+  }
 };
 
 //Endpoint for create a listing
@@ -190,13 +190,53 @@ export const createListing = async (req, res) => {
   }
 };
 
-export const editListing = async (res, req) => {
+export const editListing = async (req, res) => {
 
-}
+};
 
-export const deleteListing = async (res, req) => {
+export const deleteListing = async (req, res) => {
+  try {
+    const listingID = req.params.id;
+    
+    const deleteQuery = `
+    DELETE FROM public.listings
+    WHERE listing_id = $1;
+    `;
 
-}
+    const fileKeyQuery = `
+    SELECT file_key FROM public.listing_images
+    WHERE listing_id = $1; 
+    `;
+
+    const result = await pool.query(fileKeyQuery, [listingID]);
+
+
+    if (result.rows.length > 0) {
+      await Promise.all(result.rows.map(async (file) => {
+        if (!file.file_key) {
+          console.error("File key is missing for listing:", file);
+          return; 
+        }
+
+        const params = {
+          "Bucket": bucketName,
+          "Key": file.file_key
+        };
+
+        await s3.send(new DeleteObjectCommand(params));
+      }));
+
+    await pool.query(deleteQuery, [listingID]);
+
+    return res.status(200).json({ message: "Listing deleted successfully" });
+    }
+
+  }
+  catch (error) {
+    console.error("Error deleting listing:", error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
 
 
 // //Endpoint for create a listing
