@@ -43,6 +43,7 @@ const Profile = () => {
       fetchUserPosts();
       fetchUserListings();
       fetchUserStatistics();
+      fetchUserCommunities();
     }, []);
 
     const fetchUserPosts = async () => {
@@ -287,10 +288,10 @@ const Profile = () => {
                         <div className="community-info">
                             <h3>{community.name || `Community ${community.community_id}`}</h3>
                             <p>Created At: {new Date(community.created_at).toLocaleString()}</p>
-                            {`/<p>Joined At: {new Date(community.joined_at).toLocaleString()}</p>/`}
+                            {/*<p>Joined At: {new Date(community.joined_at).toLocaleString()}</p>*/}
                         </div>
                         <button className="leave-button" onClick={() => leaveCommunity(community.community_id)}>
-                            Leave {`/FIXME: add delete community ability/`}
+                            Leave {/*FIXME: add delete community ability*/}
                         </button>
                     </div>
                 ))
