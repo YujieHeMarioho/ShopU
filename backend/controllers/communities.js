@@ -9,7 +9,7 @@ const bucketName = buckets.community;
 
 //get details of a community by id
 export const getCommunityDetails = async (req, res) => {
-    const community_id = req.body.community_id;
+    const community_id = req.params.community_id;
 
     const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
     let user_id;  
@@ -29,7 +29,6 @@ export const getCommunityDetails = async (req, res) => {
 
     try {
         const result = await pool.query(query, [community_id]);
-        console.error(result);
         // Loop through each community and generate signed URLs for the image file_key
         const communityWithUrl = await Promise.all(
             result.rows.map(async (community) => {
@@ -56,7 +55,8 @@ export const getCommunityDetails = async (req, res) => {
         );
         
         // Return the response with the communities and their image URLs
-        res.status(200).json(communitiesWithUrls);
+        console.error(communityWithUrl)
+        res.status(200).json(communityWithUrl);
     } catch (err) {
         console.error('Error running query:', err);
         res.status(500).json({ error: 'Database error' });
@@ -230,7 +230,7 @@ export const getCreatedCommunities = async (req, res) => {
 
 //get users in community
 export const getCommunityMembers = async (req, res) => {
-    const community_id = req.body.community_id;
+    const community_id = req.params.community_id;
     const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
     let user_id;
     try {

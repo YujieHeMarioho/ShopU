@@ -3,7 +3,6 @@ import React, { useState, useLayoutEffect, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import axios from 'axios';
 import './Community.css';
-import CommunityModal from './CommunityModal';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const Communities = () => {
@@ -20,9 +19,6 @@ const Communities = () => {
   const [newCommunityName, setNewCommunityName] = useState('');
   const [newCommunityDescription, setNewCommunityDescription] = useState('');
   const [communityImage, setCommunityImage] = useState(null);
-
-  const [showCommunityModal, setShowCommunityModal] = useState(false);
-  const [selectedCommunity, setSelectedCommunity] = useState(null);
 
   const { getAccessTokenSilently } = useAuth0();  
 
@@ -255,12 +251,6 @@ const Communities = () => {
     window.location.href=`/${comm.id}`;
   };
 
-  // Close modal for community popup
-  const handleCloseCommunityModal = () => {
-    setShowCommunityModal(false);
-    setSelectedCommunity(null);
-  };
-
 
   // Map the data to match the desired format
   const formattedOtherCommunities = otherCommunities.map(comm => ({
@@ -361,7 +351,7 @@ const Communities = () => {
       </div>
       <div className="your-community-grid">
       <h2>Your Communities</h2>
-      {communities.length === 0 ? (
+      {createdCommunities.length === 0 ? (
           <p>You haven't created any communities.</p>
       ) : (
           createdCommunities.map((community) => (
@@ -383,9 +373,6 @@ const Communities = () => {
           ))
       )}
       </div>
-      <CommunityModal show={showCommunityModal} 
-      onHide={handleCloseCommunityModal} 
-      community={selectedCommunity} />
     </div>
 
     
