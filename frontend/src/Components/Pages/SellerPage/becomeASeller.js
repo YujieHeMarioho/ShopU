@@ -1,8 +1,11 @@
 import React from "react";
 import { Container, Row, Col, Card, Button } from "react-bootstrap";
+import { useNavigate } from "react-router-dom";
 import styles from "./BecomeASeller.module.css";
 
 function BecomeASeller() {
+  const navigate = useNavigate();
+  
   return (
     <Container className={styles.container}>
       {/* Hero Section */}
@@ -74,9 +77,11 @@ function BecomeASeller() {
           registered on the platform.
         </p>
         <div className={styles.ctaContainer}>
-          <Button className={styles.startButton} variant="primary">
-            Start My Business Journey
-          </Button>
+        <Button
+            className={styles.startButton}
+            variant="primary"
+            onClick={() => navigate("/seller-dashboard")}
+          >Start My Business Journey</Button>
           <p className={styles.comingSoon}>More features coming soon!</p>
         </div>
       </section>
