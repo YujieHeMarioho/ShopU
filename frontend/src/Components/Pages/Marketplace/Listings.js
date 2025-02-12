@@ -2,14 +2,56 @@ import React, { useState } from 'react';
 import { Modal, Button, Dropdown, DropdownButton, DropdownItem, Carousel } from 'react-bootstrap';
 import './Listings.css'; 
 
+import { useAuth0 } from '@auth0/auth0-react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+
 function ListingModal({ show, onHide, listing }) {
  const [dropDownTitle, setDropDownTitle] = useState('Select an Option')
+
+  const { user, getAccessTokenSilently } = useAuth0();
+  const navigate = useNavigate();
 
   if (!listing) return null; // If no listing data, render nothing
 
   const handleDropDownClick = (option) => {
     setDropDownTitle(option);
   };
+
+
+  // NEW: Function to handle messaging the seller using listing.user_id
+  const handleMessageSeller = async () => {
+    // Log the keys and full listing object for debugging
+    console.log("Listing object keys:", Object.keys(listing));
+    console.log("Listing object:", listing);
+  
+    // Use user_id or seller_id from the listing (whichever exists)
+    const sellerId = listing.user_id || listing.seller_id;
+    if (!sellerId) {
+      alert('Seller information is not available.');
+      return;
+    }
+  
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/api/conversations`,
+        { 
+          user1_id: user.sub, 
+          user2_id: sellerId 
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      navigate(`/chat/${response.data.conversation_id}`);
+    } catch (error) {
+      console.error(
+        'Error starting conversation with seller:',
+        error.response ? error.response.data : error.message
+      );
+      alert('Unable to start conversation with seller. Please try again.');
+    }
+  };
+  
 
   return (
     <Modal show={show} onHide={onHide} dialogClassName='modal' centered>
@@ -52,7 +94,7 @@ function ListingModal({ show, onHide, listing }) {
                 </Dropdown>
             </div>
             <Button variant='dark' className='mb-2'> Offer Seller! </Button>
-            <Button variant='dark'> Message Seller! </Button>
+            <Button variant='dark' onClick={handleMessageSeller}> Message Seller! </Button>
             <p className='card-text'>{listing.description}</p>
           </div>
       </Modal.Body>

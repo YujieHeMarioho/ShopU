@@ -9,9 +9,11 @@ const bucketName = buckets.listings;
 
 //Endpoint for fetching rows
 export const getAllListings = async (req, res) => {
+  console.log("Inside getAllListings endpoint"); // Debug: Check if endpoint is hit
   const query = `
         SELECT
           l.listing_id,
+          l.user_id,
           l.title,
           l.description,
           c.name AS category,  -- Get the category name
@@ -27,6 +29,7 @@ export const getAllListings = async (req, res) => {
           listing_images li ON l.listing_id = li.listing_id
         GROUP BY
           l.listing_id, 
+          l.user_id,          -- Group by seller's ID
           l.title, 
           l.description, 
           c.name, 
@@ -34,13 +37,15 @@ export const getAllListings = async (req, res) => {
           l.star_rating, 
           l.price;
       `;
-
   try {
     const result = await pool.query(query);
+    // Log the full result using JSON.stringify to ensure all keys are visible.
+    console.log("Fetched Listings:", JSON.stringify(result.rows, null, 2));
 
     // Loop through each listing and generate signed URLs
     const listingsWithUrls = await Promise.all(
       result.rows.map(async (listing) => {
+        console.log("Listing user_id:", listing.user_id); // Debug: Check each seller's user_id
         // Generate pre-signed URLs for file_keys
         const signedUrls = await Promise.all(
           (listing.file_keys || []).map(async (fileKey) => {
@@ -48,12 +53,9 @@ export const getAllListings = async (req, res) => {
               Bucket: bucketName,
               Key: fileKey,
             });
-
             return getSignedUrl(s3, command, { expiresIn: 86400 }); // URL expires in 1 day
           })
         );
-
-        // Return the listing with the signed URLs
         return {
           ...listing,
           file_keys: signedUrls,
@@ -67,67 +69,72 @@ export const getAllListings = async (req, res) => {
     res.status(500).json({ error: 'Database error' });
   }
 };
+
 
 //Endpoint for fetching rows
-export const getAllUserListings = async (req, res) => {
-  const query = `
-        SELECT
-          l.listing_id,
-          l.title,
-          l.description,
-          c.name AS category,  -- Get the category name
-          l.item_type,
-          l.star_rating,
-          l.price,
-          ARRAY_AGG(li.file_key) AS file_keys 
-        FROM
-          listings l
-        JOIN
-          categories c ON l.category_id = c.category_id
-        INNER JOIN
-          listing_images li ON l.listing_id = li.listing_id
-        GROUP BY
-          l.listing_id, 
-          l.title, 
-          l.description, 
-          c.name, 
-          l.item_type, 
-          l.star_rating, 
-          l.price;
-      `;
+// export const getAllUserListings = async (req, res) => {
+//   const query = `
+//         SELECT
+//         l.listing_id,
+//         l.user_id,
+//         l.title,
+//         l.description,
+//         c.name AS category,  -- Get the category name
+//         l.item_type,
+//         l.star_rating,
+//         l.price,
+//         ARRAY_AGG(li.file_key) AS file_keys 
+//       FROM
+//         listings l
+//       JOIN
+//         categories c ON l.category_id = c.category_id
+//       INNER JOIN
+//         listing_images li ON l.listing_id = li.listing_id
+//       GROUP BY
+//         l.listing_id, 
+//         l.user_id,          -- NEW: Also group by the seller's ID
+//         l.title, 
+//         l.description, 
+//         c.name, 
+//         l.item_type, 
+//         l.star_rating, 
+//         l.price;
+//       `;
 
-  try {
-    const result = await pool.query(query);
+//   try {
+//     const result = await pool.query(query);
 
-    // Loop through each listing and generate signed URLs
-    const listingsWithUrls = await Promise.all(
-      result.rows.map(async (listing) => {
-        // Generate pre-signed URLs for file_keys
-        const signedUrls = await Promise.all(
-          (listing.file_keys || []).map(async (fileKey) => {
-            const command = new GetObjectCommand({
-              Bucket: bucketName,
-              Key: fileKey,
-            });
+//     // Loop through each listing and generate signed URLs
+//     const listingsWithUrls = await Promise.all(
+//       result.rows.map(async (listing) => {
+//         // NEW: Log the seller's user_id for each listing
+//         console.log("Listing user_id:", listing.user_id);
+//         // Generate pre-signed URLs for file_keys
+//         const signedUrls = await Promise.all(
+//           (listing.file_keys || []).map(async (fileKey) => {
+//             const command = new GetObjectCommand({
+//               Bucket: bucketName,
+//               Key: fileKey,
+//             });
 
-            return getSignedUrl(s3, command, { expiresIn: 86400 }); // URL expires in 1 day
-          })
-        );
+//             return getSignedUrl(s3, command, { expiresIn: 86400 }); // URL expires in 1 day
+//           })
+//         );
 
-        // Return the listing with the signed URLs
-        return {
-          ...listing,
-          file_keys: signedUrls,
-        };
-      })
-    );
+//         // Return the listing with the signed URLs
+//         return {
+//           ...listing,
+//           file_keys: signedUrls,
+//         };
+//       })
+//     );
 
-    res.status(200).json(listingsWithUrls);
-  } catch (err) {
-    console.error('Error running query:', err);
-    res.status(500).json({ error: 'Database error' });
-  }
-};
+//     res.status(200).json(listingsWithUrls);
+//   } catch (err) {
+//     console.error('Error running query:', err);
+//     res.status(500).json({ error: 'Database error' });
+//   }
+// };
 
 
 
@@ -145,33 +152,32 @@ export const getFavoritedListings = async (req, res) => {
   }
 
   const query = `
-  SELECT
-    l.listing_id,
-    l.title,
-    l.description,
-    c.name AS category,  -- Get the category name
-    l.item_type,
-    l.star_rating,
-    l.price,
-    ARRAY_AGG(li.file_key) AS file_keys 
-  FROM
-    listings l
-  JOIN
-    categories c ON l.category_id = c.category_id
-  INNER JOIN
-    listing_images li ON l.listing_id = li.listing_id
-  JOIN
-    favorites f ON l.listing_id = f.listing_id
-  WHERE
-    f.user_id = $1 
-  GROUP BY
-    l.listing_id, 
-    l.title, 
-    l.description, 
-    c.name, 
-    l.item_type, 
-    l.star_rating, 
-    l.price;
+        SELECT
+        l.listing_id,
+        l.user_id,
+        l.title,
+        l.description,
+        c.name AS category,  -- Get the category name
+        l.item_type,
+        l.star_rating,
+        l.price,
+        ARRAY_AGG(li.file_key) AS file_keys 
+      FROM
+        listings l
+      JOIN
+        categories c ON l.category_id = c.category_id
+      INNER JOIN
+        listing_images li ON l.listing_id = li.listing_id
+      GROUP BY
+        l.listing_id, 
+        l.user_id,          -- NEW: Also group by the seller's ID
+        l.title, 
+        l.description, 
+        c.name, 
+        l.item_type, 
+        l.star_rating, 
+        l.price;
+        
 `;
 
 try {
