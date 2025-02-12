@@ -6,6 +6,7 @@ import Header from './Components/Header/Header';
 import Footer from './Components/Footer/Footer';
 import Favorites from './Components/Pages/Favorites/Favorites';
 import Communities from './Components/Pages/Community/Community';
+import CommunityHome from './Components/Pages/Community/CommunityHome';
 import Marketplace from './Components/Pages/Marketplace/Marketplace';
 import Banner from './Components/Common/Banner';
 import Statistics from './Components/Common/Statistics';
@@ -70,6 +71,7 @@ function App() {
         {/* New Checkout Page */}
         <Route path="/cart" element={<AuthenticationGuard component={CheckOut} />} />
         <Route path="/messages" element={<AuthenticationGuard component={MessagesPage} />} />
+        <Route path="/community/:community_id" element={<CommunityHome />} />
         <Route path="/chat/:conversation_id" element={<AuthenticationGuard component={ChatContent} />} />
 
       </Routes>
