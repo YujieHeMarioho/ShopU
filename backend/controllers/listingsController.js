@@ -91,6 +91,19 @@ export const getAllListings = async (req, res) => {
   }
 };
 
+//Endpoint for get the total count of num listings
+export const getListingCount = async (req, res) => {
+  const query = `SELECT COUNT(*) AS total_listings FROM listings;`;
+
+  try {
+    const result = await pool.query(query);
+    res.status(200).json({ total_listings: result.rows[0].total_listings });
+  } catch (err) {
+    console.error('Error running query:', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+};
+
 
 //Endpoint for fetching rows
 export const getAllUserListings = async (req, res) => {

@@ -29,6 +29,20 @@ export const getAllAuth0Users = async (req, res) => {
     }
 };
 
+// Get the total number of users on the platform
+export const getUserCount = async (req, res) => {
+  const query = `SELECT COUNT(*) AS total_users FROM users;`;
+
+  try {
+    const result = await pool.query(query);
+    res.status(200).json({ total_users: result.rows[0].total_users });
+  } catch (err) {
+    console.error('Error running query:', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+};
+
+
 // Get User Info
 export const getUserInfo = async (req, res) => {
   const { user_id } = req.params;
