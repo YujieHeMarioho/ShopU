@@ -3,6 +3,7 @@ import {
     getAllFeedPosts, 
     getFeedPostCount,
     getUserFeedPosts, 
+    getUserFeedPostsCount,
     createFeedPost, 
     deleteFeedPost, 
     updateFeedPost, 
@@ -22,6 +23,9 @@ router.get('/feed/count', getFeedPostCount);
 
 // Get feed posts for a specific user
 router.get('/feed/user', getUserFeedPosts);
+
+// Get all feed posts count
+router.get('/feed/user/count', getUserFeedPostsCount);
 
 // Create a new feed post
 router.post('/feed/create', createFeedPost);

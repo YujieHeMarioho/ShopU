@@ -233,6 +233,32 @@ export const getUserFeedPosts = async (req, res) => {
   }
 };
 
+export const getUserFeedPostsCount = async (req, res) => {
+  try {
+    const userId = extractUserIdFromToken(req); // Extract user ID from token
+
+    const query = `
+      SELECT COUNT(*) AS post_count
+      FROM feed_posts f
+      WHERE f.user_id = $1;
+    `;
+
+    // Execute the query
+    const result = await pool.query(query, [userId]);
+
+    const postCount = result.rows[0].post_count;
+
+    console.log('Number of user feed posts:', postCount);
+
+    // Respond with the count
+    res.status(200).json({ count: postCount });
+  } catch (err) {
+    console.error('Error fetching user feed posts count:', err.message); // Log specific error message
+    res.status(500).json({ error: err.message || 'Database error' });
+  }
+};
+
+
 // Create a new feed post  (TODO Need to handle linking to items)
 export const createFeedPost = async (req, res) => {
   const { title, content, tags, image } = req.body;

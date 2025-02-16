@@ -118,9 +118,63 @@ const Profile = () => {
     }
 
     const fetchUserStatistics = async () => {
-      // Fetch statistics logic (replace with your actual API)
-      setUserStatistics({ posts: 5, listings: 10, followers: 200 });
+      try {
+        const token = await getAccessTokenSilently();
+        
+        // Fetch post count
+        const postResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/user/count`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+    
+        if (!postResponse.ok) {
+          throw new Error('Failed to fetch post count');
+        }
+    
+        const postCount = await postResponse.json();
+    
+        // Fetch listing count
+        const listingResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings/user/count`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+    
+        if (!listingResponse.ok) {
+          throw new Error('Failed to fetch listing count');
+        }
+    
+        const listingCount = await listingResponse.json();
+    
+        // Fetch friends count
+        const friendsResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/friends/count`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+    
+        if (!friendsResponse.ok) {
+          throw new Error('Failed to fetch friends count');
+        }
+    
+        const friendsCount = await friendsResponse.json();
+    
+        // Combine all statistics
+        setUserStatistics({
+          posts: postCount.count,
+          listings: listingCount.count,
+          friends: friendsCount.count,
+        });
+      } catch (error) {
+        console.error('Error fetching user statistics:', error);
+        setError('Failed to load user statistics. Please try again later.');
+      }
     };
+    
   
     const handleInputChange = (e) => {
       const { name, value } = e.target;
@@ -239,30 +293,31 @@ const Profile = () => {
 
         {/* Tabs Section */}
         <Tabs activeKey={key} onSelect={(k) => setKey(k)} id="profile-tabs" className="mb-3">
-          <Tab eventKey="posts" title="Posts">
-              <div className={`${styles.feedContainer} ${isGridLayout ? styles.gridView : styles.scrollView}`}>
-                  {userPosts.length === 0 ? (
-                      <p>No posts available.</p>
-                  ) : (
-                      userPosts.map((post) => (
-                          <div key={post.post_id} className={styles.gridItem} onClick={() => handleCardClick(post)}>
-                              <SocialCard
-                                  post_id={post.post_id}                // Directly passing post_id
-                                  image={post.image}                   // Passing image URL
-                                  title={post.title}                   // Passing title
-                                  description={post.content}           // Passing content as description
-                                  profilePic={post.profile_pic_url}    // Passing profile picture URL
-                                  author={post.author}                 // Passing author name
-                                  initialLikes={post.likes_count}      // Mapping likes_count to initialLikes
-                                  initialShares={post.shares}          // Mapping shares to initialShares
-                                  isLikedAlready={post.is_liked}       // Check if post already liked by user
-                                  tags={post.tags}                     // Passing tags
-                              />
-                          </div>
-                      ))
-                  )}
-              </div>
+        <Tab eventKey="posts" title="Posts">
+            <div className={`${styles.feedContainer} ${isGridLayout ? styles.gridView : styles.scrollView}`}>
+              {userPosts.length === 0 ? (
+                <p>No posts available.</p>
+              ) : (
+                userPosts.map((post) => (
+                  <div key={post.post_id} className={styles.gridItem} onClick={() => handleCardClick(post)}>
+                    <SocialCard
+                      post_id={post.post_id}                // Directly passing post_id
+                      image={post.image}                   // Passing image URL
+                      title={post.title}                   // Passing title
+                      description={post.content}           // Passing content as description
+                      profilePic={post.profile_pic_url}    // Passing profile picture URL
+                      author={post.author}                 // Passing author name
+                      initialLikes={post.likes_count}      // Mapping likes_count to initialLikes
+                      initialShares={post.shares}          // Mapping shares to initialShares
+                      isLikedAlready={post.is_liked}       // Check if post already liked by user
+                      tags={post.tags}                     // Passing tags
+                    />
+                  </div>
+                ))
+              )}
+            </div>
           </Tab>
+
           <Tab eventKey="listings" title="Listings">
             <div className={styles.cardGridContainer}>
               <CardGrid 
@@ -305,14 +360,15 @@ const Profile = () => {
               <ul>
                 <li>Posts: {userStatistics.posts}</li>
                 <li>Listings: {userStatistics.listings}</li>
-                <li>Followers: {userStatistics.followers}</li>
+                <li>Followers: {userStatistics.friends}</li>
               </ul>
             </Card.Body>
           </Card>
         </Tab>
+        <Tab eventKey="preferences" title="User Preferences">
+          <UserPreferences />
+        </Tab>
       </Tabs>
-
-      <UserPreferences></UserPreferences>
 
         
         {/* JSON Section */}
