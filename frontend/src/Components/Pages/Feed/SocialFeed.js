@@ -184,6 +184,10 @@ const SocialFeed = () => {
         }
       };
 
+      const reloadFeed = () => {
+        fetchFeed();  // Call the fetchFeed function to reload posts
+    };
+
     // useEffect(() => {
     //     if (userId) {
     //         fetchUserFeed();  // Fetch user feed if user is logged in
@@ -233,6 +237,7 @@ const SocialFeed = () => {
                                 tags={post.tags}                       // Passing tags
                                 onLike={() => handleLike(post.post_id, post.likes_count, post.is_liked)} // Handling like action
                                 onShare={() => shareFeedPost(post.post_id)}  // Handling share action
+                                reloadFeed={reloadFeed}
                             />
                         </div>
                     ))

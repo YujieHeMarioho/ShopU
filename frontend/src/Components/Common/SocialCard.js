@@ -16,7 +16,8 @@ export const SocialCard = ({
   initialLikes = 0,
   initialShares = 0,
   isLikedAlready,
-  tags = [],             // Tags for the post
+  tags = [],
+  reloadFeed             // Tags for the post
 }) => {
   const { user, getAccessTokenSilently } = useAuth0();
   const navigate = useNavigate();
@@ -38,6 +39,7 @@ export const SocialCard = ({
   //const [friends, setFriends] = useState([]);
   const [communities, setCommunities] = useState(['Tech Group', 'Gaming Hub']);
   const [selectedOption, setSelectedOption] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const friends = [
     { id: 1, name: "Alice", profilePic: "https://randomuser.me/api/portraits/women/1.jpg" },
@@ -54,17 +56,37 @@ export const SocialCard = ({
     }
   }, [user]);
 
-  const handleSave = () => {
-    console.log("Saving changes:", {
-      editedTitle,
-      editedDescription,
-      editedTags: editedTags.split(",").map((tag) => tag.trim()),
-      editedImage,
-      editedVideo,
-    });
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+        const token = await getAccessTokenSilently();
 
-    setIsEditing(false);
-    // Add API call to update the post here
+          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/${post_id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}` // Include authentication token
+            },
+            body: JSON.stringify({
+                title: editedTitle,
+                description: editedDescription,
+                tags: editedTags.split(",").map(tag => tag.trim()), // Convert string to array
+                image: editedImage,
+                video: editedVideo
+            }),
+        });
+
+        if (response.ok) {
+            setIsEditing(false); // Close modal on success
+            reloadFeed();
+        } else {
+            console.error("Failed to update post:", await response.text());
+        }
+    } catch (error) {
+        console.error("Error updating post:", error);
+    } finally {
+        setLoading(false);
+    }
   };
 
   const handleClose = () => {
@@ -268,10 +290,10 @@ export const SocialCard = ({
 
        {/* Edit Modal */}
       <Modal show={isEditing} onHide={() => setIsEditing(false)} onClick={(e)=>e.stopPropagation()}>
-        <Modal.Header closeButton>
+        <Modal.Header closeButton style={{ color: "black" }}>
           <Modal.Title>Edit Post</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
+        <Modal.Body style={{ color: "black" }}>
           <Form>
             <Form.Group controlId="editTitle">
               <Form.Label>Title</Form.Label>
@@ -323,7 +345,9 @@ export const SocialCard = ({
 
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setIsEditing(false)}>Cancel</Button>
-          <Button variant="primary" onClick={handleSave}>Save Changes</Button>
+          <Button variant="primary" onClick={handleSave} disabled={loading}>
+            {loading ? "Saving..." : "Save Changes"}
+          </Button>
         </Modal.Footer>
       </Modal>
     </div>
