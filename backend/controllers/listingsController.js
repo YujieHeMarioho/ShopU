@@ -191,13 +191,51 @@ export const createListing = async (req, res) => {
 };
 
 export const editListing = async (req, res) => {
+  const listingID = req.params.id;
+  const { title, price, description } = req.body;
+  
+  try {
+    const updates = [];
+    const values = [];
+    let index = 1;
 
+    if (title) {
+      updates.push(`title = $${index}`);
+      values.push(title);
+      index++;
+    }
+    if (price) {
+      updates.push(`price = $${index}`);
+      values.push(price);
+      index++;
+    }
+    if (description) {
+      updates.push(`description = $${index}`);
+      values.push(description);
+      index++;
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ message: "No fields to update" });
+    }
+
+    values.push(listingID);
+
+    const query = `UPDATE public.listings SET ${updates.join(", ")} WHERE listing_id = $${index} RETURNING *`;
+
+    const { rows } = await pool.query(query, values);
+
+    res.json({ message: "Listing updated", listing: rows[0] });
+  } catch (error) {
+    console.error("Error updating listing:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
 
 export const deleteListing = async (req, res) => {
   try {
     const listingID = req.params.id;
-    
+
     const deleteQuery = `
     DELETE FROM public.listings
     WHERE listing_id = $1;
@@ -215,7 +253,7 @@ export const deleteListing = async (req, res) => {
       await Promise.all(result.rows.map(async (file) => {
         if (!file.file_key) {
           console.error("File key is missing for listing:", file);
-          return; 
+          return;
         }
 
         const params = {
@@ -226,9 +264,9 @@ export const deleteListing = async (req, res) => {
         await s3.send(new DeleteObjectCommand(params));
       }));
 
-    await pool.query(deleteQuery, [listingID]);
+      await pool.query(deleteQuery, [listingID]);
 
-    return res.status(200).json({ message: "Listing deleted successfully" });
+      return res.status(200).json({ message: "Listing deleted successfully" });
     }
 
   }
