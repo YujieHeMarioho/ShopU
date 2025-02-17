@@ -1,6 +1,5 @@
 // src/Components/Common/Banner.js
 import { Container, Row, Col } from 'react-bootstrap';
-import { ArrowRightCircle } from 'react-bootstrap-icons';
 
 export const Banner = ({ title, description, showConnectButton }) => {
   return (
@@ -11,12 +10,6 @@ export const Banner = ({ title, description, showConnectButton }) => {
             <div>
               <h1>{title}</h1>
               <p>{description}</p>
-              {/* Conditionally render the button */}
-              {showConnectButton && (
-                <button onClick={() => console.log('connect')}>
-                  Let’s Connect <ArrowRightCircle size={25} />
-                </button>
-              )}
             </div>
           </Col>
         </Row>

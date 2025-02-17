@@ -4,7 +4,7 @@ import styles from './Card.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
 
 
-export const CardComponent = ({ image, title, description, price, onListingClick, listingId }) => {
+export const CardComponent = ({ image, title, description, price, onListingClick, listingId, onUnfavorite }) => {
   const {getAccessTokenSilently } = useAuth0();
   const [isFavorited, setIsFavorited] = useState(false);
   const [alertMessage, setAlertMessage] = useState(null);
@@ -33,14 +33,16 @@ export const CardComponent = ({ image, title, description, price, onListingClick
       const action = isFavorited ? 'remove' : 'add';
       const success = await favoriteAPICall(listingId, action, token);
 
-
       if (success) {
         setIsFavorited(!isFavorited);
         setAlertMessage(isFavorited ? "Item was removed from favorites list" : "Item was added to favorites list");
-
+        
+        // If the item was unfavorited and we're on the Favorites page, remove it
+        if (action === 'remove' && onUnfavorite) {
+          onUnfavorite(listingId);
+        }
         // Clear alert after a few seconds
         setTimeout(() => setAlertMessage(null), 3000);
-
       }
     } catch (error) {
       console.error('Error:', error);

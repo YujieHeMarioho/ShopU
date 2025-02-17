@@ -92,10 +92,10 @@ export const getAllCommunities = async (req, res) => {
             result.rows.map(async (community) => {
             // Generate a pre-signed URL for the community's image file_key (if it exists)
             let imageUrl = null;
-            if (community.image_key) {
+            if (community.file_key) {
                 const command = new GetObjectCommand({
                 Bucket: bucketName,
-                Key: community.image_key, // The file_key from the community_images table
+                Key: community.file_key, // The file_key from the community_images table
                 });
         
                 // Generate the signed URL

@@ -3,7 +3,7 @@ import { Banner, CardGrid, FilterSidebar } from '../../Common';
 import { Form, ListGroup, Modal, Button } from 'react-bootstrap';
 import Fuse from 'fuse.js';  // Import Fuse.js library
 import styles from './Marketplace.module.css'; // Import CSS module for styling
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import ListingModal from './Listings';
 import { useAuth0 } from '@auth0/auth0-react';
 
@@ -17,7 +17,7 @@ export const Marketplace = () => {
   const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
   const { getAccessTokenSilently } = useAuth0();  
-
+  const location = useLocation();
 
   const [showListingModal, setShowListingModal] = useState(false);
   const [selectedListing, setSelectedListing] = useState(null);
@@ -105,6 +105,18 @@ export const Marketplace = () => {
 
     filterListings();
   }, [listings, searchQuery, activeFilters]);
+
+  //Sets the active filters based on the query params in the url
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const category = params.get('category');
+    if (category) {
+      setActiveFilters(prevFilters => ({
+        ...prevFilters,
+        categories: [category]
+      }));
+    }
+  }, [location]);
 
   useEffect(() => {
     // Fetch the most recent listings from the server
@@ -241,9 +253,9 @@ export const Marketplace = () => {
       <div className={styles.layoutContainer}>
         {/* Filter Sidebar */}
         <div className={styles.filterSidebarContainer}>
-          <FilterSidebar
-            activeFilters={activeFilters}
-            onFilterChange={handleFilterChange}
+          <FilterSidebar 
+            onFilterChange={handleFilterChange} 
+            initialFilters={activeFilters} 
             className={styles.filterSidebar}
           />
         </div>

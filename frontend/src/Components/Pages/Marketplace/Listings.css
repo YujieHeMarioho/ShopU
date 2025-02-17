@@ -27,6 +27,18 @@ p {
 }
 
 
+.modal-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header .card-title {
+    flex-grow: 1; /* Allows the title to take up available space */
+}
+
+
 
 /* Styling the modal body */
 .modal-body {
@@ -36,8 +48,13 @@ p {
 	align-items: flex-start;
 	width: 100%;
 	height: auto; /* Allow dynamic height */
+	width: 100%;
+	height: auto; /* Allow dynamic height */
 }
 
+/* Image container takes 60% of the modal */
+.modal-body .carousel-container {
+	flex: 60%;
 /* Image container takes 60% of the modal */
 .modal-body .carousel-container {
 	flex: 60%;
@@ -45,10 +62,15 @@ p {
 	align-items: center;
 	justify-content: center;
 	max-width: 60%;
+	max-width: 60%;
 }
 
 /* Ensure the image scales properly */
+/* Ensure the image scales properly */
 .modal-body .img {
+	width: 100%; /* Image scales with container */
+	height: auto; /* Maintain aspect ratio */
+	max-height: 80vh; /* Prevents image from being too tall */
 	width: 100%; /* Image scales with container */
 	height: auto; /* Maintain aspect ratio */
 	max-height: 80vh; /* Prevents image from being too tall */
@@ -57,12 +79,34 @@ p {
 }
 
 /* Content container takes 40% */
+/* Content container takes 40% */
 .modal-body .content {
+	flex: 40%;
 	flex: 40%;
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
 	width: 100%;
+	max-width: 40%;
+}
+
+.price-and-buttons {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	width: 100%; /* Ensure it spans the full width */
+  }
+
+  
+.price-and-buttons .card-price {
+	margin: 0; /* Remove margin so it's aligned properly */
+  }
+
+  
+.modal-body .edit-buttons{
+	display: flex;
+	gap: 5px; /* Adds spacing between buttons */
+	margin-left: auto; /* Pushes the buttons to the right */
 	max-width: 40%;
 }
 
@@ -109,3 +153,8 @@ p {
 
 
 
+
+<<<<<<< HEAD
+
+=======
+>>>>>>> development
