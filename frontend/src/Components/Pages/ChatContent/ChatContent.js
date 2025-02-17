@@ -1,5 +1,3 @@
-// ChatContent.js
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
@@ -13,79 +11,88 @@ const ChatContent = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
 
-  // A ref for the scrollable container, if needed.
-  // We'll only scroll on sending a message.
+  // We'll use this to decide if we should auto-scroll *once* on the very first load
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
+
   const messagesContainerRef = useRef(null);
 
-  // 1) Poll for new messages every 2 seconds
-  useEffect(() => {
-    const fetchMessages = async () => {
-      try {
-        const token = await getAccessTokenSilently();
-        // console.log(`Fetching messages for conversation ID: ${conversation_id}`);
-        const response = await axios.get(
-          `${process.env.REACT_APP_BACKEND_URL}/api/messages/${conversation_id}/messages`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        // console.log('Fetched messages:', response.data);
-        setMessages(response.data);
-
-        // NOTE: We do NOT scroll here. 
-        // This prevents forcing the user down if they manually scrolled up.
-      } catch (error) {
-        console.error('Error fetching messages:', error);
-      }
-    };
-
-    // Fetch immediately
-    fetchMessages();
-
-    // Poll every 2 seconds
-    const intervalId = setInterval(() => {
-      fetchMessages();
-    }, 2000);
-
-    // Cleanup interval on unmount or conversation_id change
-    return () => clearInterval(intervalId);
-  }, [conversation_id, getAccessTokenSilently]);
-
-  // 2) Scroll only after user sends a message (optional convenience)
+  // --- 1) Helper: scroll to bottom of the container ---
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = 
+      messagesContainerRef.current.scrollTop =
         messagesContainerRef.current.scrollHeight;
     }
   };
 
-  // 3) Send a new message
-  const handleSendMessage = async () => {
-    if (!newMessage.trim()) return;
+  // --- 2) Fetch messages, optionally auto-scroll the first time ---
+  const fetchMessages = async (firstTime = false) => {
     try {
       const token = await getAccessTokenSilently();
-      // console.log('Sending message:', { conversation_id, senderId: user.sub, content: newMessage });
-      
+      const response = await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/api/messages/${conversation_id}/messages`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setMessages(response.data);
+
+      // If this is the first load, scroll once after everything is rendered
+      if (firstTime) {
+        setTimeout(() => {
+          scrollToBottom();
+          setIsFirstLoad(false); // all future polls won't scroll
+        }, 100); // a small delay so the DOM can paint
+      }
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+    }
+  };
+
+  // --- 3) On mount (or when conversation_id changes), do first-load fetch + polling ---
+  useEffect(() => {
+    // Whenever conversation changes, reset "isFirstLoad"
+    setIsFirstLoad(true);
+
+    const initialFetch = async () => {
+      // On the first fetch, we pass `true` so we scroll once
+      await fetchMessages(true);
+    };
+
+    initialFetch();
+
+    // Then poll every 2 seconds, passing `false` to skip auto-scrolling
+    const intervalId = setInterval(() => {
+      fetchMessages(false);
+    }, 2000);
+
+    // Cleanup
+    return () => clearInterval(intervalId);
+
+  }, [conversation_id, getAccessTokenSilently]);
+
+  // --- 4) Send a new message (we WILL scroll here) ---
+  const handleSendMessage = async () => {
+    if (!newMessage.trim()) return;
+
+    try {
+      const token = await getAccessTokenSilently();
       const response = await axios.post(
         `${process.env.REACT_APP_BACKEND_URL}/api/messages/${conversation_id}/messages`,
         { senderId: user.sub, content: newMessage },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      
-      // console.log('Message sent successfully:', response.data);
 
-      // Optimistically add the new message to local state
+      // Optimistic update
       setMessages((prev) => [...prev, response.data]);
 
-      // Scroll to bottom so *you* see your newly sent message
+      // Always scroll so the sender sees their new message
       scrollToBottom();
 
-      // Clear input
       setNewMessage('');
     } catch (error) {
       console.error('Error sending message:', error);
     }
   };
 
-  // 4) Press Enter to send
+  // --- 5) Press Enter to send ---
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -97,13 +104,12 @@ const ChatContent = () => {
     <div className="chat-content">
       <h3>Chat</h3>
 
-      {/* 5) The scrollable container (no forced scroll in polling) */}
       <div
         className="messages"
         ref={messagesContainerRef}
         style={{
-          height: '400px',      // or '60vh'
-          overflowY: 'auto',    // only scroll within this container
+          height: '400px',      // or '60vh', etc.
+          overflowY: 'auto',
           border: '1px solid #ccc'
         }}
       >
@@ -125,7 +131,6 @@ const ChatContent = () => {
         })}
       </div>
 
-      {/* Input field & send button */}
       <div className="message-input">
         <input
           type="text"

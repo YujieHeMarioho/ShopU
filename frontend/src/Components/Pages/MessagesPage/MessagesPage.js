@@ -8,6 +8,7 @@ const MessagesPage = () => {
 
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
+
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
 
@@ -15,16 +16,21 @@ const MessagesPage = () => {
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
-  // Tracks whether we've done the "initial" fetch for this conversation
-  // so we can scroll to bottom only on that first load
+  /**
+   * `isFirstLoad` = `true` the moment we switch to a conversation.
+   * We'll auto-scroll exactly once after the first batch of messages is rendered.
+   */
   const [isFirstLoad, setIsFirstLoad] = useState(false);
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
   const userCache = useRef({});
 
+  // We'll scroll only inside this container
   const messagesContainerRef = useRef(null);
 
-  // ------------------ SCROLL HELPERS ------------------
+  // ---------------------------------------------
+  // 1) Scroll to Bottom Helper
+  // ---------------------------------------------
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop =
@@ -32,62 +38,61 @@ const MessagesPage = () => {
     }
   };
 
-  // ------------------ FETCH CONVERSATIONS ------------------
+  // ---------------------------------------------
+  // 2) On first render, fetch conversation list
+  // ---------------------------------------------
   useEffect(() => {
     const fetchConversations = async () => {
       setIsLoadingConversations(true);
       try {
         const token = await getAccessTokenSilently();
-        const res = await axios.get(
-          `${BACKEND_URL}/api/messages/conversations/${encodeURIComponent(user.sub)}`,
+        const response = await axios.get(
+          `${BACKEND_URL}/api/messages/conversations/${encodeURIComponent(
+            user.sub
+          )}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        const conversationsData = res.data;
+        const data = response.data; // your conversation array
 
-        // Identify the other participant in each conversation
-        const otherUserIds = conversationsData.map((conv) =>
+        // Identify other users
+        const otherUserIds = data.map((conv) =>
           conv.user1_id.toLowerCase() === user.sub.toLowerCase()
             ? conv.user2_id
             : conv.user1_id
         );
+        const uniqueIds = [...new Set(otherUserIds)];
 
-        // Deduplicate
-        const uniqueOtherUserIds = [...new Set(otherUserIds)];
-
-        // Fetch each user's detail
-        const userDetailsPromises = uniqueOtherUserIds.map((id) =>
+        // Fetch user details
+        const userDetailsPromises = uniqueIds.map((id) =>
           fetchUserDetails(id, token)
         );
-        const userDetails = await Promise.all(userDetailsPromises);
+        const userDetailsList = await Promise.all(userDetailsPromises);
 
-        // Map userId -> details
+        // Build a lookup
         const userIdToDetailsMap = {};
-        uniqueOtherUserIds.forEach((id, idx) => {
-          userIdToDetailsMap[id] = userDetails[idx];
+        uniqueIds.forEach((id, idx) => {
+          userIdToDetailsMap[id] = userDetailsList[idx];
         });
 
-        // Enhance each conversation
-        const enhanced = conversationsData.map((conv) => {
-          const otherUserId =
+        // Enhance the conversation data
+        const enhancedConvs = data.map((conv) => {
+          const otherId =
             conv.user1_id.toLowerCase() === user.sub.toLowerCase()
               ? conv.user2_id
               : conv.user1_id;
-
-          const { username, picture } = userIdToDetailsMap[otherUserId] || {
+          const { username, picture } = userIdToDetailsMap[otherId] || {
             username: 'Unknown User',
             picture: 'https://via.placeholder.com/40',
           };
-
           return {
             ...conv,
-            otherUserId,
             otherUsername: username,
             otherProfilePicture: picture,
           };
         });
 
-        setConversations(enhanced);
+        setConversations(enhancedConvs);
         setError(null);
       } catch (err) {
         console.error('Error fetching conversations:', err);
@@ -100,84 +105,100 @@ const MessagesPage = () => {
     if (!authLoading && user && user.sub) {
       fetchConversations();
     }
-  }, [user, getAccessTokenSilently, authLoading, BACKEND_URL]);
+  }, [authLoading, user, getAccessTokenSilently, BACKEND_URL]);
 
-  // ------------------ FETCH MESSAGES (CALLED DURING POLLING) ------------------
+  // ---------------------------------------------
+  // 3) Fetch Messages (either first load or polls)
+  // ---------------------------------------------
   const fetchMessages = async () => {
     if (!selectedConversation) return;
 
+    // If this is the very first time for this conversation, show spinner
+    if (isFirstLoad) {
+      setIsLoadingMessages(true);
+    }
+
     try {
-      // We only show spinner if isFirstLoad===true
-      if (isFirstLoad) {
-        setIsLoadingMessages(true);
-      }
       const token = await getAccessTokenSilently();
-      const res = await axios.get(
+      const response = await axios.get(
         `${BACKEND_URL}/api/messages/${encodeURIComponent(
           selectedConversation.conversation_id
         )}/messages`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      setMessages(res.data);
+      setMessages(response.data);
       setError(null);
-
-      // If it's the first load, scroll to bottom
-      if (isFirstLoad) {
-        setTimeout(scrollToBottom, 100);
-      }
     } catch (err) {
       console.error('Error fetching messages:', err);
       setError('Failed to load messages. Please try again later.');
     } finally {
       if (isFirstLoad) {
-        setIsFirstLoad(false); // future polls won't scroll
         setIsLoadingMessages(false);
       }
     }
   };
 
-  // ------------------ WATCH SELECTED CONVERSATION / POLLING ------------------
+  // ---------------------------------------------
+  // 4) When user selects a conversation, do first load + poll
+  // ---------------------------------------------
   useEffect(() => {
     if (!selectedConversation) {
       setMessages([]);
       return;
     }
 
-    // Mark that we just switched to a new conversation => do first load logic
+    // Mark that we want to auto-scroll on the first fetch
     setIsFirstLoad(true);
 
-    // 1) Immediately fetch once
+    // Immediately fetch once
     fetchMessages();
 
-    // 2) Then poll
+    // Then poll (no forced scroll)
     const intervalId = setInterval(() => {
-      fetchMessages(); // no forced scroll after the first time
+      fetchMessages();
     }, 2000);
 
+    // Cleanup
     return () => clearInterval(intervalId);
-
   }, [selectedConversation]);
 
-  // ------------------ SEND MESSAGE (ALWAYS SCROLL AFTER YOU SEND) ------------------
+  // ---------------------------------------------
+  // 5) “Auto-scroll once” after messages change IF isFirstLoad is true
+  // ---------------------------------------------
+  useEffect(() => {
+    // If it's the first load, we wait a bit so the DOM can render messages
+    // Then scroll down, then mark we are done with the first load.
+    if (isFirstLoad && messages.length > 0) {
+      const timer = setTimeout(() => {
+        scrollToBottom();
+        setIsFirstLoad(false); // don't do it again next time
+      }, 150); 
+      return () => clearTimeout(timer);
+    }
+  }, [isFirstLoad, messages]);
+
+  // ---------------------------------------------
+  // 6) Send Message (we DO scroll after sending)
+  // ---------------------------------------------
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return;
+
     try {
       const token = await getAccessTokenSilently();
-      const res = await axios.post(
+      const response = await axios.post(
         `${BACKEND_URL}/api/messages/${encodeURIComponent(
           selectedConversation.conversation_id
         )}/messages`,
         { senderId: user.sub, content: newMessage },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
       // Optimistic update
-      setMessages((prev) => [...prev, res.data]);
+      setMessages((prev) => [...prev, response.data]);
       setNewMessage('');
       setError(null);
 
-      // Scroll to bottom so you see your new message
+      // Always scroll after we send
       scrollToBottom();
     } catch (err) {
       console.error('Error sending message:', err);
@@ -185,7 +206,9 @@ const MessagesPage = () => {
     }
   };
 
-  // ------------------ ENTER KEY TO SEND ------------------
+  // ---------------------------------------------
+  // 7) “Enter” key to send
+  // ---------------------------------------------
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -193,7 +216,9 @@ const MessagesPage = () => {
     }
   };
 
-  // ------------------ FETCH USER DETAILS (CACHED) ------------------
+  // ---------------------------------------------
+  // 8) Fetch user details (caching)
+  // ---------------------------------------------
   const fetchUserDetails = async (userId, token) => {
     if (userCache.current[userId]) {
       return userCache.current[userId];
@@ -209,24 +234,27 @@ const MessagesPage = () => {
       };
       userCache.current[userId] = userData;
       return userData;
-    } catch (err) {
-      console.error(`Error fetching user details for ${userId}:`, err);
-      const fallbackData = {
+    } catch (error) {
+      console.error(`Error fetching user details for ${userId}:`, error);
+      const fallback = {
         username: userId,
         picture: 'https://via.placeholder.com/40',
       };
-      userCache.current[userId] = fallbackData;
-      return fallbackData;
+      userCache.current[userId] = fallback;
+      return fallback;
     }
   };
 
-  // ------------------ RENDER ------------------
+  // ---------------------------------------------
+  // RENDER
+  // ---------------------------------------------
   return (
     <div className="messages-page">
-      {/* LEFT COLUMN: Conversation List */}
+      {/* LEFT: Conversation List */}
       <div className="history">
         <h3>Conversations</h3>
         {error && <p className="error-message">{error}</p>}
+
         {isLoadingConversations ? (
           <div className="spinner">Loading conversations...</div>
         ) : conversations.length === 0 ? (
@@ -247,7 +275,8 @@ const MessagesPage = () => {
                 <div className="conversation-info">
                   <img
                     src={
-                      conv.otherProfilePicture || 'https://via.placeholder.com/40'
+                      conv.otherProfilePicture ||
+                      'https://via.placeholder.com/40'
                     }
                     alt={`Avatar of ${conv.otherUsername}`}
                     className="conversation-avatar"
@@ -263,7 +292,7 @@ const MessagesPage = () => {
         )}
       </div>
 
-      {/* RIGHT COLUMN: Messages + input */}
+      {/* RIGHT: Selected Conversation */}
       <div className="main-content">
         {selectedConversation ? (
           <>
