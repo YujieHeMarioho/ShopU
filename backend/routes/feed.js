@@ -1,7 +1,9 @@
 import express from 'express'; 
 import { 
     getAllFeedPosts, 
+    getFeedPostCount,
     getUserFeedPosts, 
+    getUserFeedPostsCount,
     createFeedPost, 
     deleteFeedPost, 
     updateFeedPost, 
@@ -16,8 +18,14 @@ const router = express.Router();
 // Get all feed posts
 router.get('/feed', getAllFeedPosts);
 
+// Get all feed posts count
+router.get('/feed/count', getFeedPostCount);
+
 // Get feed posts for a specific user
-router.get('/feed/user/:userId', getUserFeedPosts);
+router.get('/feed/user', getUserFeedPosts);
+
+// Get all feed posts count
+router.get('/feed/user/count', getUserFeedPostsCount);
 
 // Create a new feed post
 router.post('/feed/create', createFeedPost);

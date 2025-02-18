@@ -129,29 +129,32 @@ export const Marketplace = () => {
             'Authorization': `Bearer ${token}`,
           },
         });
-
+  
         const rawData = await response.json();
-    
-        // Map the data to match the desired format
+  
+        // Map the data to match the desired format, now including user_id
         const formattedData = rawData.map(item => ({
           id: item.listing_id,
+          user_id: item.user_id,  // NEW: Include the seller's user_id
           title: item.title,
           description: item.description,
           category: item.category,
           type: item.item_type,
           rating: item.star_rating,
           price: item.price,
-          image: item.file_keys,
+          image: item.file_keys,  // or item.file_keys[0] if you only want one image
+          
         }));
-    
+  
         setListings(formattedData);
       } catch (error) {
         console.error('Error fetching listings:', error);
       }
     };
-
+  
     fetchListings();
   }, []);
+  
 
   // Filter change handler (when filter options are selected or modified)
   const handleFilterChange = (filter) => {
