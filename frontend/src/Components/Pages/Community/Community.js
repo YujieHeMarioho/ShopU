@@ -2,7 +2,7 @@ import { Banner, CommunityCardGrid} from '../../Common';
 import React, { useState, useLayoutEffect, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import axios from 'axios';
-import './Community.css';
+import styles from './Community.module.css';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const Communities = () => {
@@ -247,8 +247,11 @@ const Communities = () => {
   };
 
   // Handler when user clicks a community
-  const handleCardClick = (comm) => {
-    window.location.href=`/${comm.id}`;
+  const handleCardClick = (comm_id, e) => {
+    if (e.target.closest('button')) {
+      return;
+    }
+    window.location.href=`/community/${comm_id}`;
   };
 
 
@@ -306,18 +309,18 @@ const Communities = () => {
           <p>You have no communities yet. Take a look at these suggested communities!</p>
       ) : (
           communities.map((community) => (
-              <div key={community.community_id} className="your-community-card">
+              <div key={community.community_id} className={styles.yourCommunityCard} onClick={(e) => handleCardClick(community.community_id, e)}>
                   <img
                       src={community.imageUrl}
                       alt={community.community_id}
-                      className="community-image"
+                      className={styles.communityImage}
                   />
-                  <div className="community-info">
+                  <div className={styles.communityInfo}>
                       <h3>{community.name || `Community ${community.community_id}`}</h3>
-                      <p>Joined At: {new Date(community.joined_at).toLocaleString()}</p>
-                      {/*<p>Joined At: {new Date(community.joined_at).toLocaleString()}</p>*/}
+                      <p>{community.description}</p>
+                      {/* <p>Joined At: {new Date(community.joined_at).toLocaleString()}</p> */}
                   </div>
-                  <button className="leave-button" onClick={() => leaveCommunity(community.community_id)}>
+                  <button className={styles.leaveButton} onClick={() => leaveCommunity(community.community_id)}>
                       Leave
                   </button>
               </div>
@@ -329,9 +332,9 @@ const Communities = () => {
         <h2>Browse Communities</h2>
         <CommunityCardGrid communities={formattedOtherCommunities} openCommunityDetails={handleCardClick}/>
       </div>
-      <div className="create-community-section">
+      <div className={styles.createCommunitySection}>
         <h2>Create a New Community</h2>
-        <div className="create-community-form">
+        <div className={styles.createCommunityForm}>
           <input
             type="text"
             placeholder="Enter Community Name"
@@ -344,29 +347,31 @@ const Communities = () => {
             value={newCommunityDescription}
             onChange={(e) => setNewCommunityDescription(e.target.value)}
             />
-            <label for="community-image">Add A Community Image</label>
-            <input type='file' id="community-image" name="community-image" accept="image/jpeg, image/png, image/jpg, image/gif" onChange={(e) => setCommunityImage(e.target.files[0])}/>
+            <div className={styles.communityImageField}>
+              <label for="communityImage">Add A Community Image</label>
+              <input type='file' id="community-image" name="communityImage" accept="image/jpeg, image/png, image/jpg, image/gif" onChange={(e) => setCommunityImage(e.target.files[0])}/>
+            </div>
           <button onClick={createCommunity}>Create Community</button>
         </div>
       </div>
       <div className="your-community-grid">
-      <h2>Your Communities</h2>
+      <h2>Your Created Communities</h2>
       {createdCommunities.length === 0 ? (
           <p>You haven't created any communities.</p>
       ) : (
           createdCommunities.map((community) => (
-              <div key={community.community_id} className="your-community-card">
+              <div key={community.community_id} className={styles.yourCommunityCard} onClick={(e) => handleCardClick(community.community_id, e)}>
                   <img
                       src={community.imageUrl}
                       alt={community.community_id}
-                      className="community-image"
+                      className={styles.communityImage}
                   />
-                  <div className="community-info">
+                  <div className={styles.communityInfo}>
                       <h3>{community.name || `Community ${community.community_id}`}</h3>
-                      <p>Created At: {new Date(community.created_at).toLocaleString()}</p>
+                      <p>{community.description}</p>
                       {/*<p>Joined At: {new Date(community.joined_at).toLocaleString()}</p>*/}
                   </div>
-                  <button className="leave-button" onClick={() => leaveCommunity(community.community_id)}>
+                  <button className={styles.leaveButton} onClick={() => leaveCommunity(community.community_id)}>
                       Leave {/*FIXME: add delete community ability*/}
                   </button>
               </div>

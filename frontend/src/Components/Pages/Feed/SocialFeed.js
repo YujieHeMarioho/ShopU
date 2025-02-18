@@ -25,7 +25,6 @@ const SocialFeed = () => {
     const userId = isAuthenticated ? user?.sub : null;
 
     const handleCardClick = (post) => {
-        console.log("Card clicked:", post);
         setSelectedCard(post);
       };
     
@@ -184,6 +183,10 @@ const SocialFeed = () => {
         }
       };
 
+      const reloadFeed = () => {
+        fetchFeed();  // Call the fetchFeed function to reload posts
+    };
+
     // useEffect(() => {
     //     if (userId) {
     //         fetchUserFeed();  // Fetch user feed if user is logged in
@@ -231,8 +234,10 @@ const SocialFeed = () => {
                                 initialShares={post.shares}            // Mapping shares to initialShares
                                 isLikedAlready={post.isliked}                 // Check if post already liked by user
                                 tags={post.tags}                       // Passing tags
+                                listingId={post.listing_id}                       // Passing link
                                 onLike={() => handleLike(post.post_id, post.likes_count, post.is_liked)} // Handling like action
                                 onShare={() => shareFeedPost(post.post_id)}  // Handling share action
+                                reloadFeed={reloadFeed}
                             />
                         </div>
                     ))
@@ -266,6 +271,7 @@ const SocialFeed = () => {
                     initialShares={selectedCard.shares}
                     isLikedAlready={selectedCard.isliked}
                     tags={selectedCard.tags}
+                    listingId={selectedCard.listing_id}
                     onLike={() => handleLike(selectedCard.post_id, selectedCard.likes_count, selectedCard.is_liked)}
                     onShare={() => shareFeedPost(selectedCard.post_id)}
                 />
