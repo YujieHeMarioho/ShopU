@@ -46,6 +46,10 @@ const Profile = () => {
       fetchUserCommunities();
     }, []);
 
+    const reloadFeed = () => {
+      fetchUserPosts();  // Call the fetchFeed function to reload posts
+    };
+
     const fetchUserPosts = async () => {
       try {
           const token = await getAccessTokenSilently();
@@ -311,6 +315,7 @@ const Profile = () => {
                       initialShares={post.shares}          // Mapping shares to initialShares
                       isLikedAlready={post.is_liked}       // Check if post already liked by user
                       tags={post.tags}                     // Passing tags
+                      reloadFeed={reloadFeed}
                     />
                   </div>
                 ))
