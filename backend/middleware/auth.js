@@ -8,9 +8,9 @@
 
 // List of paths that don't require authentication
 const openPaths = [
-  '/api/filters'
+  '/api/filters','/api/feed/count','/api/listings/count','/api/users/count'  
 ];
-  
+
   // Log user data to check if it's being populated
   const authMiddleware = (req, res, next) => {
     if (openPaths.includes(req.path)) {

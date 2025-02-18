@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Modal, Form} from 'react-bootstrap';
+import { Button, Modal, Form } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { FaThumbsUp, FaShare, FaHeart, FaRegHeart } from 'react-icons/fa';
 import styles from './SocialCard.module.css';
@@ -17,8 +17,8 @@ export const SocialCard = ({
   initialShares = 0,
   isLikedAlready,
   tags = [],
-  reloadFeed,             // Tags for the post
-  link
+  listingId,
+  reloadFeed             // Tags for the post
 }) => {
   const { user, getAccessTokenSilently } = useAuth0();
   const navigate = useNavigate();
@@ -60,33 +60,33 @@ export const SocialCard = ({
   const handleSave = async () => {
     setLoading(true);
     try {
-        const token = await getAccessTokenSilently();
+      const token = await getAccessTokenSilently();
 
-          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/${post_id}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}` // Include authentication token
-            },
-            body: JSON.stringify({
-                title: editedTitle,
-                description: editedDescription,
-                tags: editedTags.split(",").map(tag => tag.trim()), // Convert string to array
-                image: editedImage,
-                video: editedVideo
-            }),
-        });
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/${post_id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}` // Include authentication token
+        },
+        body: JSON.stringify({
+          title: editedTitle,
+          description: editedDescription,
+          tags: editedTags.split(",").map(tag => tag.trim()), // Convert string to array
+          image: editedImage,
+          video: editedVideo
+        }),
+      });
 
-        if (response.ok) {
-            setIsEditing(false); // Close modal on success
-            reloadFeed();
-        } else {
-            console.error("Failed to update post:", await response.text());
-        }
+      if (response.ok) {
+        setIsEditing(false); // Close modal on success
+        reloadFeed();
+      } else {
+        console.error("Failed to update post:", await response.text());
+      }
     } catch (error) {
-        console.error("Error updating post:", error);
+      console.error("Error updating post:", error);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -148,15 +148,9 @@ export const SocialCard = ({
   };
 
   const handleViewItem = () => {
-    
-    if (link) {
-      // If the link is a full URL, use window.open
-      if (link.startsWith('http')) {
-        window.open(link, '_blank');
-      } else {
-        // If it's a relative path, use navigate
-        navigate(link);
-      }
+    if (listingId) {
+      const fullLink = `${window.location.origin}/marketplace?listingId=${listingId}`;
+      window.open(fullLink, '_blank');
     }
   };
 
@@ -176,19 +170,6 @@ export const SocialCard = ({
         image && <img src={image} alt="Post content" className={styles.media} />
       )}
 
-      {/* "View Item" button */}
-      {link && (
-        <div className={styles.viewItemContainer}>
-          <Button
-            variant="primary"
-            onClick={handleViewItem}
-            className={styles.viewItemButton}
-          >
-            View Item
-          </Button>
-        </div>
-      )}
-
 
       <div className={styles.body}>
         <h5 className={styles.title}>{title}</h5>
@@ -206,6 +187,20 @@ export const SocialCard = ({
       )}
 
       <div className={styles.footer}>
+        {
+          (
+            <div className={styles.viewItemContainer}>
+              <Button
+                variant="primary"
+                onClick={handleViewItem}
+                className={styles.viewItemButton}
+              >
+                View Item
+              </Button>
+            </div>
+          )
+        }
+
         <Button
           variant="light"
           onClick={handleLikeClick}
@@ -237,7 +232,7 @@ export const SocialCard = ({
             e.stopPropagation();
             setIsEditing(true);
           }}>
-          ✏️ Edit
+            ✏️ Edit
           </Button>
         )}
       </div>
@@ -315,8 +310,8 @@ export const SocialCard = ({
         </Modal.Footer>
       </Modal>
 
-       {/* Edit Modal */}
-      <Modal show={isEditing} onHide={() => setIsEditing(false)} onClick={(e)=>e.stopPropagation()}>
+      {/* Edit Modal */}
+      <Modal show={isEditing} onHide={() => setIsEditing(false)} onClick={(e) => e.stopPropagation()}>
         <Modal.Header closeButton style={{ color: "black" }}>
           <Modal.Title>Edit Post</Modal.Title>
         </Modal.Header>

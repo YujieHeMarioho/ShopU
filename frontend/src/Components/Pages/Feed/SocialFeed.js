@@ -234,7 +234,7 @@ const SocialFeed = () => {
                                 initialShares={post.shares}            // Mapping shares to initialShares
                                 isLikedAlready={post.isliked}                 // Check if post already liked by user
                                 tags={post.tags}                       // Passing tags
-                                link={post.link}                       // Passing link
+                                listingId={post.listing_id}                       // Passing link
                                 onLike={() => handleLike(post.post_id, post.likes_count, post.is_liked)} // Handling like action
                                 onShare={() => shareFeedPost(post.post_id)}  // Handling share action
                                 reloadFeed={reloadFeed}
@@ -271,7 +271,7 @@ const SocialFeed = () => {
                     initialShares={selectedCard.shares}
                     isLikedAlready={selectedCard.isliked}
                     tags={selectedCard.tags}
-                    link={selectedCard.link}
+                    listingId={selectedCard.listing_id}
                     onLike={() => handleLike(selectedCard.post_id, selectedCard.likes_count, selectedCard.is_liked)}
                     onShare={() => shareFeedPost(selectedCard.post_id)}
                 />

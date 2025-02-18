@@ -6,7 +6,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 function PostDetails() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [link, setLink] = useState("");
+  const [listingId, setListingId] = useState("");
   const [tags, setTags] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
@@ -86,12 +86,11 @@ function PostDetails() {
   };
 
   const handleSubmit = async () => {
-    const fullLink = link ? `${window.location.origin}${link}` : '';
     // Prepare the data to send
     const postData = {
       title,
       content,
-      link: fullLink,
+      listingId,
       tags,
       image, // Include the image URL or base64 string
     };
@@ -170,12 +169,12 @@ function PostDetails() {
         <Form.Group className="mb-3">
           <Form.Label>Link to Existing Listing</Form.Label>
           <Form.Select
-            value={link}
-            onChange={(e) => setLink(e.target.value)}
+            value={listingId}
+            onChange={(e) => setListingId(e.target.value)}
           >
             <option value="">Select Listing Item</option>
             {listings.map((listing) => (
-              <option key={listing.listing_id} value={`/marketplace?listingId=${listing.listing_id}`}>
+              <option key={listing.listing_id} value={`${listing.listing_id}`}>
                 {listing.title}
               </option>
             ))}
