@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
 import axios from 'axios';
 import {CardGrid} from '../../Common'
-import "./CommunityHome.css";
+import styles from "./CommunityHome.module.css";
 
 const CommunityHome = () => {
   const { community_id } = useParams(); // Get community id from URL
@@ -89,49 +89,49 @@ const CommunityHome = () => {
 
   return (
     <div> 
-      <h1 className="community-page-title">{community.name + " Homepage"}</h1>
+      <h1 className={styles.communityPageTitle}>{community.name + " Homepage"}</h1>
       <div className='community-information'>
-        <div className='community-image-and-buttons'>
-          <div className="empty-for-formatting"></div>
-          <div className='image-container'>
+        <div className={styles.communityImageAndButtons}>
+          <div className={styles.emptyForFormatting}></div>
+          <div className={styles.imageContainer}>
               <img
                 src={community.imageUrl}
                 alt={community.name}
-                className='img'
+                className={styles.img}
               />
           </div>
-          <div className='community-buttons'>
+          <div className={styles.communityButtons}>
             <button>Join</button>
             <button>Visit Community Groupchat</button>
           </div>
         </div>
-        <div className='content'>
+        <div className={styles.content}>
             {/*<Button variant='dark' > Join {community.name} </Button>
             <Button variant='dark'> Button 2 </Button>}*/}
-            <p className='card-text'>{community.description}</p>
+            <p className={styles.cardText}>{community.description}</p>
         </div>
       </div>
-      <p className="section-title">Members</p>
-      <div className="members-grid">
+      <p className={styles.sectionTitle}>Members</p>
+      <div className={styles.membersGrid}>
         {members.map((member) => (
-          <div key={member.user_id} className="member-card">
+          <div key={member.user_id} className={styles.memberCard}>
             <img
               src={member.profile_picture || 'https://via.placeholder.com/100'}
               alt={member.username || `User ${member.user_id}`}
-              className="member-avatar"
+              className={styles.memberAvatar}
             />
-            <div className="member-info">
+            <div className={styles.memberInfo}>
               <h3>{member.username || `User ${member.user_id}`}</h3>
             </div>
-            <div className="member-actions">
+            <div className={styles.memberActions}>
                <button
-                className="member-message-button"
+                className={styles.memberMessageButton}
                 /* onClick={() => handleMessage(member.user_id)} */
               >
                 Message
               </button> 
               <button
-                className="add-friend-button"
+                className={styles.addFriendButton}
                 /* onClick={() => handleMessage(member.user_id)} */
               >
                 Add Friend
@@ -140,12 +140,12 @@ const CommunityHome = () => {
           </div>
         ))}
       </div>
-      <p className='section-title'>Listings</p>
+      <p className={styles.sectionTitle}>Listings</p>
       <div>
         {/* FIXME: this is placeholder stuff. need to fix tables to match with communities. */}
         <CardGrid listings={[]} openListingDetails={setIsLoading} />
       </div>
-      <p className='section-title'>Social Posts</p>
+      <p className={styles.sectionTitle}>Social Posts</p>
       <div>
         {/* FIXME: this is placeholder stuff. need to fix tables to match with communities. */}
         <p>No posts available.</p>
