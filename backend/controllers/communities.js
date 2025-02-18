@@ -7,6 +7,62 @@ import sharp from 'sharp';
 
 const bucketName = buckets.community;
 
+//get details of a community by id
+export const getCommunityDetails = async (req, res) => {
+    const community_id = req.params.community_id;
+
+    const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+    let user_id;  
+    try {
+        const decodedToken = jwtDecode(token); // Decode the token
+        user_id = decodedToken.sub;
+    } catch (err) {
+        console.error('Error decoding token:', err);
+        return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    const query = `
+    SELECT comms.community_id, comms.name, comms.description, comm_img.file_key
+    FROM public.communities AS comms
+    LEFT JOIN public.community_images AS comm_img ON comms.community_id = comm_img.community_id
+    WHERE comms.community_id = $1;`;
+
+    try {
+        const result = await pool.query(query, [community_id]);
+        // Loop through each community and generate signed URLs for the image file_key
+        const communityWithUrl = await Promise.all(
+            result.rows.map(async (community) => {
+            // Generate a pre-signed URL for the community's image file_key (if it exists)
+            let imageUrl = null;
+            if (community.file_key) {
+                const command = new GetObjectCommand({
+                Bucket: bucketName,
+                Key: community.file_key, // The file_key from the community_images table
+                });
+        
+                // Generate the signed URL
+                imageUrl = await getSignedUrl(s3, command, { expiresIn: 86400 }); // URL expires in 1 day
+            }
+        
+            // Return the community with the signed URL for the image (if it exists)
+            return {
+                community_id: community.community_id,
+                name: community.name,
+                description: community.description,
+                imageUrl: imageUrl, // Add image URL to the community data
+            };
+            })
+        );
+        
+        // Return the response with the communities and their image URLs
+        console.error(communityWithUrl)
+        res.status(200).json(communityWithUrl);
+    } catch (err) {
+        console.error('Error running query:', err);
+        res.status(500).json({ error: 'Database error' });
+    }
+};
+
 //get communities for user
 export const getUserCommunities = async (req, res) => {
     const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
@@ -119,7 +175,7 @@ export const getAllCommunities = async (req, res) => {
     }
 };
 
-//get communities for user
+//get created communities for user
 export const getCreatedCommunities = async (req, res) => {
     const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
     let user_id;
@@ -166,6 +222,33 @@ export const getCreatedCommunities = async (req, res) => {
         
         // Return the response with the communities and their image URLs
         res.status(200).json(communitiesWithUrls);
+    } catch (err) {
+        console.error('Error running query:', err);
+        res.status(500).json({ error: 'Database error' });
+    }
+};
+
+//get users in community
+export const getCommunityMembers = async (req, res) => {
+    const community_id = req.params.community_id;
+    const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+    let user_id;
+    try {
+        const decodedToken = jwtDecode(token); // Decode the token
+        user_id = decodedToken.sub;
+    } catch (err) {
+        console.error('Error decoding token:', err);
+        return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    const query = `
+    SELECT comms.user_id
+    FROM public.community_members AS comms
+    WHERE comms.community_id = $1;`;
+    
+    try {
+        const result = await pool.query(query, [community_id]);
+        res.status(200).json(result);
     } catch (err) {
         console.error('Error running query:', err);
         res.status(500).json({ error: 'Database error' });

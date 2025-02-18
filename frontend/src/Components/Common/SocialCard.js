@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Modal, Form } from 'react-bootstrap';
+import { Button, Modal, Form} from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { FaThumbsUp, FaShare, FaHeart, FaRegHeart } from 'react-icons/fa';
 import styles from './SocialCard.module.css';
@@ -16,8 +16,9 @@ export const SocialCard = ({
   initialLikes = 0,
   initialShares = 0,
   isLikedAlready,
-  tags = [],             // Tags for the post
-  link,
+  tags = [],
+  reloadFeed,             // Tags for the post
+  link
 }) => {
   const { user, getAccessTokenSilently } = useAuth0();
   const navigate = useNavigate();
@@ -30,9 +31,16 @@ export const SocialCard = ({
   const [showShareModal, setShowShareModal] = useState(false);
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [selectedCommunity, setSelectedCommunity] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedTitle, setEditedTitle] = useState(title);
+  const [editedDescription, setEditedDescription] = useState(description);
+  const [editedTags, setEditedTags] = useState(tags.join(", "));
+  const [editedImage, setEditedImage] = useState(image);
+  const [editedVideo, setEditedVideo] = useState(video);
   //const [friends, setFriends] = useState([]);
   const [communities, setCommunities] = useState(['Tech Group', 'Gaming Hub']);
   const [selectedOption, setSelectedOption] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const friends = [
     { id: 1, name: "Alice", profilePic: "https://randomuser.me/api/portraits/women/1.jpg" },
@@ -49,6 +57,38 @@ export const SocialCard = ({
     }
   }, [user]);
 
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+        const token = await getAccessTokenSilently();
+
+          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/${post_id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}` // Include authentication token
+            },
+            body: JSON.stringify({
+                title: editedTitle,
+                description: editedDescription,
+                tags: editedTags.split(",").map(tag => tag.trim()), // Convert string to array
+                image: editedImage,
+                video: editedVideo
+            }),
+        });
+
+        if (response.ok) {
+            setIsEditing(false); // Close modal on success
+            reloadFeed();
+        } else {
+            console.error("Failed to update post:", await response.text());
+        }
+    } catch (error) {
+        console.error("Error updating post:", error);
+    } finally {
+        setLoading(false);
+    }
+  };
 
   const handleClose = () => {
     // Reset all states to null when closing the modal
@@ -192,6 +232,14 @@ export const SocialCard = ({
         >
           {isFavorited ? <FaHeart /> : <FaRegHeart />}
         </Button>
+        {user?.sub === author && (
+          <Button variant="outline-warning" size="sm" onClick={(e) => {
+            e.stopPropagation();
+            setIsEditing(true);
+          }}>
+          ✏️ Edit
+          </Button>
+        )}
       </div>
 
       {alertMessage && <div className={styles.alert}>{alertMessage}</div>}
@@ -263,6 +311,69 @@ export const SocialCard = ({
           <Button variant="secondary" onClick={handleClose}>Cancel</Button>
           <Button variant="primary" onClick={handleConfirmShare} disabled={!selectedFriend && !selectedCommunity}>
             Share
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+       {/* Edit Modal */}
+      <Modal show={isEditing} onHide={() => setIsEditing(false)} onClick={(e)=>e.stopPropagation()}>
+        <Modal.Header closeButton style={{ color: "black" }}>
+          <Modal.Title>Edit Post</Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ color: "black" }}>
+          <Form>
+            <Form.Group controlId="editTitle">
+              <Form.Label>Title</Form.Label>
+              <Form.Control
+                type="text"
+                value={editedTitle}
+                onChange={(e) => setEditedTitle(e.target.value)}
+              />
+            </Form.Group>
+
+            <Form.Group controlId="editDescription" className="mt-3">
+              <Form.Label>Description</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                value={editedDescription}
+                onChange={(e) => setEditedDescription(e.target.value)}
+              />
+            </Form.Group>
+
+            <Form.Group controlId="editTags" className="mt-3">
+              <Form.Label>Tags (comma-separated)</Form.Label>
+              <Form.Control
+                type="text"
+                value={editedTags}
+                onChange={(e) => setEditedTags(e.target.value)}
+              />
+            </Form.Group>
+
+            <Form.Group controlId="editImage" className="mt-3">
+              <Form.Label>Image URL</Form.Label>
+              <Form.Control
+                type="text"
+                value={editedImage}
+                onChange={(e) => setEditedImage(e.target.value)}
+              />
+            </Form.Group>
+
+            <Form.Group controlId="editVideo" className="mt-3">
+              <Form.Label>Video URL</Form.Label>
+              <Form.Control
+                type="text"
+                value={editedVideo}
+                onChange={(e) => setEditedVideo(e.target.value)}
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setIsEditing(false)}>Cancel</Button>
+          <Button variant="primary" onClick={handleSave} disabled={loading}>
+            {loading ? "Saving..." : "Save Changes"}
           </Button>
         </Modal.Footer>
       </Modal>

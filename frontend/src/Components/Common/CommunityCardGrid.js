@@ -2,7 +2,7 @@ import React from 'react';
 import { Container, Row, Col } from 'react-bootstrap';
 import { CommunityCardComponent } from './CommunityCard';
 
-export const CommunityCardGrid = ({ communities }) => {
+export const CommunityCardGrid = ({ communities, openCommunityDetails }) => {
   return (
     <Container>
       <Row>
@@ -13,6 +13,7 @@ export const CommunityCardGrid = ({ communities }) => {
               title={community.title}
               description={community.description}
               communityId={community.communityId}
+              onCommunityClick={() => openCommunityDetails(community)}
             />
 
           </Col>

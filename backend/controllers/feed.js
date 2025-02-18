@@ -98,6 +98,18 @@ export const getAllFeedPosts = async (req, res) => {
   }
 };
 
+//Endpoint to get the total number of active posts in the feed
+export const getFeedPostCount = async (req, res) => {
+  const query = `SELECT COUNT(*) AS total_feed_posts FROM feed_posts;`;
+
+  try {
+    const result = await pool.query(query);
+    res.status(200).json({ total_feed_posts: result.rows[0].total_feed_posts });
+  } catch (err) {
+    console.error('Error running query:', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+};
 
 
 
@@ -221,6 +233,30 @@ export const getUserFeedPosts = async (req, res) => {
   }
 };
 
+export const getUserFeedPostsCount = async (req, res) => {
+  try {
+    const userId = extractUserIdFromToken(req); // Extract user ID from token
+
+    const query = `
+      SELECT COUNT(*) AS post_count
+      FROM feed_posts f
+      WHERE f.user_id = $1;
+    `;
+
+    // Execute the query
+    const result = await pool.query(query, [userId]);
+
+    const postCount = result.rows[0].post_count;
+
+    // Respond with the count
+    res.status(200).json({ count: postCount });
+  } catch (err) {
+    console.error('Error fetching user feed posts count:', err.message); // Log specific error message
+    res.status(500).json({ error: err.message || 'Database error' });
+  }
+};
+
+
 // Create a new feed post  (TODO Need to handle linking to items)
 export const createFeedPost = async (req, res) => {
   const { title, content, tags, image } = req.body;
@@ -320,27 +356,74 @@ export const deleteFeedPost = async (req, res) => {
 // Update a feed post by ID
 export const updateFeedPost = async (req, res) => {
   const { postId } = req.params;
-  const { title, content, imageUrl } = req.body;
+const { title, description, tags, image } = req.body;
 
-  const query = `
-    UPDATE feed_posts
-    SET title = $1, content = $2, image_url = $3, date_created = NOW()
-    WHERE post_id = $4
-    RETURNING *;
-  `;
+const client = await pool.connect(); // Use a client for transaction
 
-  try {
-    const result = await pool.query(query, [title, content, imageUrl, postId]);
-    if (result.rowCount === 0) {
-      res.status(404).json({ error: 'Post not found' });
-    } else {
-      res.status(200).json(result.rows[0]);
+try {
+    // Start a transaction
+    await client.query('BEGIN');
+
+    // Step 1: Process tags
+    const tagIds = [];
+    for (const tag of tags) {
+        // Step 1.1: Check if the tag exists in the 'tags' table
+        const tagResult = await client.query(
+            'SELECT tag_id FROM tags WHERE tag_name = $1', [tag]
+        );
+
+        let tagId;
+        if (tagResult.rowCount === 0) {
+            // Step 1.2: If the tag does not exist, create it
+            const insertTagResult = await client.query(
+                'INSERT INTO tags (tag_name) VALUES ($1) RETURNING tag_id', [tag]
+            );
+            tagId = insertTagResult.rows[0].tag_id;
+        } else {
+            // If the tag exists, use its id
+            tagId = tagResult.rows[0].tag_id;
+        }
+
+        // Collect all tag_ids to be inserted into the post_tags table
+        tagIds.push(tagId);
     }
-  } catch (err) {
+
+    // Step 2: Insert tags into the post_tags table if they don't already exist for the post
+    for (const tagId of tagIds) {
+        await client.query(
+            'INSERT INTO post_tags (post_id, tag_id) SELECT $1, $2 WHERE NOT EXISTS (SELECT 1 FROM post_tags WHERE post_id = $1 AND tag_id = $2)',
+            [postId, tagId]
+        );
+    }
+
+    // Step 3: Update the feed_posts table with the new information
+    const query = `
+        UPDATE feed_posts
+        SET title = $1, content = $2, image_url = $3, date_created = NOW()
+        WHERE post_id = $4
+        RETURNING *;
+    `;
+    const result = await client.query(query, [title, description, image, postId]);
+
+    if (result.rowCount === 0) {
+        res.status(404).json({ error: 'Post not found' });
+    } else {
+        // Commit the transaction
+        await client.query('COMMIT');
+        res.status(200).json(result.rows[0]);
+    }
+} catch (err) {
+    // Rollback the transaction if an error occurs
+    await client.query('ROLLBACK');
     console.error('Error updating feed post:', err);
     res.status(500).json({ error: 'Database error' });
-  }
+} finally {
+    client.release(); // Release the client back to the pool
+}
+
+
 };
+
 
 export const shareFeedPost = async (req, res) => {
   const { postId } = req.params; // ID of the post being shared
