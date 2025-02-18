@@ -37,6 +37,39 @@ export const getFriends = async (req, res) => {
   }
 };
 
+export const getFriendsCount = async (req, res) => {
+  let user_id;
+  const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+  
+  try {
+    const decodedToken = jwtDecode(token);
+    user_id = decodedToken.sub;
+
+    // Check if user_id is explicitly passed (optional)
+    if (req.query.user_id && req.query.user_id !== user_id) {
+      console.error('Mismatched user_id in request.');
+      return res.status(401).json({ message: 'Unauthorized request' });
+    }
+  } catch (err) {
+    console.error('Error decoding token:', err);
+    return res.status(401).json({ message: 'Invalid token' });
+  }
+
+  try {
+    const result = await pool.query(
+      'SELECT COUNT(*) AS friend_count FROM friends WHERE user_id = $1;',
+      [user_id]
+    );
+
+    const friendCount = result.rows[0].friend_count;
+    res.status(200).json({ count: friendCount });
+  } catch (error) {
+    console.error('Error getting friends count:', error);
+    res.status(500).json({ message: 'Error getting friends count', error });
+  }
+};
+
+
 
 
 

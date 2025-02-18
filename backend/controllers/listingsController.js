@@ -169,6 +169,29 @@ export const getAllUserListings = async (req, res) => {
   }
 };
 
+export const getUserListingsCount = async (req, res) => {
+  try {
+    const userId = extractUserIdFromToken(req); // Extract user ID from token
+
+    const query = `
+      SELECT COUNT(*) AS listings_count
+      FROM listings l
+      WHERE l.user_id = $1;
+    `;
+
+    // Execute the query
+    const result = await pool.query(query, [userId]);
+
+    const listingsCount = result.rows[0].listings_count;
+
+    res.status(200).json({ count: listingsCount });
+  } catch (err) {
+    console.error('Error fetching user listings count:', err.message); // Log specific error message
+    res.status(500).json({ error: err.message || 'Database error' });
+  }
+};
+
+
 
 
 
