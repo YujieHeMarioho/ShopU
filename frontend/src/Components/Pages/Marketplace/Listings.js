@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Dropdown, Carousel, Form } from 'react-bootstrap';
-import './Listings.css';
+import styles from './Listings.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 function ListingModal({ show, onHide, listing }) {
    const [dropDownTitle, setDropDownTitle] = useState('Select an Option');
@@ -26,11 +27,12 @@ function ListingModal({ show, onHide, listing }) {
 
    if (!listing) return null;
 
-   const isOwner = isAuthenticated && listing.created_by === user?.sub;
+   const isOwner = isAuthenticated && listing.user_id === user?.sub;
 
    const handleDropDownClick = (option) => {
       setDropDownTitle(option);
    };
+
 
    const handleDeleteClick = async () => {
       try {
@@ -102,12 +104,45 @@ function ListingModal({ show, onHide, listing }) {
       onHide(); // Close modal
    };
 
+     // NEW: Function to handle messaging the seller using listing.user_id
+  const handleMessageSeller = async () => {
+   // Log the keys and full listing object for debugging
+   console.log("Listing object keys:", Object.keys(listing));
+   console.log("Listing object:", listing);
+ 
+   // Use user_id or seller_id from the listing (whichever exists)
+   const sellerId = listing.user_id || listing.seller_id;
+   if (!sellerId) {
+     alert('Seller information is not available.');
+     return;
+   }
+ 
+   try {
+     const token = await getAccessTokenSilently();
+     const response = await axios.post(
+       `${process.env.REACT_APP_BACKEND_URL}/api/conversations`,
+       { 
+         user1_id: user.sub, 
+         user2_id: sellerId 
+       },
+       { headers: { Authorization: `Bearer ${token}` } }
+     );
+     navigate(`/chat/${response.data.conversation_id}`);
+   } catch (error) {
+     console.error(
+       'Error starting conversation with seller:',
+       error.response ? error.response.data : error.message
+     );
+     alert('Unable to start conversation with seller. Please try again.');
+   }
+ };
+
    return (
       <>
          {/* Main Listing Modal */}
-         <Modal show={show} onHide={handleCloseModal} dialogClassName='modal' centered>
-            <Modal.Header closeButton>
-               <Modal.Title className='card-title'>
+         <Modal show={show} onHide={handleCloseModal} dialogClassName='modal' centered className={styles.modal}>
+            <Modal.Header closeButton className={styles.modalHeader}>
+               <Modal.Title className={styles.cardTitle}>
                   {isEditing ? (
                      <Form.Control
                         type="text"
@@ -119,23 +154,23 @@ function ListingModal({ show, onHide, listing }) {
                   )}
                </Modal.Title>
             </Modal.Header>
-            <Modal.Body className='modal-body'>
-               <div className='carousel-container'>
+            <Modal.Body className={styles.modalBody}>
+               <div className={styles.carouselContainer}>
                   {listing.image.length > 1 ? (
                      <Carousel interval={null} slide={false}>
                         {listing.image.map((img, index) => (
                            <Carousel.Item key={index}>
-                              <img src={img} alt={`Slide ${index}`} className='img' />
+                              <img src={img} alt={`Slide ${index}`} className={styles.img} />
                            </Carousel.Item>
                         ))}
                      </Carousel>
                   ) : (
-                     <img src={listing.image[0]} alt={listing.title} className='img' />
+                     <img src={listing.image[0]} alt={listing.title} className={styles.img} />
                   )}
                </div>
-               <div className='content'>
-                  <div className='price-and-buttons'>
-                     <h5 className='card-price'>
+               <div className={styles.content}>
+                  <div className={styles.priceAndButtons}>
+                     <h5 className={styles.cardPrice}>
                         {isEditing ? (
                            <Form.Control
                               type="number"
@@ -147,7 +182,7 @@ function ListingModal({ show, onHide, listing }) {
                         )}
                      </h5>
                      {isOwner && (
-                        <div className='edit-buttons'>
+                        <div className={styles.editButtons}>
                            {isEditing ? (
                               <>
                                  <Button variant='success' onClick={handleSaveClick}>Save</Button>
@@ -160,10 +195,10 @@ function ListingModal({ show, onHide, listing }) {
                         </div>
                      )}
                   </div>
-                  <div className='product-options'>
-                     <label htmlFor='product-options-dropdown' className='card-text'>Product Options</label>
+                  <div className={styles.productOptions}>
+                     <label htmlFor='product-options-dropdown' className={styles.cardText}>Product Options</label>
                      <Dropdown>
-                        <Dropdown.Toggle id='product-options-dropdown' variant='outline-light' className='dropdown-text'>
+                        <Dropdown.Toggle id='product-options-dropdown' variant='outline-light' className={styles.dropdownText}>
                            {dropDownTitle}
                         </Dropdown.Toggle>
                         <Dropdown.Menu>
@@ -174,8 +209,8 @@ function ListingModal({ show, onHide, listing }) {
                      </Dropdown>
                   </div>
                   <Button variant='dark' className='mb-2'>Offer Seller!</Button>
-                  <Button variant='dark'>Message Seller!</Button>
-                  <p className='card-text'>
+                  <Button variant='dark' onClick={handleMessageSeller}>Message Seller!</Button>
+                  <p className={styles.cardText}>
                      {isEditing ? (
                         <Form.Control
                            as="textarea"
@@ -190,7 +225,7 @@ function ListingModal({ show, onHide, listing }) {
                </div>
             </Modal.Body>
             <Modal.Footer>
-               <h5 className='card-text'>Add future similar listings here</h5>
+               <h5>Add future similar listings here</h5>
             </Modal.Footer>
          </Modal>
 

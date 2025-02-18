@@ -1,32 +1,61 @@
 import React, { useState, useEffect } from 'react';
-import { Banner, Statistics } from '../../Common';
-import styles from './Home.module.css'; // Importing styles from Home.module.css
-import { useNavigate } from 'react-router-dom';
+import { Banner } from '../../Common';
+import styles from './Home.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
 
 function Home() {    
-    const {isAuthenticated, loginWithRedirect} = useAuth0();
-    const navigate = useNavigate();
+    const { isAuthenticated, loginWithRedirect, getAccessTokenSilently } = useAuth0();
     const [stats, setStats] = useState({
         listings: 0,
         users: 0,
         productsSold: 0,
+        feedPosts: 0,
     });
 
-    // Simulate fetching statistics (can be replaced with actual API call)
     useEffect(() => {
         const fetchStats = async () => {
-            // Simulating API call for statistics
-            setTimeout(() => {
+            try {
+                const token = await getAccessTokenSilently(); // Retrieve Auth0 token
+    
+                const [feedRes, listingsRes, usersRes, productsRes] = await Promise.all([
+                    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/count`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }),
+                    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings/count`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }),
+                    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/users/count`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    }),
+                    // fetch(`${process.env.REACT_APP_BACKEND_URL}/api/products/sold/count`, {
+                    //     headers: { 'Authorization': `Bearer ${token}` }
+                    // })
+                ]);
+    
+                if (!feedRes.ok || !listingsRes.ok || !usersRes.ok) {
+                    throw new Error('One or more requests failed');
+                }
+    
+                const feedData = await feedRes.json();
+                const listingsData = await listingsRes.json();
+                const usersData = await usersRes.json();
+                //const productsData = await productsRes.json();
+    
                 setStats({
-                    listings: 5000,
-                    users: 1200,
-                    productsSold: 3000,
+                    listings: listingsData.total_listings || 0,
+                    users: usersData.total_users || 0,
+                    productsSold: 0,
+                    feedPosts: feedData.total_feed_posts || 0, 
                 });
-            }, 1000);
+    
+            } catch (error) {
+                console.error('Error fetching statistics:', error);
+            }
         };
+    
         fetchStats();
     }, []);
+    
 
     useEffect(() => {
         console.log('Authentication state:', isAuthenticated);
@@ -35,14 +64,14 @@ function Home() {
     return (
         <div className={styles['home-container']}>
 
-            {/* Enhanced Banner Section */}
+            {/* Banner Section */}
             <Banner
                 title="Welcome to ShopU!"
                 description="Discover the best deals on dorm essentials, textbooks, and services from your campus community."
                 className={styles.banner}
             />
 
-            {/* New Feature Highlights Section */}
+            {/* Feature Highlights Section */}
             <section className={styles['feature-highlights']}>
                 <h2>Why Choose ShopU?</h2>
                 <div className={styles.features}>
@@ -66,19 +95,24 @@ function Home() {
                 <h2>ShopU by the Numbers</h2>
                 <div className={styles.statistics}>
                     <div className={styles.stat}>
-                        <h3>{stats.listings}</h3>
+                        <h3>{stats.listings.toLocaleString()}</h3>
                         <p>Listings Available</p>
                     </div>
                     <div className={styles.stat}>
-                        <h3>{stats.users}</h3>
+                        <h3>{stats.users.toLocaleString()}</h3>
                         <p>Active Users</p>
                     </div>
                     <div className={styles.stat}>
-                        <h3>{stats.productsSold}</h3>
+                        <h3>{stats.productsSold.toLocaleString()}</h3>
                         <p>Products Sold</p>
+                    </div>
+                    <div className={styles.stat}>
+                        <h3>{stats.feedPosts.toLocaleString()}</h3>
+                        <p>Feed Posts</p>
                     </div>
                 </div>
             </section>
+
 
             {/* Interactive Hover Section */}
             <section className={styles['hover-section']}>
@@ -111,8 +145,8 @@ function Home() {
                 </div>
             </section>
 
-                        {/* Interactive Call-to-Action Section */}
-                        <section className={styles['call-to-action']}>
+            {/* Call-to-Action Section */}
+            <section className={styles['call-to-action']}>
                 <h2>Ready to Get Started?</h2>
                 <p>Create your first listing or browse items from your campus today!</p>
                 <button

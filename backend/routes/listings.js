@@ -1,11 +1,18 @@
 import express from 'express';
-import { getAllListings, createListing, getFavoritedListings, uploadImages, getAllCategories, editListing, deleteListing } from '../controllers/listingsController.js';
+import { getAllListings, createListing, getFavoritedListings, uploadImages, getAllCategories, editListing, deleteListing, getListingCount, getAllUserListings } from '../controllers/listingsController.js';
 import upload from '../middleware/multer.js';
 
 const router = express.Router();
 
-// Fetch all listings route
-router.get('/listings', getAllListings);  
+// Define the route for fetching all listings
+router.get('/listings', getAllListings);  // When a GET request is made to /api/listings, run getAllListings
+
+router.get('/listings/count', getListingCount);
+
+//router.get('/listings/:userId', getAllUserListings);  // When a GET request is made to /api/listings, run getAllListings
+
+router.get('/listings/user', getAllUserListings);  // When a GET request is made to /api/listings, run getAllListings
+
 
 // get all favorited listings for a specific user
 router.get('/listings/favorites', getFavoritedListings);  
