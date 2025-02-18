@@ -184,8 +184,6 @@ export const getUserListingsCount = async (req, res) => {
 
     const listingsCount = result.rows[0].listings_count;
 
-    console.log('Number of user listings:', listingsCount);
-
     res.status(200).json({ count: listingsCount });
   } catch (err) {
     console.error('Error fetching user listings count:', err.message); // Log specific error message

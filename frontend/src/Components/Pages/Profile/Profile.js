@@ -353,18 +353,18 @@ const Profile = () => {
             )}
             </div>
           </Tab>
-        <Tab eventKey="statistics" title="Statistics">
-          <Card className="mb-3">
-            <Card.Body>
-              <h5>User Statistics</h5>
-              <ul>
-                <li>Posts: {userStatistics.posts}</li>
-                <li>Listings: {userStatistics.listings}</li>
-                <li>Followers: {userStatistics.friends}</li>
-              </ul>
-            </Card.Body>
-          </Card>
-        </Tab>
+          <Tab eventKey="statistics" title="Statistics">
+            <Card className="profile-tab-statistics mb-3">
+              <Card.Body>
+                <h5>User Statistics</h5>
+                <ul>
+                  <li>Posts: {userStatistics.posts}</li>
+                  <li>Listings: {userStatistics.listings}</li>
+                  <li>Followers: {userStatistics.friends}</li>
+                </ul>
+              </Card.Body>
+            </Card>
+          </Tab>
         <Tab eventKey="preferences" title="User Preferences">
           <UserPreferences />
         </Tab>

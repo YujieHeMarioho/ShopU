@@ -248,8 +248,6 @@ export const getUserFeedPostsCount = async (req, res) => {
 
     const postCount = result.rows[0].post_count;
 
-    console.log('Number of user feed posts:', postCount);
-
     // Respond with the count
     res.status(200).json({ count: postCount });
   } catch (err) {

@@ -25,7 +25,6 @@ const SocialFeed = () => {
     const userId = isAuthenticated ? user?.sub : null;
 
     const handleCardClick = (post) => {
-        console.log("Card clicked:", post);
         setSelectedCard(post);
       };
     
