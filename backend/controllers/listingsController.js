@@ -411,4 +411,4 @@ export const getAllCategories = async (req, res) => {
   }
 };
 
-export default { createListing, getFavoritedListings, getAllListings, uploadImages, getAllCategories };
+export default { createListing, getFavoritedListings, getAllListings, uploadImages, getAllCategories, getAllUserListings };
