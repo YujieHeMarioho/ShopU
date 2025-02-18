@@ -53,7 +53,7 @@ function App() {
 
       {/* Routing Setup */}
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<AuthenticationGuard component={Home} />} />
         <Route path="/home" element={<AuthenticationGuard component={Home} />} />
         <Route path="/favorites" element={<AuthenticationGuard component={Favorites} />} />
         <Route path="/marketplace" element={<AuthenticationGuard component={Marketplace} />} />
@@ -73,7 +73,7 @@ function App() {
         {/* New Checkout Page */}
         <Route path="/cart" element={<AuthenticationGuard component={CheckOut} />} />
         <Route path="/messages" element={<AuthenticationGuard component={MessagesPage} />} />
-        <Route path="/community/:community_id" element={<CommunityHome />} />
+        <Route path="/community/:community_id" element={<AuthenticationGuard component={CommunityHome} />} />
         <Route path="/chat/:conversation_id" element={<AuthenticationGuard component={ChatContent} />} />
 
       </Routes>
