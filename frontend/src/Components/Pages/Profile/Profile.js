@@ -18,7 +18,7 @@ const Profile = () => {
     const [formData, setFormData] = useState({
       name: name || '',
       email: email || '',
-      picture: picture || ''});
+      picture: picture || null});
       
   
     const [message, setMessage] = useState('');
@@ -192,6 +192,18 @@ const Profile = () => {
     const handleSaveChanges = async () => {
       try {
         const token = await getAccessTokenSilently();
+
+        if (formData.picture != null){
+          const upload = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/users/upload`, {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+            body: formData.picture,
+          });
+
+          formData.picture = upload;
+        }
         
         const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/users`, {
           method: 'PATCH',
@@ -202,7 +214,7 @@ const Profile = () => {
           body: JSON.stringify({
             email: formData.email,
             name: formData.name,
-            picture: formData.picture
+            picture: formData.picture,
           }),
         });
   
@@ -262,17 +274,10 @@ const Profile = () => {
                   />
                 </InputGroup>
   
-                {/* Picture URL Input */}
+                {/* Picture Upload */}
                 <InputGroup className="mb-3">
-                  <InputGroup.Text id="picture">Picture URL</InputGroup.Text>
-                  <Form.Control
-                    placeholder="Picture"
-                    aria-label="Picture"
-                    aria-describedby="Picture"
-                    name="picture"
-                    value={formData.picture}
-                    onChange={handleInputChange}
-                  />
+                  <InputGroup.Text id="picture">Upload Profile Picture</InputGroup.Text>
+                  <input type="file" accept="image/jpeg, image/png, image/jpg, image/gif" name="picture" value={formData.picture} onChange={handleInputChange}/>
                 </InputGroup>
   
                 {/* Save Changes Button */}

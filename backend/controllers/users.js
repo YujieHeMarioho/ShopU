@@ -1,8 +1,12 @@
-import { pool } from '../pool.js'; 
+import { pool, buckets, s3 } from '../pool.js'; 
 import axios from 'axios';
 import qs from 'qs';
 //correct with import 
 import {jwtDecode} from "jwt-decode"; 
+import { PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { v4 as uuidv4 } from 'uuid';
+import sharp from 'sharp';
 
 // Your Auth0 domain and client credentials
 const auth0URL = process.env.AUTH0_ISSUER_BASE_URL; 
@@ -183,6 +187,10 @@ async function ManagementApiUpdateUser(accessToken, userId, updatedDataJson) {
         console.error('Error updating user:', error.response ? error.response.data : error.message);
         throw new Error('Failed to update user');
     }
+}
+
+export const uploadProfileImage = (req) => {
+
 }
 
 export default { updateUser, getAllAuth0Users, createUser, getUserInfo };
