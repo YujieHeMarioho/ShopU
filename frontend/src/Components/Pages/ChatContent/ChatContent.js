@@ -11,12 +11,17 @@ const ChatContent = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
 
-  // We'll use this to decide if we should auto-scroll *once* on the very first load
+  // Flag to ensure we always scroll on the very first load
   const [isFirstLoad, setIsFirstLoad] = useState(true);
+
+  // Track if user is near the bottom of the scrollable container
+  const [isUserNearBottom, setIsUserNearBottom] = useState(true);
 
   const messagesContainerRef = useRef(null);
 
-  // --- 1) Helper: scroll to bottom of the container ---
+  // -----------------------------
+  // Force scroll to bottom
+  // -----------------------------
   const scrollToBottom = () => {
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop =
@@ -24,8 +29,25 @@ const ChatContent = () => {
     }
   };
 
-  // --- 2) Fetch messages, optionally auto-scroll the first time ---
-  const fetchMessages = async (firstTime = false) => {
+  // -----------------------------
+  // Handle scroll (detect if user is near bottom)
+  // -----------------------------
+  const handleScroll = () => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    // Adjust threshold as needed
+    const threshold = 50;
+    const isNearBottom = scrollHeight - (scrollTop + clientHeight) < threshold;
+
+    setIsUserNearBottom(isNearBottom);
+  };
+
+  // -----------------------------
+  // Fetch messages from backend
+  // -----------------------------
+  const fetchMessages = async () => {
     try {
       const token = await getAccessTokenSilently();
       const response = await axios.get(
@@ -33,42 +55,51 @@ const ChatContent = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setMessages(response.data);
-
-      // If this is the first load, scroll once after everything is rendered
-      if (firstTime) {
-        setTimeout(() => {
-          scrollToBottom();
-          setIsFirstLoad(false); // all future polls won't scroll
-        }, 100); // a small delay so the DOM can paint
-      }
     } catch (error) {
       console.error('Error fetching messages:', error);
     }
   };
 
-  // --- 3) On mount (or when conversation_id changes), do first-load fetch + polling ---
+  // -----------------------------
+  // Whenever conversation_id changes, reset and start polling
+  // -----------------------------
   useEffect(() => {
-    // Whenever conversation changes, reset "isFirstLoad"
-    setIsFirstLoad(true);
+    setIsFirstLoad(true); // Ensure we scroll on first load for new conversation
 
     const initialFetch = async () => {
-      // On the first fetch, we pass `true` so we scroll once
-      await fetchMessages(true);
+      await fetchMessages();
     };
 
     initialFetch();
 
-    // Then poll every 2 seconds, passing `false` to skip auto-scrolling
+    // Poll every 2 seconds
     const intervalId = setInterval(() => {
-      fetchMessages(false);
+      fetchMessages();
     }, 2000);
 
-    // Cleanup
     return () => clearInterval(intervalId);
-
   }, [conversation_id, getAccessTokenSilently]);
 
-  // --- 4) Send a new message (we WILL scroll here) ---
+  // -----------------------------
+  // Scroll behavior after messages update
+  // -----------------------------
+  useEffect(() => {
+    if (messages.length > 0) {
+      // On the very first load, always scroll to bottom
+      if (isFirstLoad) {
+        scrollToBottom();
+        setIsFirstLoad(false);
+      }
+      // Otherwise, scroll ONLY if user is near bottom
+      else if (isUserNearBottom) {
+        scrollToBottom();
+      }
+    }
+  }, [messages, isFirstLoad, isUserNearBottom]);
+
+  // -----------------------------
+  // Send a message
+  // -----------------------------
   const handleSendMessage = async () => {
     if (!newMessage.trim()) return;
 
@@ -83,8 +114,10 @@ const ChatContent = () => {
       // Optimistic update
       setMessages((prev) => [...prev, response.data]);
 
-      // Always scroll so the sender sees their new message
-      scrollToBottom();
+      // After sending, only scroll if user was near bottom
+      if (isUserNearBottom) {
+        scrollToBottom();
+      }
 
       setNewMessage('');
     } catch (error) {
@@ -92,7 +125,9 @@ const ChatContent = () => {
     }
   };
 
-  // --- 5) Press Enter to send ---
+  // -----------------------------
+  // Send message on Enter (no Shift)
+  // -----------------------------
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -107,14 +142,16 @@ const ChatContent = () => {
       <div
         className="messages"
         ref={messagesContainerRef}
+        onScroll={handleScroll}
         style={{
-          height: '400px',      // or '60vh', etc.
+          height: '400px',
           overflowY: 'auto',
-          border: '1px solid #ccc'
+          border: '1px solid #ccc',
         }}
       >
         {messages.map((message) => {
-          const isSent = message.sender_id.toLowerCase() === user.sub.toLowerCase();
+          const isSent =
+            message.sender_id?.toLowerCase() === user.sub.toLowerCase();
           return (
             <div key={message.message_id} className={isSent ? 'sent' : 'received'}>
               <div className="message-bubble">
@@ -137,7 +174,7 @@ const ChatContent = () => {
           placeholder="Type a message..."
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
-          onKeyPress={handleKeyPress}
+          onKeyDown={handleKeyPress}
         />
         <button onClick={handleSendMessage}>Send</button>
       </div>
