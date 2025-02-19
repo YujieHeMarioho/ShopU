@@ -1,109 +1,249 @@
-import React, { useState } from 'react';
-import { Modal, Button, Dropdown, DropdownButton, DropdownItem, Carousel } from 'react-bootstrap';
-import './Listings.css'; 
-
+import React, { useState, useEffect } from 'react';
+import { Modal, Button, Dropdown, Carousel, Form } from 'react-bootstrap';
+import styles from './Listings.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
 function ListingModal({ show, onHide, listing }) {
- const [dropDownTitle, setDropDownTitle] = useState('Select an Option')
+   const [dropDownTitle, setDropDownTitle] = useState('Select an Option');
+   const { getAccessTokenSilently, user, isAuthenticated } = useAuth0();
+   const navigate = useNavigate();
 
-  const { user, getAccessTokenSilently } = useAuth0();
-  const navigate = useNavigate();
+   // Edit Mode State
+   const [isEditing, setIsEditing] = useState(false);
+   const [editTitle, setEditTitle] = useState(listing?.title || '');
+   const [editPrice, setEditPrice] = useState(listing?.price || '');
+   const [editDescription, setEditDescription] = useState(listing?.description || '');
+   const [showConfirm, setShowConfirm] = useState(false); // Confirmation Modal
 
-  if (!listing) return null; // If no listing data, render nothing
+   useEffect(() => {
+      if (isEditing) {
+         setEditTitle(listing.title);
+         setEditPrice(listing.price);
+         setEditDescription(listing.description);
+      }
+   }, [isEditing, listing]);
 
-  const handleDropDownClick = (option) => {
-    setDropDownTitle(option);
-  };
+   if (!listing) return null;
+
+   const isOwner = isAuthenticated && listing.user_id === user?.sub;
+
+   const handleDropDownClick = (option) => {
+      setDropDownTitle(option);
+   };
 
 
-  // NEW: Function to handle messaging the seller using listing.user_id
+   const handleDeleteClick = async () => {
+      try {
+         const token = await getAccessTokenSilently();
+
+         await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings/${listing.id}/delete`, {
+            method: "DELETE",
+            headers: {
+               'Authorization': `Bearer ${token}`,
+            },
+         });
+
+         window.location.reload();
+      } catch (error) {
+         console.error("Error deleting listing:", error);
+      }
+   };
+
+   const handleEditClick = () => {
+      setIsEditing(true); // Enable edit mode
+   };
+
+   const handleSaveClick = async () => {
+      try {
+         const token = await getAccessTokenSilently();
+
+         const updatedListing = {
+            title: editTitle,
+            price: editPrice,
+            description: editDescription,
+         };
+
+         const json = JSON.stringify(updatedListing);
+         await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings/${listing.id}/edit`, {
+            method: "PUT",
+            headers: {
+               'Authorization': `Bearer ${token}`,
+               'Content-Type': 'application/json',
+            },
+            body: json,
+         });
+
+         setIsEditing(false); // Exit edit mode
+         window.location.reload();
+      } catch (error) {
+         console.error("Error updating listing:", error);
+      }
+   };
+
+   const handleCancelClick = () => {
+      // Restore original values and exit edit mode
+      setEditTitle(listing.title);
+      setEditPrice(listing.price);
+      setEditDescription(listing.description);
+      setIsEditing(false);
+   };
+
+   const handleCloseModal = () => {
+      if (isEditing) {
+         setShowConfirm(true); // Show confirmation popup
+      } else {
+         onHide(); // Close modal normally if not editing
+      }
+   };
+
+   const confirmExit = () => {
+      setShowConfirm(false);
+      handleCancelClick(); // Discard changes
+      onHide(); // Close modal
+   };
+
+     // NEW: Function to handle messaging the seller using listing.user_id
   const handleMessageSeller = async () => {
-    // Log the keys and full listing object for debugging
-    console.log("Listing object keys:", Object.keys(listing));
-    console.log("Listing object:", listing);
-  
-    // Use user_id or seller_id from the listing (whichever exists)
-    const sellerId = listing.user_id || listing.seller_id;
-    if (!sellerId) {
-      alert('Seller information is not available.');
-      return;
-    }
-  
-    try {
-      const token = await getAccessTokenSilently();
-      const response = await axios.post(
-        `${process.env.REACT_APP_BACKEND_URL}/api/conversations`,
-        { 
-          user1_id: user.sub, 
-          user2_id: sellerId 
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      navigate(`/chat/${response.data.conversation_id}`);
-    } catch (error) {
-      console.error(
-        'Error starting conversation with seller:',
-        error.response ? error.response.data : error.message
-      );
-      alert('Unable to start conversation with seller. Please try again.');
-    }
-  };
-  
-  
+   // Log the keys and full listing object for debugging
+   console.log("Listing object keys:", Object.keys(listing));
+   console.log("Listing object:", listing);
+ 
+   // Use user_id or seller_id from the listing (whichever exists)
+   const sellerId = listing.user_id || listing.seller_id;
+   if (!sellerId) {
+     alert('Seller information is not available.');
+     return;
+   }
+ 
+   try {
+     const token = await getAccessTokenSilently();
+     const response = await axios.post(
+       `${process.env.REACT_APP_BACKEND_URL}/api/conversations`,
+       { 
+         user1_id: user.sub, 
+         user2_id: sellerId 
+       },
+       { headers: { Authorization: `Bearer ${token}` } }
+     );
+     navigate(`/chat/${response.data.conversation_id}`);
+   } catch (error) {
+     console.error(
+       'Error starting conversation with seller:',
+       error.response ? error.response.data : error.message
+     );
+     alert('Unable to start conversation with seller. Please try again.');
+   }
+ };
 
-  return (
-    <Modal show={show} onHide={onHide} dialogClassName='modal' centered>
-      <Modal.Header closeButton>
-          <Modal.Title className='card-title'>{listing.title}</Modal.Title>
-      </Modal.Header>
-      <Modal.Body className='modal-body'>
-          <div className='carousel-container'>
-              {listing.image.length > 1 ? (
-              <Carousel interval={null} slide={false}>
-                {listing.image.map((img, index) => (
-                  <Carousel.Item key={index}>
-                    <img
-                      src={img}
-                      alt={`Slide ${index}`}
-                      className='img'
-                    />
-                  </Carousel.Item>
-                ))}
-              </Carousel>
-            ) : (
-              <img
-                src={listing.image[0]}
-                alt={listing.title}
-                className='img'
-              />
-            )}
-          </div>
-          <div className='content'>
-            <h5 className='card-price'>${listing.price}</h5>
-            <div className='product-options'>
-                <label htmlFor='product-options-dropdown' className='card-text'> Product Options </label>
-                <Dropdown>
-                  <Dropdown.Toggle id='product-options-dropdown' variant='outline-light' className='dropdown-text'> {dropDownTitle} </Dropdown.Toggle>
-                  <Dropdown.Menu>
-                      <Dropdown.Item as='button' onClick={()=> handleDropDownClick('Drop Off Location')}>Drop Off Location</Dropdown.Item>
-                      <Dropdown.Item as='button' onClick={()=> handleDropDownClick('Pickup From Seller')}>Pickup From Seller</Dropdown.Item>
-                      <Dropdown.Item as='button' onClick={()=> handleDropDownClick('Shipped')}>Shipped</Dropdown.Item>
-                  </Dropdown.Menu>
-                </Dropdown>
-            </div>
-            <Button variant='dark' className='mb-2'> Offer Seller! </Button>
-            <Button variant='dark' onClick={handleMessageSeller}> Message Seller! </Button>
-            <p className='card-text'>{listing.description}</p>
-          </div>
-      </Modal.Body>
-      <Modal.Footer>
-          <h5 class='card-text'> add future similar listings here </h5>
-      </Modal.Footer>
-    </Modal>
-  );
+   return (
+      <>
+         {/* Main Listing Modal */}
+         <Modal show={show} onHide={handleCloseModal} dialogClassName='modal' centered className={styles.modal}>
+            <Modal.Header closeButton className={styles.modalHeader}>
+               <Modal.Title className={styles.cardTitle}>
+                  {isEditing ? (
+                     <Form.Control
+                        type="text"
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                     />
+                  ) : (
+                     listing.title
+                  )}
+               </Modal.Title>
+            </Modal.Header>
+            <Modal.Body className={styles.modalBody}>
+               <div className={styles.carouselContainer}>
+                  {listing.image.length > 1 ? (
+                     <Carousel interval={null} slide={false}>
+                        {listing.image.map((img, index) => (
+                           <Carousel.Item key={index}>
+                              <img src={img} alt={`Slide ${index}`} className={styles.img} />
+                           </Carousel.Item>
+                        ))}
+                     </Carousel>
+                  ) : (
+                     <img src={listing.image[0]} alt={listing.title} className={styles.img} />
+                  )}
+               </div>
+               <div className={styles.content}>
+                  <div className={styles.priceAndButtons}>
+                     <h5 className={styles.cardPrice}>
+                        {isEditing ? (
+                           <Form.Control
+                              type="number"
+                              value={editPrice}
+                              onChange={(e) => setEditPrice(e.target.value)}
+                           />
+                        ) : (
+                           `$${listing.price}`
+                        )}
+                     </h5>
+                     {isOwner && (
+                        <div className={styles.editButtons}>
+                           {isEditing ? (
+                              <>
+                                 <Button variant='success' onClick={handleSaveClick}>Save</Button>
+                                 <Button variant='warning' onClick={handleCancelClick}>Cancel</Button>
+                              </>
+                           ) : (
+                              <Button variant='secondary' onClick={handleEditClick}>Edit</Button>
+                           )}
+                           <Button variant='danger' onClick={handleDeleteClick}>Delete</Button>
+                        </div>
+                     )}
+                  </div>
+                  <div className={styles.productOptions}>
+                     <label htmlFor='product-options-dropdown' className={styles.cardText}>Product Options</label>
+                     <Dropdown>
+                        <Dropdown.Toggle id='product-options-dropdown' variant='outline-light' className={styles.dropdownText}>
+                           {dropDownTitle}
+                        </Dropdown.Toggle>
+                        <Dropdown.Menu>
+                           <Dropdown.Item as='button' onClick={() => handleDropDownClick('Drop Off Location')}>Drop Off Location</Dropdown.Item>
+                           <Dropdown.Item as='button' onClick={() => handleDropDownClick('Pickup From Seller')}>Pickup From Seller</Dropdown.Item>
+                           <Dropdown.Item as='button' onClick={() => handleDropDownClick('Shipped')}>Shipped</Dropdown.Item>
+                        </Dropdown.Menu>
+                     </Dropdown>
+                  </div>
+                  <Button variant='dark' className='mb-2'>Offer Seller!</Button>
+                  <Button variant='dark' onClick={handleMessageSeller}>Message Seller!</Button>
+                  <p className={styles.cardText}>
+                     {isEditing ? (
+                        <Form.Control
+                           as="textarea"
+                           rows={3}
+                           value={editDescription}
+                           onChange={(e) => setEditDescription(e.target.value)}
+                        />
+                     ) : (
+                        listing.description
+                     )}
+                  </p>
+               </div>
+            </Modal.Body>
+            <Modal.Footer>
+               <h5>Add future similar listings here</h5>
+            </Modal.Footer>
+         </Modal>
+
+         {/* Confirmation Popup */}
+         <Modal show={showConfirm} onHide={() => setShowConfirm(false)} centered>
+            <Modal.Header closeButton>
+               <Modal.Title>Unsaved Changes</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+               <p>You have unsaved changes. Are you sure you want to exit?</p>
+            </Modal.Body>
+            <Modal.Footer>
+               <Button variant="secondary" onClick={() => setShowConfirm(false)}>No, Stay</Button>
+               <Button variant="danger" onClick={confirmExit}>Yes, Exit</Button>
+            </Modal.Footer>
+         </Modal>
+      </>
+   );
 }
 
 export default ListingModal;
