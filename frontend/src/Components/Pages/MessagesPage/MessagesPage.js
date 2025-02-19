@@ -8,39 +8,114 @@ const MessagesPage = () => {
 
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
-
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-
   const [error, setError] = useState(null);
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
-
-  /**
-   * `isFirstLoad` = `true` the moment we switch to a conversation.
-   * We'll auto-scroll exactly once after the first batch of messages is rendered.
-   */
   const [isFirstLoad, setIsFirstLoad] = useState(false);
 
-  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-  const userCache = useRef({});
+  // Tracks if the user is near the bottom of the message list
+  const [isUserNearBottom, setIsUserNearBottom] = useState(true);
 
-  // We'll scroll only inside this container
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
+  // Cache for user details and in-flight promise cache
+  const userCache = useRef({});
+  const userCachePromise = useRef({});
+  // Ensure conversation list is fetched only once
+  const conversationsFetched = useRef(false);
+
+  // Container for scrolling messages
   const messagesContainerRef = useRef(null);
 
-  // ---------------------------------------------
-  // 1) Scroll to Bottom Helper
-  // ---------------------------------------------
-  const scrollToBottom = () => {
-    if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop =
-        messagesContainerRef.current.scrollHeight;
+  // -----------------------------
+  // Force Scroll to Bottom (used on first load or if user is near bottom)
+  // -----------------------------
+  const forceScrollToBottom = () => {
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
     }
   };
 
-  // ---------------------------------------------
-  // 2) On first render, fetch conversation list
-  // ---------------------------------------------
+  // -----------------------------
+  // Handle scroll event to track if user is near the bottom
+  // -----------------------------
+  const handleScroll = () => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    const threshold = 50; // Adjust this threshold to your preference
+    setIsUserNearBottom(scrollHeight - (scrollTop + clientHeight) < threshold);
+  };
+
+  // -----------------------------
+  // Fetch user details with caching & promise caching
+  // -----------------------------
+  const fetchUserDetails = async (userId, token) => {
+    if (userCache.current[userId]) {
+      console.log(`User details for ${userId} found in cache`);
+      return userCache.current[userId];
+    }
+    if (userCachePromise.current[userId]) {
+      return userCachePromise.current[userId];
+    }
+    const promise = axios
+      .get(`${BACKEND_URL}/api/user/${encodeURIComponent(userId)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((response) => {
+        const pictureFromAPI = response.data.picture;
+        const validPicture =
+          pictureFromAPI && pictureFromAPI.trim() !== ''
+            ? pictureFromAPI
+            : 'https://via.placeholder.com/40';
+        if (validPicture === 'https://via.placeholder.com/40') {
+          console.warn(`No valid picture for user ${userId}, using fallback.`);
+        } else {
+          console.log(`Fetched valid picture for user ${userId}`);
+        }
+        const userData = {
+          username: response.data.username || userId,
+          picture: validPicture,
+        };
+        userCache.current[userId] = userData;
+        delete userCachePromise.current[userId];
+        return userData;
+      })
+      .catch((error) => {
+        if (error.response && error.response.status === 429) {
+          console.error(`Rate limit reached for user ${userId}. Using fallback.`);
+        } else if (error.response && error.response.status === 404) {
+          console.error(`User ${userId} not found.`);
+        } else {
+          console.error(`Error fetching user details for ${userId}:`, error);
+        }
+        const fallback = {
+          username: userId,
+          picture: 'https://via.placeholder.com/40',
+        };
+        userCache.current[userId] = fallback;
+        delete userCachePromise.current[userId];
+        return fallback;
+      });
+    userCachePromise.current[userId] = promise;
+    return promise;
+  };
+
+  // -----------------------------
+  // Batch fetch user details for multiple IDs
+  // -----------------------------
+  const fetchAllUserDetails = async (userIds, token) => {
+    const uniqueIds = [...new Set(userIds)];
+    const promises = uniqueIds.map((id) => fetchUserDetails(id, token));
+    return await Promise.all(promises);
+  };
+
+  // -----------------------------
+  // Fetch conversation list (only once)
+  // -----------------------------
   useEffect(() => {
     const fetchConversations = async () => {
       setIsLoadingConversations(true);
@@ -52,30 +127,23 @@ const MessagesPage = () => {
           )}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
+        const data = response.data;
+        console.log('Conversations fetched:', data);
 
-        const data = response.data; // your conversation array
-
-        // Identify other users
+        // Identify other user IDs
         const otherUserIds = data.map((conv) =>
           conv.user1_id.toLowerCase() === user.sub.toLowerCase()
             ? conv.user2_id
             : conv.user1_id
         );
+        const userDetailsList = await fetchAllUserDetails(otherUserIds, token);
         const uniqueIds = [...new Set(otherUserIds)];
-
-        // Fetch user details
-        const userDetailsPromises = uniqueIds.map((id) =>
-          fetchUserDetails(id, token)
-        );
-        const userDetailsList = await Promise.all(userDetailsPromises);
-
-        // Build a lookup
         const userIdToDetailsMap = {};
         uniqueIds.forEach((id, idx) => {
           userIdToDetailsMap[id] = userDetailsList[idx];
         });
 
-        // Enhance the conversation data
+        // Enhance conversation data with user details
         const enhancedConvs = data.map((conv) => {
           const otherId =
             conv.user1_id.toLowerCase() === user.sub.toLowerCase()
@@ -93,6 +161,7 @@ const MessagesPage = () => {
         });
 
         setConversations(enhancedConvs);
+        conversationsFetched.current = true;
         setError(null);
       } catch (err) {
         console.error('Error fetching conversations:', err);
@@ -102,22 +171,19 @@ const MessagesPage = () => {
       }
     };
 
-    if (!authLoading && user && user.sub) {
+    if (!authLoading && user && user.sub && !conversationsFetched.current) {
       fetchConversations();
     }
   }, [authLoading, user, getAccessTokenSilently, BACKEND_URL]);
 
-  // ---------------------------------------------
-  // 3) Fetch Messages (either first load or polls)
-  // ---------------------------------------------
+  // -----------------------------
+  // Fetch messages for selected conversation
+  // -----------------------------
   const fetchMessages = async () => {
     if (!selectedConversation) return;
-
-    // If this is the very first time for this conversation, show spinner
     if (isFirstLoad) {
       setIsLoadingMessages(true);
     }
-
     try {
       const token = await getAccessTokenSilently();
       const response = await axios.get(
@@ -126,7 +192,6 @@ const MessagesPage = () => {
         )}/messages`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
       setMessages(response.data);
       setError(null);
     } catch (err) {
@@ -139,51 +204,45 @@ const MessagesPage = () => {
     }
   };
 
-  // ---------------------------------------------
-  // 4) When user selects a conversation, do first load + poll
-  // ---------------------------------------------
+  // -----------------------------
+  // When a conversation is selected, load messages & poll (every 5s)
+  // -----------------------------
   useEffect(() => {
     if (!selectedConversation) {
       setMessages([]);
       return;
     }
-
-    // Mark that we want to auto-scroll on the first fetch
     setIsFirstLoad(true);
-
-    // Immediately fetch once
     fetchMessages();
-
-    // Then poll (no forced scroll)
     const intervalId = setInterval(() => {
       fetchMessages();
-    }, 2000);
-
-    // Cleanup
+    }, 5000);
     return () => clearInterval(intervalId);
+    // eslint-disable-next-line
   }, [selectedConversation]);
 
-  // ---------------------------------------------
-  // 5) “Auto-scroll once” after messages change IF isFirstLoad is true
-  // ---------------------------------------------
+  // -----------------------------
+  // Scroll behavior after messages update
+  // -----------------------------
   useEffect(() => {
-    // If it's the first load, we wait a bit so the DOM can render messages
-    // Then scroll down, then mark we are done with the first load.
-    if (isFirstLoad && messages.length > 0) {
-      const timer = setTimeout(() => {
-        scrollToBottom();
-        setIsFirstLoad(false); // don't do it again next time
-      }, 150); 
-      return () => clearTimeout(timer);
+    if (messages.length > 0) {
+      // On the very first load, always scroll to bottom.
+      if (isFirstLoad) {
+        forceScrollToBottom();
+        setIsFirstLoad(false);
+      } 
+      // Otherwise, scroll to bottom ONLY if user is near bottom
+      else if (isUserNearBottom) {
+        forceScrollToBottom();
+      }
     }
-  }, [isFirstLoad, messages]);
+  }, [messages, isFirstLoad, isUserNearBottom]);
 
-  // ---------------------------------------------
-  // 6) Send Message (we DO scroll after sending)
-  // ---------------------------------------------
+  // -----------------------------
+  // Send a message
+  // -----------------------------
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return;
-
     try {
       const token = await getAccessTokenSilently();
       const response = await axios.post(
@@ -198,17 +257,19 @@ const MessagesPage = () => {
       setNewMessage('');
       setError(null);
 
-      // Always scroll after we send
-      scrollToBottom();
+      // Only auto-scroll if user is near the bottom
+      if (isUserNearBottom) {
+        forceScrollToBottom();
+      }
     } catch (err) {
       console.error('Error sending message:', err);
       setError('Failed to send message. Please try again.');
     }
   };
 
-  // ---------------------------------------------
-  // 7) “Enter” key to send
-  // ---------------------------------------------
+  // -----------------------------
+  // Send message on Enter key (without Shift)
+  // -----------------------------
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -216,45 +277,15 @@ const MessagesPage = () => {
     }
   };
 
-  // ---------------------------------------------
-  // 8) Fetch user details (caching)
-  // ---------------------------------------------
-  const fetchUserDetails = async (userId, token) => {
-    if (userCache.current[userId]) {
-      return userCache.current[userId];
-    }
-    try {
-      const response = await axios.get(
-        `${BACKEND_URL}/api/user/${encodeURIComponent(userId)}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      const userData = {
-        username: response.data.username || userId,
-        picture: response.data.picture || 'https://via.placeholder.com/40',
-      };
-      userCache.current[userId] = userData;
-      return userData;
-    } catch (error) {
-      console.error(`Error fetching user details for ${userId}:`, error);
-      const fallback = {
-        username: userId,
-        picture: 'https://via.placeholder.com/40',
-      };
-      userCache.current[userId] = fallback;
-      return fallback;
-    }
-  };
-
-  // ---------------------------------------------
+  // -----------------------------
   // RENDER
-  // ---------------------------------------------
+  // -----------------------------
   return (
     <div className="messages-page">
       {/* LEFT: Conversation List */}
       <div className="history">
         <h3>Conversations</h3>
         {error && <p className="error-message">{error}</p>}
-
         {isLoadingConversations ? (
           <div className="spinner">Loading conversations...</div>
         ) : conversations.length === 0 ? (
@@ -266,18 +297,14 @@ const MessagesPage = () => {
                 key={conv.conversation_id}
                 onClick={() => setSelectedConversation(conv)}
                 className={
-                  selectedConversation?.conversation_id ===
-                  conv.conversation_id
+                  selectedConversation?.conversation_id === conv.conversation_id
                     ? 'active'
                     : ''
                 }
               >
                 <div className="conversation-info">
                   <img
-                    src={
-                      conv.otherProfilePicture ||
-                      'https://via.placeholder.com/40'
-                    }
+                    src={conv.otherProfilePicture || 'https://via.placeholder.com/40'}
                     alt={`Avatar of ${conv.otherUsername}`}
                     className="conversation-avatar"
                   />
@@ -297,13 +324,13 @@ const MessagesPage = () => {
         {selectedConversation ? (
           <>
             <h3>Chat with {selectedConversation.otherUsername}</h3>
-
             {isLoadingMessages ? (
               <div className="spinner">Loading messages...</div>
             ) : (
               <div
                 className="messages"
                 ref={messagesContainerRef}
+                onScroll={handleScroll}
                 style={{
                   height: '400px',
                   overflowY: 'auto',
@@ -332,7 +359,6 @@ const MessagesPage = () => {
                 })}
               </div>
             )}
-
             <div className="message-input">
               <input
                 type="text"

@@ -267,3 +267,17 @@
         max-width: 90ch; /* Increased for smaller screens */
     }
 }
+
+.unread-badge {
+    background-color: red;
+    color: white;
+    border-radius: 50%;
+    font-size: 0.75rem;
+    padding: 2px 7px;
+    margin-left: 10px;
+    display: inline-block;
+    min-width: 20px;
+    text-align: center;
+  }
+  
+  
