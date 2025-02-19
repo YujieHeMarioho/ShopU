@@ -13,6 +13,7 @@ export const SocialCard = ({
   description,
   profilePic,
   author,
+  authorId,
   initialLikes = 0,
   initialShares = 0,
   isLikedAlready,
@@ -227,7 +228,7 @@ export const SocialCard = ({
         >
           {isFavorited ? <FaHeart /> : <FaRegHeart />}
         </Button>
-        {user?.sub === author && (
+        {user?.sub === authorId && (
           <Button variant="outline-warning" size="sm" onClick={(e) => {
             e.stopPropagation();
             setIsEditing(true);

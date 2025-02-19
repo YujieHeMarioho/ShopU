@@ -230,6 +230,7 @@ const SocialFeed = () => {
                                 description={post.content}             // Passing content as description
                                 profilePic={post.profile_pic_url}      // Passing profile picture URL
                                 author={post.author}                   // Passing author name
+                                authorId={post.author_id}              // Passing author ID
                                 initialLikes={post.likes_count}        // Mapping likes_count to initialLikes
                                 initialShares={post.shares}            // Mapping shares to initialShares
                                 isLikedAlready={post.isliked}                 // Check if post already liked by user
@@ -267,6 +268,7 @@ const SocialFeed = () => {
                     description={selectedCard.content}
                     profilePic={selectedCard.profile_pic_url}
                     author={selectedCard.author}
+                    authorId={selectedCard.author_id}
                     initialLikes={selectedCard.likes_count}
                     initialShares={selectedCard.shares}
                     isLikedAlready={selectedCard.isliked}
