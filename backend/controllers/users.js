@@ -220,12 +220,8 @@ async function ManagementApiUpdateUser(accessToken, userId, updatedDataJson) {
     }
 }
 
-<<<<<<< HEAD
 export const uploadProfileImage = (req) => {
 
 }
 
-export default { updateUser, getAllAuth0Users, createUser, getUserInfo };
-=======
 export default { updateUser, getAllAuth0Users, createUser, getUserInfo, getUserSearch };
->>>>>>> development
