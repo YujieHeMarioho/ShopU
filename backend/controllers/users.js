@@ -42,6 +42,34 @@ export const getUserCount = async (req, res) => {
   }
 };
 
+export const getUserSearch = async (req, res) => {
+  const { query } = req.query; // Get the search query from request parameters
+
+  if (!query || query.length < 2) {
+    return res.status(400).json({ error: 'Search query must be at least 2 characters long' });
+  }
+
+  const searchQuery = `
+    SELECT user_id, name
+    FROM users
+    WHERE 
+      name ILIKE $1
+    LIMIT 12;
+  `;
+
+  try {
+    const result = await pool.query(searchQuery, [`%${query}%`]);    
+    const users = result.rows.map(user => ({
+      id: user.user_id,
+      name: user.name,
+    }));
+
+    res.status(200).json(users);
+  } catch (err) {
+    console.error('Error running query:', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+};
 
 // Get User Info
 export const getUserInfo = async (req, res) => {
@@ -104,6 +132,9 @@ export const updateUser =  async (req, res) => {
       // You can now use this token to make further API requests to Auth0's Management API
       const response = await ManagementApiUpdateUser(accessToken, userId, updatedDataJson); 
       // Added 'await' since ManagementApiUpdateUser is async
+      
+      const query = `UPDATE users SET name = $1 WHERE user_id = $2;`;
+      const updateUsersName = await pool.query(query, [name, userId]);
 
       res.status(200).json({ message: 'Updated user successfully', accessToken });
     } catch (error) {
@@ -185,4 +216,4 @@ async function ManagementApiUpdateUser(accessToken, userId, updatedDataJson) {
     }
 }
 
-export default { updateUser, getAllAuth0Users, createUser, getUserInfo };
+export default { updateUser, getAllAuth0Users, createUser, getUserInfo, getUserSearch };
