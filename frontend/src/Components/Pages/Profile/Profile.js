@@ -13,14 +13,13 @@ import leaveCommunity from '../Community/Community';
 
 const Profile = () => {
   const { user, getAccessTokenSilently } = useAuth0();  
-  const { name, picture, email, updated_at, created_at } = user;
+  const { name, email, updated_at, created_at } = user;
 
     const [formData, setFormData] = useState({
       name: name || '',
       email: email || '',
-      picture: picture || null});
+      picture: ''});
       
-  
     const [message, setMessage] = useState('');
     const [key, setKey] = useState('posts'); // Default active tab
     const [userPosts, setUserPosts] = useState([]); // Placeholder for posts
@@ -32,6 +31,7 @@ const Profile = () => {
     const [selectedCard, setSelectedCard] = useState(null);
     const [listings, setListings] = useState([]);
     const [createdCommunities, setCreatedCommunities] = useState([]);
+    const [newProfilePicture, setNewProfilePicture] = useState(null);
 
      const handleCardClick = (post) => {
       console.log("Card clicked:", post);
@@ -44,11 +44,33 @@ const Profile = () => {
       fetchUserListings();
       fetchUserStatistics();
       fetchUserCommunities();
+      fetchUserProfilePicture();
     }, []);
 
     const reloadFeed = () => {
       fetchUserPosts();  // Call the fetchFeed function to reload posts
     };
+
+    const fetchUserProfilePicture = async () => {
+      const userID = user?.sub;
+
+      try {
+         const token = await getAccessTokenSilently();
+
+         const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/${userID}/profile-picture`, {
+            method: "GET",
+            headers: {
+               'Authorization': `Bearer ${token}`,
+            },
+         });
+
+         const data = await response.json();
+         formData.picture = data;
+      } catch (error) {
+         console.error("Error deleting listing:", error);
+      }
+    };
+  
 
     const fetchUserPosts = async () => {
       try {
@@ -181,28 +203,33 @@ const Profile = () => {
     
   
     const handleInputChange = (e) => {
-      const { name, value } = e.target;
+      const { name, type, files, value } = e.target;
+    
       setFormData((prevState) => ({
         ...prevState,
-        [name]: value,
+        [name]: type === "file" ? files[0] : value, // Store the file object instead of value
       }));
     };
-  
+    
     // Save changes to the backend
     const handleSaveChanges = async () => {
       try {
         const token = await getAccessTokenSilently();
+        let newPicture = null;
 
-        if (formData.picture != null){
+        if (newProfilePicture){
+          const newPictureForm = new FormData();
+          newPictureForm.append('picture', newProfilePicture);
+
           const upload = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/users/upload`, {
-            method: 'PATCH',
+            method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
             },
-            body: formData.picture,
+            body: newPictureForm,
           });
 
-          formData.picture = upload;
+          newPicture = await upload.json();
         }
         
         const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/users`, {
@@ -214,7 +241,7 @@ const Profile = () => {
           body: JSON.stringify({
             email: formData.email,
             name: formData.name,
-            picture: formData.picture,
+            picture: newPicture.fileKey,
           }),
         });
   
@@ -223,11 +250,13 @@ const Profile = () => {
           throw new Error(data.message || 'Failed to save changes');
         }
         setMessage('Profile updated successfully!');
+        window.location.reload();
       } catch (error) {
         console.error('Error saving user:', error);
         setMessage('Error saving profile: ' + error.message);
       }
     };
+
 
     return (
       <Container className="my-5">
@@ -277,7 +306,7 @@ const Profile = () => {
                 {/* Picture Upload */}
                 <InputGroup className="mb-3">
                   <InputGroup.Text id="picture">Upload Profile Picture</InputGroup.Text>
-                  <input type="file" accept="image/jpeg, image/png, image/jpg, image/gif" name="picture" value={formData.picture} onChange={handleInputChange}/>
+                  <input type="file" accept="image/jpeg, image/png, image/jpg, image/gif" onChange={(e) => setNewProfilePicture(e.target.files[0])} />
                 </InputGroup>
   
                 {/* Save Changes Button */}
