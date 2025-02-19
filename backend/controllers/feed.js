@@ -40,7 +40,8 @@ export const getAllFeedPosts = async (req, res) => {
         f.image_url as profile,
         fi.file_key as image,
         f.date_created,
-        u.user_id AS author,
+        u.NAME AS author,
+        u.user_id AS author_id,
         f.likes_count,
         f.listing_id,
         ARRAY_AGG(t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL) AS tags, -- Aggregate tags into an array
@@ -175,7 +176,8 @@ export const getUserFeedPosts = async (req, res) => {
         f.image_url as profile,
         fi.file_key as image,
         f.date_created,
-        u.user_id AS author,
+        u.NAME AS author,
+        u.user_id AS author_id,
         f.likes_count,
         f.listing_id,
         ARRAY_AGG(t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL) AS tags, -- Aggregate tags into an array

@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
+import { Typeahead } from 'react-bootstrap-typeahead';
+import 'react-bootstrap-typeahead/css/Typeahead.css'; 
 import axios from 'axios';
-import './Friends.css';
+import styles from './Friends.module.css';
 
 const Friends = () => {
   const { user, getAccessTokenSilently, isLoading: authLoading } = useAuth0();
   const [friends, setFriends] = useState([]);
-  const [newFriendId, setNewFriendId] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [userOptions, setUserOptions] = useState([]);
+  const [selectedUser, setSelectedUser] = useState([]);
 
   const navigate = useNavigate();
 
@@ -69,15 +72,37 @@ const Friends = () => {
     }
   }, [authLoading, user, getAccessTokenSilently]);
 
+  const searchUsers = async (query) => {
+    if (query.length < 2) return; // Don't search for very short queries
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/api/users/search`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { query }
+        }
+      );
+      setUserOptions(response.data.map(user => ({
+        id: user.id,
+        label: `${user.name}`
+      })));
+    } catch (error) {
+      console.error('Error searching users:', error);
+    }
+  };
+
   const addFriend = async () => {
-    if (!newFriendId.trim()) {
-      alert('Please enter a valid Friend ID.');
+    if (selectedUser.length === 0) {
+      alert('Please select a user to add as a friend.');
       return;
     }
+    
+    const newFriend = selectedUser[0];
 
-    if (friends.some((friend) => friend.friend_id === newFriendId.trim())) {
+    if (friends.some((friend) => friend.friend_id === newFriend.id)) {
       alert('Friendship already exists.');
-      setNewFriendId('');
+      setSelectedUser([]);
       return;
     }
 
@@ -85,33 +110,34 @@ const Friends = () => {
       const token = await getAccessTokenSilently();
       const response = await axios.post(
         `${process.env.REACT_APP_BACKEND_URL}/api/friends`,
-        { friend_id: newFriendId.trim() },
+        { friend_id: newFriend.id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       console.log('Add Friend Response:', response.data);
       alert(response.data.message);
-      setNewFriendId('');
 
       // Fetch the new friend's details and add to the state
       const friendResponse = await axios.get(
-        `${process.env.REACT_APP_BACKEND_URL}/api/user/${encodeURIComponent(newFriendId.trim())}`,
+        `${process.env.REACT_APP_BACKEND_URL}/api/user/${encodeURIComponent(newFriend.id)}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      console.log(`New Friend ${newFriendId.trim()} Details:`, friendResponse.data);
+      console.log(`New Friend ${newFriend.label} Details:`, friendResponse.data);
 
       setFriends((prevFriends) => [
         ...prevFriends,
         { 
           ...friendResponse.data, 
-          friend_id: newFriendId.trim(), 
-          email: friendResponse.data.email, // Include email
-          profile_picture: friendResponse.data.picture, 
-          username: friendResponse.data.username,
-          friended_at: new Date().toISOString() // Assuming current time
+          friend_id: newFriend.id, 
+          username: friendResponse.data.username || newFriend.label,
+          friended_at: new Date().toISOString()
         },
       ]);
+
+      // Clear the selection after adding
+      setSelectedUser([]);
+
     } catch (error) {
       console.error('Error adding friend:', error.response ? error.response.data : error.message);
       alert('Error adding friend.');
@@ -175,68 +201,49 @@ const Friends = () => {
   }
 
   return (
-    <div className="friends-container">
-      <h1 className="page-title">Friends</h1>
-
-      {/* Display Current User Info */}
-      <div className="current-user-card">
-        <img
-          src={user.picture || 'https://via.placeholder.com/150'}
-          alt="Profile"
-          className="current-user-avatar"
-        />
-        <div className="current-user-info">
-          <h2>{user.name || 'No Name Provided'}</h2>
-          <p><strong>Email:</strong> {user.email}</p>
-          <p><strong>User ID:</strong> {user.sub}</p>
-        </div>
-      </div>
+    <div className={styles.friendsContainer}>
+      <h1 className={styles.pageTitle}>Friends</h1>
 
       {/* Add Friend Section */}
-      <div className="add-friend-section">
+      <div className={styles.addFriendSection}>
         <h2>Add a Friend</h2>
-        <div className="add-friend-form">
-          <input
-            type="text"
-            placeholder="Enter Friend ID"
-            value={newFriendId}
-            onChange={(e) => setNewFriendId(e.target.value)}
+        <div className={styles.addFriendForm}>
+        <Typeahead
+            id="friend-typeahead"
+            labelKey="label"
+            onChange={setSelectedUser}
+            options={userOptions}
+            selected={selectedUser}
+            placeholder="Search for a friend by name"
+            onInputChange={(text) => {
+              searchUsers(text);
+            }}
           />
-          <button onClick={addFriend}>Add Friend</button>
+          <button className={styles.addButton} onClick={addFriend}>Add Friend</button>
         </div>
       </div>
 
       {/* Friends List */}
-      <div className="friends-list-section">
+      <div className={styles.friendsListSection}>
         <h2>Your Friends</h2>
         {friends.length === 0 ? (
-          <p className="no-friends">You have no friends yet. Add some friends to get started!</p>
+          <p className={styles.noFriends}>You have no friends yet. Add some friends to get started!</p>
         ) : (
-          <div className="friends-grid">
+          <div className={styles.friendsGrid}>
             {friends.map((friend) => (
-              <div key={friend.friend_id} className="friend-card">
+              <div key={friend.friend_id} className={styles.friendCard}>
                 <img
-                  src={friend.profile_picture || 'https://via.placeholder.com/100'}
-                  alt={friend.username || `User ${friend.friend_id}`}
-                  className="friend-avatar"
+                  src={friend.profile_picture} 
+                  alt={friend.username} 
+                  className={styles.friendAvatar}
                 />
-                <div className="friend-info">
-                  <h3>{friend.username || `User ${friend.friend_id}`}</h3>
-                  <p><strong>Friended At:</strong> {new Date(friend.friended_at).toLocaleString()}</p>
+                <div className={styles.friendInfo}>
+                <h3>{friend.username}</h3>
+                <p><strong>Friended At:</strong> {new Date(friend.friended_at).toLocaleString()}</p>
                 </div>
-                <div className="friend-actions">
-                  <button
-                    className="message-button"
-                    onClick={() => handleMessage(friend.friend_id)}
-                  >
-                    Message
-                  </button>
-                  <button
-                    className="delete-button"
-                    onClick={() => removeFriend(friend.friend_id)}
-                  >
-                    Remove
-                  </button>
+                <div className={styles.friendActions}>
+                <button className={styles.messageButton} onClick={() => handleMessage(friend.friend_id)}>Message</button>
+                <button className={styles.removeButton} onClick={() => removeFriend(friend.friend_id)}>Remove</button>
                 </div>
               </div>
             ))}
