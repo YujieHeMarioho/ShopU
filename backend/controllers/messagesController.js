@@ -7,9 +7,26 @@ export const getConversations = async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT * FROM conversations WHERE user1_id = $1 OR user2_id = $1`,
-      [userId]
-    );
+      `SELECT 
+        c.conversation_id AS conversation_id,
+        c.user1_id,
+        c.user2_id,
+        c.created_at,
+        u1.name AS user1_name,
+        u2.name AS user2_name,
+        u1.profile_image AS user1_profile_image,
+        u2.profile_image AS user2_profile_image
+      FROM 
+        conversations c
+      JOIN 
+        users u1 ON c.user1_id = u1.user_id
+      JOIN 
+        users u2 ON c.user2_id = u2.user_id
+      WHERE 
+        c.user1_id = $1 OR c.user2_id = $1
+      ORDER BY 
+        c.created_at DESC`, [userId]);
+    
     console.log('Conversations fetched:', result.rows); // Debug log
     res.json(result.rows);
   } catch (error) {

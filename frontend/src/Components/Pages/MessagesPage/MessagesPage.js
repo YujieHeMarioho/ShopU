@@ -63,38 +63,15 @@ const MessagesPage = () => {
 
         const conversationsData = conversationsResponse.data;
 
-        // Step 2: Identify the other participant's Auth0 ID in each conversation
-        const otherUserIds = conversationsData.map((conv) =>
-          conv.user1_id.toLowerCase() === user.sub.toLowerCase() ? conv.user2_id : conv.user1_id
-        );
-
-        // Step 3: Remove duplicate IDs to optimize API calls
-        const uniqueOtherUserIds = [...new Set(otherUserIds)];
-
-        // Step 4: Fetch usernames and profile pictures for all unique other user IDs
-        const userDetailsPromises = uniqueOtherUserIds.map((id) => fetchUserDetails(id, token));
-        const userDetails = await Promise.all(userDetailsPromises);
-
-        // Step 5: Create a mapping from user ID to user details
-        const userIdToDetailsMap = {};
-        uniqueOtherUserIds.forEach((id, index) => {
-          userIdToDetailsMap[id] = userDetails[index];
-        });
-
         // Step 6: Enhance conversations with the other participant's username and profile picture
         const enhancedConversations = conversationsData.map((conv) => {
-          const otherUserId =
-            conv.user1_id.toLowerCase() === user.sub.toLowerCase() ? conv.user2_id : conv.user1_id;
-          const { username, picture } = userIdToDetailsMap[otherUserId] || {
-            username: 'Unknown User',
-            picture: 'https://via.placeholder.com/40',
-          };
-
+          const isUser1 = conv.user1_id === user.sub;
+  
           return {
             ...conv,
-            otherUserId,
-            otherUsername: username,
-            otherProfilePicture: picture,
+            otherUserId: isUser1 ? conv.user2_id : conv.user1_id,
+            otherUsername: isUser1 ? conv.user2_name : conv.user1_name,
+            otherProfilePicture: isUser1 ? conv.user2_profile_image : conv.user1_profile_image,    
           };
         });
 

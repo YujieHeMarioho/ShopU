@@ -164,9 +164,9 @@ export const likeFeedPost = async (req, res) => {
 
 
 export const getUserFeedPosts = async (req, res) => {
-  try {
-    const userId = extractUserIdFromToken(req); // Extract user ID from token
+  const { user_id } = req.params;
 
+  try {
 
     const query = `
        SELECT
@@ -205,7 +205,7 @@ export const getUserFeedPosts = async (req, res) => {
     `;
 
     // Execute the query
-    const result = await pool.query(query, [userId]);
+    const result = await pool.query(query, [user_id]);
 
     const feedWithUrls = await Promise.all(
       result.rows.map(async (feed) => {
@@ -239,7 +239,7 @@ export const getUserFeedPosts = async (req, res) => {
 
 export const getUserFeedPostsCount = async (req, res) => {
   try {
-    const userId = extractUserIdFromToken(req); // Extract user ID from token
+    const { user_id } = req.params;
 
     const query = `
       SELECT COUNT(*) AS post_count
@@ -248,7 +248,7 @@ export const getUserFeedPostsCount = async (req, res) => {
     `;
 
     // Execute the query
-    const result = await pool.query(query, [userId]);
+    const result = await pool.query(query, [user_id]);
 
     const postCount = result.rows[0].post_count;
 

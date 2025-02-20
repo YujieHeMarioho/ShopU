@@ -60,13 +60,9 @@ export const getAllListings = async (req, res) => {
       `;
   try {
     const result = await pool.query(query);
-    // Log the full result using JSON.stringify to ensure all keys are visible.
-    console.log("Fetched Listings:", JSON.stringify(result.rows, null, 2));
-
     // Loop through each listing and generate signed URLs
     const listingsWithUrls = await Promise.all(
       result.rows.map(async (listing) => {
-        console.log("Listing user_id:", listing.user_id); // Debug: Check each seller's user_id
         // Generate pre-signed URLs for file_keys
         const signedUrls = await Promise.all(
           (listing.file_keys || []).map(async (fileKey) => {
@@ -104,64 +100,22 @@ export const getListingCount = async (req, res) => {
   }
 };
 
+export const getAUsersListings = async (req, res) => {
+  const { user_id } = req.params;
+  try {
+    const listingsWithUrls = await getUserListings(user_id);
+    res.status(200).json(listingsWithUrls);
+  } catch (err) {
+    console.error('Error running query:', err);
+    res.status(500).json({ error: 'Database error' });
+  }
 
+}
 //Endpoint for fetching rows
 export const getAllUserListings = async (req, res) => {
   try {
-  const userId = extractUserIdFromToken(req); // Extract user ID from token
-  const query = `
-        SELECT
-          l.listing_id,
-          l.title,
-          l.description,
-          c.name AS category,  -- Get the category name
-          l.item_type,
-          l.star_rating,
-          l.price,
-          l.user_id,  -- Get the user ID for each listing
-          ARRAY_AGG(li.file_key) AS file_keys 
-        FROM
-          listings l
-        JOIN
-          categories c ON l.category_id = c.category_id
-        INNER JOIN
-          listing_images li ON l.listing_id = li.listing_id
-        WHERE
-          l.user_id = $1  -- Filter listings by user ID
-        GROUP BY
-          l.listing_id, 
-          l.title, 
-          l.description, 
-          c.name, 
-          l.item_type, 
-          l.star_rating, 
-          l.price, 
-          l.user_id;  -- Ensure user_id is included in the GROUP BY clause
-      `;
-    const result = await pool.query(query, [userId]);
-    // Loop through each listing and generate signed URLs
-    const listingsWithUrls = await Promise.all(
-      result.rows.map(async (listing) => {
-        // Generate pre-signed URLs for file_keys
-        const signedUrls = await Promise.all(
-          (listing.file_keys || []).map(async (fileKey) => {
-            const command = new GetObjectCommand({
-              Bucket: bucketName,
-              Key: fileKey,
-            });
-
-            return getSignedUrl(s3, command, { expiresIn: 86400 }); // URL expires in 1 day
-          })
-        );
-
-        // Return the listing with the signed URLs
-        return {
-          ...listing,
-          file_keys: signedUrls,
-        };
-      })
-    );
-
+    const userId = extractUserIdFromToken(req); // Extract user ID from token
+    const listingsWithUrls = await getUserListings(userId);
     res.status(200).json(listingsWithUrls);
   } catch (err) {
     console.error('Error running query:', err);
@@ -169,10 +123,63 @@ export const getAllUserListings = async (req, res) => {
   }
 };
 
-export const getUserListingsCount = async (req, res) => {
-  try {
-    const userId = extractUserIdFromToken(req); // Extract user ID from token
+const getUserListings = async (userId) => {
+  const query = `
+    SELECT
+      l.listing_id,
+      l.title,
+      l.description,
+      c.name AS category,
+      l.item_type,
+      l.star_rating,
+      l.price,
+      l.user_id,
+      ARRAY_AGG(li.file_key) AS file_keys 
+    FROM
+      listings l
+    JOIN
+      categories c ON l.category_id = c.category_id
+    INNER JOIN
+      listing_images li ON l.listing_id = li.listing_id
+    WHERE
+      l.user_id = $1
+    GROUP BY
+      l.listing_id, 
+      l.title, 
+      l.description, 
+      c.name, 
+      l.item_type, 
+      l.star_rating, 
+      l.price, 
+      l.user_id;
+  `;
 
+  const result = await pool.query(query, [userId]);
+  
+  return Promise.all(
+    result.rows.map(async (listing) => {
+      const signedUrls = await Promise.all(
+        (listing.file_keys || []).map(async (fileKey) => {
+          const command = new GetObjectCommand({
+            Bucket: bucketName,
+            Key: fileKey,
+          });
+          return getSignedUrl(s3, command, { expiresIn: 86400 });
+        })
+      );
+      return {
+        ...listing,
+        file_keys: signedUrls,
+      };
+    })
+  );
+};
+
+
+export const getUserListingsCount = async (req, res) => {
+  const { user_id } = req.params;
+
+  try {
     const query = `
       SELECT COUNT(*) AS listings_count
       FROM listings l
@@ -180,7 +187,7 @@ export const getUserListingsCount = async (req, res) => {
     `;
 
     // Execute the query
-    const result = await pool.query(query, [userId]);
+    const result = await pool.query(query, [user_id]);
 
     const listingsCount = result.rows[0].listings_count;
 
@@ -207,33 +214,35 @@ export const getFavoritedListings = async (req, res) => {
     return res.status(401).json({ message: 'Invalid token' });
   }
 
+
   const query = `
-        SELECT
-        l.listing_id,
-        l.user_id,
-        l.title,
-        l.description,
-        c.name AS category,  -- Get the category name
-        l.item_type,
-        l.star_rating,
-        l.price,
-        ARRAY_AGG(li.file_key) AS file_keys 
-      FROM
-        listings l
-      JOIN
-        categories c ON l.category_id = c.category_id
-      INNER JOIN
-        listing_images li ON l.listing_id = li.listing_id
-      GROUP BY
-        l.listing_id, 
-        l.user_id,          -- NEW: Also group by the seller's ID
-        l.title, 
-        l.description, 
-        c.name, 
-        l.item_type, 
-        l.star_rating, 
-        l.price;
-        
+  SELECT
+    l.listing_id,
+    l.title,
+    l.description,
+    c.name AS category,  -- Get the category name
+    l.item_type,
+    l.star_rating,
+    l.price,
+    ARRAY_AGG(li.file_key) AS file_keys 
+  FROM
+    listings l
+  JOIN
+    categories c ON l.category_id = c.category_id
+  INNER JOIN
+    listing_images li ON l.listing_id = li.listing_id
+  JOIN
+    favorites f ON l.listing_id = f.listing_id
+  WHERE
+    f.user_id = $1 
+  GROUP BY
+    l.listing_id, 
+    l.title, 
+    l.description, 
+    c.name, 
+    l.item_type, 
+    l.star_rating, 
+    l.price;
 `;
 
   try {

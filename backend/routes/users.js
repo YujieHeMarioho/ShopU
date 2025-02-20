@@ -1,5 +1,5 @@
 import express from 'express';
-import { updateUser, getAllAuth0Users, createUser, getUserInfo, getUserCount, getUserSearch } from '../controllers/users.js';  
+import { updateUser, getAllAuth0Users, createUser, getUserInfo, getUserCount, getUserSearch, getCurrentUserInfo } from '../controllers/users.js';  
 
 const router = express.Router();
 
@@ -12,6 +12,6 @@ router.post('/users', createUser);
 router.patch('/users', updateUser);
 router.get('/user/:user_id', getUserInfo);
 router.get('/users/search', getUserSearch);
-
+router.get('/users/current', getCurrentUserInfo);
 
 export default router;

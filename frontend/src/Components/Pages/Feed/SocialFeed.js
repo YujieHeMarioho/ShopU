@@ -44,7 +44,6 @@ const SocialFeed = () => {
             if (!response.ok) throw new Error(`Failed to fetch feed: ${response.statusText}`);
             const rawFeed = await response.json();
             setFeed(rawFeed);
-            console.log('Raw Feed:', rawFeed);
         } catch (err) {
             console.error('Error fetching feed:', err);
             setError('Failed to load feed. Please try again later.');
