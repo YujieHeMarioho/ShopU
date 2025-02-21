@@ -269,15 +269,14 @@
 }
 
 .unread-badge {
+    display: inline-block;
     background-color: red;
     color: white;
     border-radius: 50%;
-    font-size: 0.75rem;
-    padding: 2px 7px;
-    margin-left: 10px;
-    display: inline-block;
-    min-width: 20px;
-    text-align: center;
+    padding: 0.3em 0.6em;
+    font-size: 0.8em;
+    margin-left: 8px;
   }
+  
   
   
