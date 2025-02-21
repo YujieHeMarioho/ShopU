@@ -130,7 +130,11 @@ const MessagesPage = () => {
           ...conv,
           otherUsername: username,
           otherProfilePicture: picture,
-          unread_count: conv.unread_count || 0,
+          // If this conversation is currently selected, force unread_count to 0
+          unread_count:
+            selectedConversation && conv.conversation_id === selectedConversation.conversation_id
+              ? 0
+              : conv.unread_count || 0,
         };
       });
 
@@ -163,15 +167,13 @@ const MessagesPage = () => {
       }, 2000);
       return () => clearInterval(intervalId);
     }
-  }, [authLoading, user, getAccessTokenSilently, BACKEND_URL]);
+  }, [authLoading, user, getAccessTokenSilently, BACKEND_URL, selectedConversation]);
 
   // -----------------------------
   // Fetch messages for a given conversation ID
   // -----------------------------
   const fetchMessagesForConversation = async (conversationId, isPolling = false) => {
-    if (!isPolling) {
-      setIsLoadingMessages(true);
-    }
+    if (!isPolling) setIsLoadingMessages(true);
     try {
       const token = await getAccessTokenSilently();
       const response = await axios.get(
@@ -184,9 +186,7 @@ const MessagesPage = () => {
       console.error('Error fetching messages:', err);
       setError('Failed to load messages. Please try again later.');
     } finally {
-      if (!isPolling) {
-        setIsLoadingMessages(false);
-      }
+      if (!isPolling) setIsLoadingMessages(false);
     }
   };
 
@@ -213,9 +213,9 @@ const MessagesPage = () => {
   // Handle conversation selection
   // -----------------------------
   const handleSelectConversation = (conv) => {
-    // Immediately clear out messages so the old conversation is gone.
+    // Immediately clear messages so the old conversation's messages vanish.
     setMessages([]);
-    // Immediately update local state to clear the unread badge.
+    // Immediately update local state to clear the unread badge for the selected conversation.
     setConversations((prev) =>
       prev.map((c) =>
         c.conversation_id === conv.conversation_id ? { ...c, unread_count: 0 } : c
@@ -225,9 +225,9 @@ const MessagesPage = () => {
     setSelectedConversation(conv);
     // Clear any existing messages polling interval.
     if (messagesIntervalRef.current) clearInterval(messagesIntervalRef.current);
-    // Immediately fetch messages for the new conversation (initial load with spinner).
+    // Immediately fetch messages for the new conversation.
     fetchMessagesForConversation(conv.conversation_id, false);
-    // Start a new polling interval for the new conversation (without spinner flashing).
+    // Start a new polling interval for the new conversation (without flashing spinner).
     messagesIntervalRef.current = setInterval(() => {
       fetchMessagesForConversation(conv.conversation_id, true);
       markConversationAsRead(conv.conversation_id);
