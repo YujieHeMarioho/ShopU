@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Modal, Form} from 'react-bootstrap';
+import { Button, Modal, Form, Card} from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import { FaThumbsUp, FaShare, FaHeart, FaRegHeart } from 'react-icons/fa';
+import { FaThumbsUp, FaShare, FaHeart, FaRegHeart, FaComment } from 'react-icons/fa';
 import styles from './SocialCard.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
 
@@ -26,6 +26,7 @@ export const SocialCard = ({
   const [isLiked, setIsLiked] = useState(isLikedAlready);
   const [isShared, setIsShared] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [isCommentMode, setIsComment] = useState(false);
   const [alertMessage, setAlertMessage] = useState(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const [selectedFriend, setSelectedFriend] = useState(null);
@@ -40,6 +41,9 @@ export const SocialCard = ({
   const [communities, setCommunities] = useState(['Tech Group', 'Gaming Hub']);
   const [selectedOption, setSelectedOption] = useState('');
   const [loading, setLoading] = useState(false);
+  const [numComments, setNumComments] = useState(3);
+  const [showComments, setShowComments] = useState(false);
+  
 
   const friends = [
     { id: 1, name: "Alice", profilePic: "https://randomuser.me/api/portraits/women/1.jpg" },
@@ -189,20 +193,32 @@ export const SocialCard = ({
         </Button>
         <Button
           variant="light"
-          onClick={handleShareClick}
+          onClick={(e)=>{
+            e.stopPropagation();
+            setShowComments(!showComments);
+          }}
           className={styles.button}
-          style={{ color: isShared ? 'green' : 'gray' }}
+          style={{ color: isCommentMode ? 'blue' : 'gray' }}
         >
-          <FaShare style={{ marginRight: '5px' }} />
-          {shares}
+          <FaComment style={{ marginRight: '5px' }} />
+          {numComments}
         </Button>
-        <Button
+        {user?.sub !== author && (<Button
           variant="light"
           onClick={handleFavoriteClick}
           className={styles.button}
           style={{ color: isFavorited ? 'red' : 'gray' }}
         >
           {isFavorited ? <FaHeart /> : <FaRegHeart />}
+        </Button>)}
+        <Button
+          variant="light"
+          onClick={handleShareClick}
+          className={styles.button}
+          style={{ color: isShared ? 'green' : 'gray' }}
+        >
+          <FaShare style={{ marginRight: '5px' }} />
+          {shares}
         </Button>
         {user?.sub === author && (
           <Button variant="outline-warning" size="sm" onClick={(e) => {

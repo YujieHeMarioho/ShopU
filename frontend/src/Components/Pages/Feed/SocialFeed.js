@@ -16,6 +16,8 @@ const SocialFeed = () => {
     const [editPost, setEditPost] = useState(null);
     const [isPostLoading, setIsPostLoading] = useState(false);
     const [selectedCard, setSelectedCard] = useState(null);
+    const [showComments, setShowComments] = useState(false);
+    const [selectedPostId, setSelectedPostId] = useState(null);
     const [showModal, setShowModal] = useState(false); // State to toggle the modal
     const [selectedImage, setSelectedImage] = useState(null); // State for uploaded image
     const [isGridLayout, setIsGridLayout] = useState(true); // State to toggle layout
@@ -23,6 +25,33 @@ const SocialFeed = () => {
     const navigate = useNavigate();
 
     const userId = isAuthenticated ? user?.sub : null;
+
+    const [comments, setComments] = useState({
+        1: [{ username: "Alice", text: "Nice post!" }],
+        2: [{ username: "Bob", text: "Great content!" }]
+      });
+    const [newComment, setNewComment] = useState("");
+    const [username, setUsername] = useState("User");
+
+  const handleShowComments = (post_id) => {
+    setSelectedPostId(post_id);
+    setShowComments(true);
+  };
+
+  const handleCloseComments = () => {
+    setShowComments(false);
+    setSelectedPostId(null);
+  };
+
+  const addComment = () => {
+    if (newComment.trim()) {
+      setComments({
+        ...comments,
+        [selectedPostId]: [...(comments[selectedPostId] || []), { username, text: newComment }]
+      });
+      setNewComment("");
+    }
+  };
 
     const handleCardClick = (post) => {
         setSelectedCard(post);
@@ -222,7 +251,7 @@ const SocialFeed = () => {
                     <p>No posts available.</p>
                 ) : (
                     feed.map((post) => (
-                        <div key={post.post_id} className={styles.gridItem} onClick={() => handleCardClick(post)}>
+                        <div key={post.post_id} className={styles.gridItem} onClick={isGridLayout ? () => handleCardClick(post) : undefined}>
                             <SocialCard
                                 post_id={post.post_id}                // Directly passing post_id
                                 image={post.image}                 // Passing image URL
@@ -236,6 +265,7 @@ const SocialFeed = () => {
                                 tags={post.tags}                       // Passing tags
                                 onLike={() => handleLike(post.post_id, post.likes_count, post.is_liked)} // Handling like action
                                 onShare={() => shareFeedPost(post.post_id)}  // Handling share action
+                                onShowComments={()=>handleShowComments(post.post_id)} // Handling show post comments
                                 reloadFeed={reloadFeed}
                             />
                         </div>
@@ -339,7 +369,37 @@ const SocialFeed = () => {
                 </Modal.Footer>
                 </Modal>
 
-
+         {/* Comments Modal */}
+      <Modal 
+        show={showComments} 
+        onHide={handleCloseComments} 
+        animation={true} 
+        className="bottom-modal"
+        dialogClassName="modal-dialog-bottom"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Comments for Post {selectedPostId}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="space-y-2">
+            {(comments[selectedPostId] || []).map((comment, index) => (
+              <p key={index} className="p-2 bg-light rounded-md">
+                <strong>{comment.username}:</strong> {comment.text}
+              </p>
+            ))}
+          </div>
+          <div className="mt-4 d-flex">
+            <input
+              type="text"
+              className="form-control"
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Add a comment..."
+            />
+            <Button className="ml-2" onClick={addComment} variant="primary">Post</Button>
+          </div>
+        </Modal.Body>
+      </Modal>
 
 
 
