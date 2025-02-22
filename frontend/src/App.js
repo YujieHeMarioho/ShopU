@@ -34,9 +34,9 @@ function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const location = useLocation();
   const params = new URLSearchParams(location.search);
-  const isEmailVerificationError = 
-  params.get('error') === 'access_denied' && 
-  params.get('error_description')?.includes('verify your email');
+  const isEmailVerificationError =
+    params.get('error') === 'access_denied' &&
+    params.get('error_description')?.includes('verify your email');
 
   if (isEmailVerificationError) {
     return <EmailVerificationRequired />;
@@ -48,38 +48,44 @@ function App() {
 
   return (
     <div className={isSidebarOpen ? 'App body-shifted' : 'App'}>
-      {/* Header */}
-      <Header toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
+      <div className="page-container">
 
-      {/* Routing Setup */}
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/home" element={<AuthenticationGuard component={Home} />} />
-        <Route path="/favorites" element={<AuthenticationGuard component={Favorites} />} />
-        <Route path="/marketplace" element={<AuthenticationGuard component={Marketplace} />} />
-        <Route path="/resources" element={<AuthenticationGuard component={Resources} />} />
-        <Route path="/feed" element={<AuthenticationGuard component={SocialFeed} />} />
-        <Route path="/create-item-listing" element={<AuthenticationGuard component={CreateListingPage} />} />
-        <Route path="/create-service-listing" element={<AuthenticationGuard component={CreateListingPage} />} />
-        <Route path="/friends" element={<AuthenticationGuard component={Friends} />} />
-        <Route path="/community" element={<AuthenticationGuard component={Communities} />} />
-        <Route path="/profile" element={<AuthenticationGuard component={Profile} />} />
-        <Route path="/edit-image" element={<AuthenticationGuard component={EditImage} />} />
-        <Route path="/post-details" element={<AuthenticationGuard component={PostDetails} />} />
-        <Route path="/Become A Seller" element={<BecomeASeller />} />
-        <Route path="/admin-dashboard" element={<AuthenticationGuard component={AdminDashboard} />} />
-        <Route path="/seller-dashboard" element={<AuthenticationGuard component={SellerDashboard} />} />
-        
-        {/* New Checkout Page */}
-        <Route path="/cart" element={<AuthenticationGuard component={CheckOut} />} />
-        <Route path="/messages" element={<AuthenticationGuard component={MessagesPage} />} />
-        <Route path="/community/:community_id" element={<CommunityHome />} />
-        <Route path="/chat/:conversation_id" element={<AuthenticationGuard component={ChatContent} />} />
+        {/* Header */}
+        <Header toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
 
-      </Routes>
+        <div className="content-wrapper">
 
-      {/* Footer */}
-      <Footer />
+          {/* Routing Setup */}
+          <Routes>
+            <Route path="/" element={<AuthenticationGuard component={Home} />} />
+            <Route path="/home" element={<AuthenticationGuard component={Home} />} />
+            <Route path="/favorites" element={<AuthenticationGuard component={Favorites} />} />
+            <Route path="/marketplace" element={<AuthenticationGuard component={Marketplace} />} />
+            <Route path="/resources" element={<AuthenticationGuard component={Resources} />} />
+            <Route path="/feed" element={<AuthenticationGuard component={SocialFeed} />} />
+            <Route path="/create-item-listing" element={<AuthenticationGuard component={CreateListingPage} />} />
+            <Route path="/create-service-listing" element={<AuthenticationGuard component={CreateListingPage} />} />
+            <Route path="/friends" element={<AuthenticationGuard component={Friends} />} />
+            <Route path="/community" element={<AuthenticationGuard component={Communities} />} />
+            <Route path="/profile" element={<AuthenticationGuard component={Profile} />} />
+            <Route path="/edit-image" element={<AuthenticationGuard component={EditImage} />} />
+            <Route path="/post-details" element={<AuthenticationGuard component={PostDetails} />} />
+            <Route path="/Become A Seller" element={<BecomeASeller />} />
+            <Route path="/admin-dashboard" element={<AuthenticationGuard component={AdminDashboard} />} />
+            <Route path="/seller-dashboard" element={<AuthenticationGuard component={SellerDashboard} />} />
+
+            {/* New Checkout Page */}
+            <Route path="/cart" element={<AuthenticationGuard component={CheckOut} />} />
+            <Route path="/messages" element={<AuthenticationGuard component={MessagesPage} />} />
+            <Route path="/community/:community_id" element={<AuthenticationGuard component={CommunityHome} />} />
+            <Route path="/chat/:conversation_id" element={<AuthenticationGuard component={ChatContent} />} />
+
+          </Routes>
+
+        </div>
+        {/* Footer */}
+        <Footer />
+      </div>
     </div>
   );
 }

@@ -13,10 +13,12 @@ export const SocialCard = ({
   description,
   profilePic,
   author,
+  authorId,
   initialLikes = 0,
   initialShares = 0,
   isLikedAlready,
   tags = [],
+  listingId,
   reloadFeed             // Tags for the post
 }) => {
   const { user, getAccessTokenSilently } = useAuth0();
@@ -63,33 +65,33 @@ export const SocialCard = ({
   const handleSave = async () => {
     setLoading(true);
     try {
-        const token = await getAccessTokenSilently();
+      const token = await getAccessTokenSilently();
 
-          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/${post_id}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}` // Include authentication token
-            },
-            body: JSON.stringify({
-                title: editedTitle,
-                description: editedDescription,
-                tags: editedTags.split(",").map(tag => tag.trim()), // Convert string to array
-                image: editedImage,
-                video: editedVideo
-            }),
-        });
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/${post_id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}` // Include authentication token
+        },
+        body: JSON.stringify({
+          title: editedTitle,
+          description: editedDescription,
+          tags: editedTags.split(",").map(tag => tag.trim()), // Convert string to array
+          image: editedImage,
+          video: editedVideo
+        }),
+      });
 
-        if (response.ok) {
-            setIsEditing(false); // Close modal on success
-            reloadFeed();
-        } else {
-            console.error("Failed to update post:", await response.text());
-        }
+      if (response.ok) {
+        setIsEditing(false); // Close modal on success
+        reloadFeed();
+      } else {
+        console.error("Failed to update post:", await response.text());
+      }
     } catch (error) {
-        console.error("Error updating post:", error);
+      console.error("Error updating post:", error);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -106,11 +108,11 @@ export const SocialCard = ({
     e.stopPropagation();
     const newLikeStatus = !isLiked;
     setIsLiked(newLikeStatus);
-  
+
     try {
       const token = await getAccessTokenSilently();
       const response = await likeAPICall(post_id, newLikeStatus, token, user.sub); // Pass user.sub
-  
+
       if (response.success) {
         setLikes(response.likeCount);  // Use the updated like count from the backend
       }
@@ -150,6 +152,13 @@ export const SocialCard = ({
     }
   };
 
+  const handleViewItem = () => {
+    if (listingId) {
+      const fullLink = `${window.location.origin}/marketplace?listingId=${listingId}`;
+      window.open(fullLink, '_blank');
+    }
+  };
+
   return (
     <div className={styles.socialCard}>
       <div className={styles.header}>
@@ -165,6 +174,7 @@ export const SocialCard = ({
       ) : (
         image && <img src={image} alt="Post content" className={styles.media} />
       )}
+
 
       <div className={styles.body}>
         <h5 className={styles.title}>{title}</h5>
@@ -182,6 +192,20 @@ export const SocialCard = ({
       )}
 
       <div className={styles.footer}>
+        {
+          (
+            <div className={styles.viewItemContainer}>
+              <Button
+                variant="primary"
+                onClick={handleViewItem}
+                className={styles.viewItemButton}
+              >
+                View Item
+              </Button>
+            </div>
+          )
+        }
+
         <Button
           variant="light"
           onClick={handleLikeClick}
@@ -220,82 +244,81 @@ export const SocialCard = ({
           <FaShare style={{ marginRight: '5px' }} />
           {shares}
         </Button>
-        {user?.sub === author && (
+        {user?.sub === authorId && (
           <Button variant="outline-warning" size="sm" onClick={(e) => {
             e.stopPropagation();
             setIsEditing(true);
           }}>
-          ✏️ Edit
+            ✏️ Edit
           </Button>
         )}
       </div>
 
       {alertMessage && <div className={styles.alert}>{alertMessage}</div>}
 
-      <Modal show={showShareModal} onHide={handleClose}  onClick={(e) => e.stopPropagation()}>
+      <Modal show={showShareModal} onHide={handleClose} onClick={(e) => e.stopPropagation()}>
         <Modal.Header closeButton>
           <Modal.Title className={styles.modalTitle}>Share Post</Modal.Title>
         </Modal.Header>
         <Modal.Body className={styles.modalBody}>
-        <Form>
-        <Button
-          variant={selectedOption === "friend" ? "primary" : "outline-primary"}
-          onClick={() => setSelectedOption("friend")}
-          className="form-check mb-2"
-        >
-          Select a Friend
-        </Button>
+          <Form>
+            <Button
+              variant={selectedOption === "friend" ? "primary" : "outline-primary"}
+              onClick={() => setSelectedOption("friend")}
+              className="form-check mb-2"
+            >
+              Select a Friend
+            </Button>
 
-        {/* Community Share Option */}
-        <Button
-          variant={selectedOption === "community" ? "primary" : "outline-primary"}
-          onClick={() => setSelectedOption("community")}
-          className="form-check mb-2"
-        >
-          Community Share
-        </Button>
+            {/* Community Share Option */}
+            <Button
+              variant={selectedOption === "community" ? "primary" : "outline-primary"}
+              onClick={() => setSelectedOption("community")}
+              className="form-check mb-2"
+            >
+              Community Share
+            </Button>
 
 
-          {/* Friend Selection Grid */}
-          {selectedOption === "friend" && (
-            <div className={styles.friendGrid}>
-            {friends.map((friend) => (
-              <div key={friend.id} className={styles.friendItem}>
-                <img
-                  src={friend.profilePic}
-                  alt={`${friend.name}'s profile`}
-                  className={`${styles.profilePic} ${
-                    selectedFriend === friend.id ? styles.selected : ""
-                  }`}
-                  onClick={() => setSelectedFriend(friend.id)}
-                />
-                <span className={styles.friendName}>{friend.name}</span> {/* Display name */}
-              </div>
-            ))}
-          </div>
-          )}
-
-          {/* Community Dropdown */}
-          {selectedOption === "community" && (
-            <Form.Group controlId="communitySelect" className="mt-3">
-              <Form.Label>Select a Community</Form.Label>
-              <Form.Control
-                as="select"
-                value={selectedCommunity}
-                onChange={(e) => setSelectedCommunity(e.target.value)}
-              >
-                <option value="">Choose...</option>
-                {communities.map((community) => (
-                  <option key={community.id} value={community.id}>
-                    {community.name}
-                  </option>
+            {/* Friend Selection Grid */}
+            {selectedOption === "friend" && (
+              <div className={styles.friendGrid}>
+                {friends.map((friend) => (
+                  <div key={friend.id} className={styles.friendItem}>
+                    <img
+                      src={friend.profilePic}
+                      alt={`${friend.name}'s profile`}
+                      className={`${styles.profilePic} ${selectedFriend === friend.id ? styles.selected : ""
+                        }`}
+                      onClick={() => setSelectedFriend(friend.id)}
+                    />
+                    <span className={styles.friendName}>{friend.name}</span> {/* Display name */}
+                  </div>
                 ))}
-              </Form.Control>
-            </Form.Group>
-          )}
-        </Form>
-        
-      </Modal.Body>
+              </div>
+            )}
+
+            {/* Community Dropdown */}
+            {selectedOption === "community" && (
+              <Form.Group controlId="communitySelect" className="mt-3">
+                <Form.Label>Select a Community</Form.Label>
+                <Form.Control
+                  as="select"
+                  value={selectedCommunity}
+                  onChange={(e) => setSelectedCommunity(e.target.value)}
+                >
+                  <option value="">Choose...</option>
+                  {communities.map((community) => (
+                    <option key={community.id} value={community.id}>
+                      {community.name}
+                    </option>
+                  ))}
+                </Form.Control>
+              </Form.Group>
+            )}
+          </Form>
+
+        </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleClose}>Cancel</Button>
           <Button variant="primary" onClick={handleConfirmShare} disabled={!selectedFriend && !selectedCommunity}>
@@ -304,8 +327,8 @@ export const SocialCard = ({
         </Modal.Footer>
       </Modal>
 
-       {/* Edit Modal */}
-      <Modal show={isEditing} onHide={() => setIsEditing(false)} onClick={(e)=>e.stopPropagation()}>
+      {/* Edit Modal */}
+      <Modal show={isEditing} onHide={() => setIsEditing(false)} onClick={(e) => e.stopPropagation()}>
         <Modal.Header closeButton style={{ color: "black" }}>
           <Modal.Title>Edit Post</Modal.Title>
         </Modal.Header>
@@ -379,7 +402,7 @@ const likeAPICall = async (post_id, isLiked, token, userId) => {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
-        },
+      },
     });
 
     if (!response.ok) {

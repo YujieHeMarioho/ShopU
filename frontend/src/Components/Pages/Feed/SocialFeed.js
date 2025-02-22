@@ -259,10 +259,12 @@ const SocialFeed = () => {
                                 description={post.content}             // Passing content as description
                                 profilePic={post.profile_pic_url}      // Passing profile picture URL
                                 author={post.author}                   // Passing author name
+                                authorId={post.author_id}              // Passing author ID
                                 initialLikes={post.likes_count}        // Mapping likes_count to initialLikes
                                 initialShares={post.shares}            // Mapping shares to initialShares
                                 isLikedAlready={post.isliked}                 // Check if post already liked by user
                                 tags={post.tags}                       // Passing tags
+                                listingId={post.listing_id}                       // Passing link
                                 onLike={() => handleLike(post.post_id, post.likes_count, post.is_liked)} // Handling like action
                                 onShare={() => shareFeedPost(post.post_id)}  // Handling share action
                                 onShowComments={()=>handleShowComments(post.post_id)} // Handling show post comments
@@ -296,10 +298,12 @@ const SocialFeed = () => {
                     description={selectedCard.content}
                     profilePic={selectedCard.profile_pic_url}
                     author={selectedCard.author}
+                    authorId={selectedCard.author_id}
                     initialLikes={selectedCard.likes_count}
                     initialShares={selectedCard.shares}
                     isLikedAlready={selectedCard.isliked}
                     tags={selectedCard.tags}
+                    listingId={selectedCard.listing_id}
                     onLike={() => handleLike(selectedCard.post_id, selectedCard.likes_count, selectedCard.is_liked)}
                     onShare={() => shareFeedPost(selectedCard.post_id)}
                 />

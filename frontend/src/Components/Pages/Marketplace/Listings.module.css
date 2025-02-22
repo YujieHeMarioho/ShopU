@@ -1,31 +1,32 @@
-/* css for listing cards */
-.card-title {
+p {
+	color: black;
+}
+
+:global(.modal) {
+    max-width: calc(100% - 40px) !important;
+    max-height: calc(100% - 80px) !important;
+    padding: 20px 10px !important;
+    box-sizing: border-box !important;
+}
+
+.cardTitle {
 	color: black;
 	font-weight: bold;
 }
 
-.modal {
-    max-width: calc(100% - 40px);
-    max-height: calc(100% - 80px);
-    padding: 20px 10px; 
-    box-sizing: border-box;
-}
-
-.modal-header {
+.modalHeader {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
 }
 
-.modal-header .card-title {
+.modalHeader .cardTitle {
     flex-grow: 1; /* Allows the title to take up available space */
 }
 
-
-
 /* Styling the modal body */
-.modal-body {
+.modalBody {
 	display: flex;
 	flex-direction: row;
 	gap: 20px;
@@ -35,7 +36,7 @@
 }
 
 /* Image container takes 60% of the modal */
-.modal-body .carousel-container {
+.carouselContainer {
 	flex: 60%;
 	display: flex;
 	align-items: center;
@@ -44,7 +45,7 @@
 }
 
 /* Ensure the image scales properly */
-.modal-body .img {
+.img {
 	width: 100%; /* Image scales with container */
 	height: auto; /* Maintain aspect ratio */
 	max-height: 80vh; /* Prevents image from being too tall */
@@ -53,7 +54,7 @@
 }
 
 /* Content container takes 40% */
-.modal-body .content {
+.content {
 	flex: 40%;
 	display: flex;
 	flex-direction: column;
@@ -62,45 +63,41 @@
 	max-width: 40%;
 }
 
-.price-and-buttons {
+.priceAndButtons {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 	width: 100%; /* Ensure it spans the full width */
-  }
+}
 
-  
-.price-and-buttons .card-price {
+.priceAndButtons .cardPrice {
 	margin: 0; /* Remove margin so it's aligned properly */
-  }
+}
 
-  
-.modal-body .edit-buttons{
+.editButtons {
 	display: flex;
 	gap: 5px; /* Adds spacing between buttons */
 	margin-left: auto; /* Pushes the buttons to the right */
 }
 
 /* Styling for individual content elements */
-.modal-body .card-text {
+.cardText {
 	font-size: 1rem;
 	color: #555;
 }
 
-.modal-body .card-price {
+.cardPrice {
 	font-size: 1.25rem;
 	font-weight: bold;
 	color: #333;
 }
 
-.modal-body .dropdown-text {
+.dropdownText {
 	font-size: 1rem;
 	color: #555;
 }
 
-.modal-body button {
+.button {
 	padding: 10px 20px;
 	font-size: 1rem;
 }
-
-

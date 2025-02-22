@@ -1,6 +1,7 @@
 CREATE TABLE users (
     user_id VARCHAR(255) PRIMARY KEY,
-    create_date DATE DEFAULT CURRENT_DATE
+    create_date DATE DEFAULT CURRENT_DATE,
+    name VARCHAR(255)
 );
 
 CREATE TABLE admins (
@@ -180,3 +181,9 @@ CREATE TABLE community_images (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  
     CONSTRAINT fk_community FOREIGN KEY (community_id) REFERENCES communities(community_id) ON DELETE CASCADE
 );
+
+# Feed posts table
+
+ALTER TABLE feed_posts
+ADD COLUMN listing_id BIGINT,
+ADD CONSTRAINT fk_listing_id FOREIGN KEY (listing_id) REFERENCES listings(listing_id);

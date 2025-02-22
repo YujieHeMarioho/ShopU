@@ -306,3 +306,13 @@
 .selected {
   border: 3px solid #007bff;
 }
+
+.viewItemContainer {
+  text-align: center;
+  margin: 10px 0;
+}
+
+.viewItemButton {
+  width: 100%;
+  max-width: 200px;
+}

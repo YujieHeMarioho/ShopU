@@ -40,8 +40,10 @@ export const getAllFeedPosts = async (req, res) => {
         f.image_url as profile,
         fi.file_key as image,
         f.date_created,
-        u.user_id AS author,
+        u.NAME AS author,
+        u.user_id AS author_id,
         f.likes_count,
+        f.listing_id,
         ARRAY_AGG(t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL) AS tags, -- Aggregate tags into an array
         EXISTS (
             SELECT 1
@@ -174,8 +176,10 @@ export const getUserFeedPosts = async (req, res) => {
         f.image_url as profile,
         fi.file_key as image,
         f.date_created,
-        u.user_id AS author,
+        u.NAME AS author,
+        u.user_id AS author_id,
         f.likes_count,
+        f.listing_id,
         ARRAY_AGG(t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL) AS tags, -- Aggregate tags into an array
         EXISTS (
             SELECT 1
@@ -270,13 +274,20 @@ export const createFeedPost = async (req, res) => {
 
     // Insert the post into the feed_posts table
     const postQuery = `
-      INSERT INTO feed_posts (title, content, image_url, user_id, date_created)
-      VALUES ($1, $2, $3, $4, NOW())
+      INSERT INTO feed_posts (title, content, image_url, user_id, date_created, listing_id)
+      VALUES ($1, $2, $3, $4, NOW(), $5)
       RETURNING post_id;
     `;
 
+    let postListingId = null;
+
+    if(req.body.listingId != null)
+    {
+      postListingId = req.body.listingId;
+    }
+
     //will need to replace the placeholder with profile image, will get to that later 
-    const postResult = await pool.query(postQuery, [title, content, 'https://via.placeholder.com/300x200', userId]);
+    const postResult = await pool.query(postQuery, [title, content, 'https://via.placeholder.com/300x200', userId, postListingId]);
     const postId = postResult.rows[0].post_id;
 
     // Inserts image into the post_image table
