@@ -19,7 +19,8 @@ export const SocialCard = ({
   isLikedAlready,
   tags = [],
   listingId,
-  reloadFeed             // Tags for the post
+  reloadFeed,
+  onShowComments
 }) => {
   const { user, getAccessTokenSilently } = useAuth0();
   const navigate = useNavigate();
@@ -44,7 +45,6 @@ export const SocialCard = ({
   const [selectedOption, setSelectedOption] = useState('');
   const [loading, setLoading] = useState(false);
   const [numComments, setNumComments] = useState(3);
-  const [showComments, setShowComments] = useState(false);
   
 
   const friends = [
@@ -158,7 +158,7 @@ export const SocialCard = ({
       window.open(fullLink, '_blank');
     }
   };
-
+  console.log("user.sub:", user?.sub, "author:", author);
   return (
     <div className={styles.socialCard}>
       <div className={styles.header}>
@@ -174,6 +174,16 @@ export const SocialCard = ({
       ) : (
         image && <img src={image} alt="Post content" className={styles.media} />
       )}
+
+    <div className={styles.viewItemBar} onClick={(e)=>e.stopPropagation()}>
+      <Button
+        variant="primary"
+        onClick={handleViewItem}
+        className={styles.viewItemButton}
+      >
+        View Item
+      </Button>
+    </div>
 
 
       <div className={styles.body}>
@@ -192,20 +202,6 @@ export const SocialCard = ({
       )}
 
       <div className={styles.footer}>
-        {
-          (
-            <div className={styles.viewItemContainer}>
-              <Button
-                variant="primary"
-                onClick={handleViewItem}
-                className={styles.viewItemButton}
-              >
-                View Item
-              </Button>
-            </div>
-          )
-        }
-
         <Button
           variant="light"
           onClick={handleLikeClick}
@@ -219,7 +215,7 @@ export const SocialCard = ({
           variant="light"
           onClick={(e)=>{
             e.stopPropagation();
-            setShowComments(!showComments);
+            onShowComments(post_id);
           }}
           className={styles.button}
           style={{ color: isCommentMode ? 'blue' : 'gray' }}

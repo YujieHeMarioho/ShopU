@@ -138,13 +138,21 @@
   background: rgba(220, 53, 69, 0.1);
 }
 
+.viewItemBar {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 10px 0;
+}
+
 .viewItemButton {
-  background: linear-gradient(90deg, #6a11cb, #2575fc);
-  color: white;
-  font-weight: bold;
-  padding: 8px 20px;
-  transition: background 0.3s ease, transform 0.2s ease;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 100%;
+  padding: 10px;
+  font-size: 16px;
+  text-align: center;
+  display: block;
 }
 
 .viewItemButton:hover {

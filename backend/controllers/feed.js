@@ -517,3 +517,130 @@ export const uploadImage = async (req, res) => {
     res.status(500).json({ message: "Error uploading files", error: err });
   }
 };
+
+// Get all comments for a post
+export const getPostComments = async (req, res) => {
+  const { postId } = req.params;
+
+  try {
+    const result = await pool.query(
+      `SELECT c.comment_id, c.post_id, c.user_id, c.text, c.created_at, u.name
+       FROM post_comments c 
+       JOIN users u ON c.user_id = u.user_id 
+       WHERE c.post_id = $1 
+       ORDER BY c.created_at ASC`,
+      [postId]
+    );
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error fetching comments:", error);
+    res.status(500).json({ error: "Failed to fetch comments" });
+  }
+};
+
+// Add a comment to a post
+export const addComment = async (req, res) => {
+  const { postId, userId, text } = req.body;
+
+  if (!text.trim()) {
+    return res.status(400).json({ error: "Comment cannot be empty" });
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO post_comments (post_id, user_id, text) 
+       VALUES ($1, $2, $3) 
+       RETURNING *`,
+      [postId, userId, text]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error("Error adding comment:", error);
+    res.status(500).json({ error: "Failed to add comment" });
+  }
+};
+
+// Delete a comment
+export const deleteComment = async (req, res) => {
+  const { commentId } = req.params;
+  const { userId } = req.body;
+
+  try {
+    const result = await pool.query(
+      `DELETE FROM post_comments WHERE comment_id = $1 AND user_id = $2 RETURNING *`,
+      [commentId, userId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(403).json({ error: "Unauthorized or comment not found" });
+    }
+
+    res.json({ success: true, message: "Comment deleted" });
+  } catch (error) {
+    console.error("Error deleting comment:", error);
+    res.status(500).json({ error: "Failed to delete comment" });
+  }
+};
+
+// Like a comment
+export const likeComment = async (req, res) => {
+  const { commentId } = req.params;
+  const { userId } = req.body;
+
+  try {
+    await pool.query(
+      `INSERT INTO post_comment_likes (comment_id, user_id) 
+       VALUES ($1, $2) 
+       ON CONFLICT DO NOTHING`,
+      [commentId, userId]
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error liking comment:", error);
+    res.status(500).json({ error: "Failed to like comment" });
+  }
+};
+
+// Unlike a comment
+export const unlikeComment = async (req, res) => {
+  const { commentId } = req.params;
+  const { userId } = req.body;
+
+  try {
+    const result = await pool.query(
+      `DELETE FROM post_comment_likes WHERE comment_id = $1 AND user_id = $2 RETURNING *`,
+      [commentId, userId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Like not found" });
+    }
+
+    res.json({ success: true, message: "Comment unliked" });
+  } catch (error) {
+    console.error("Error unliking comment:", error);
+    res.status(500).json({ error: "Failed to unlike comment" });
+  }
+};
+
+// Get likes for a comment
+export const getLikesForComment = async (req, res) => {
+  const { commentId } = req.params;
+
+  try {
+    const result = await pool.query(
+      `SELECT u.username FROM post_comment_likes l 
+       JOIN users u ON l.user_id = u.user_id 
+       WHERE l.comment_id = $1`,
+      [commentId]
+    );
+
+    res.json({ likes: result.rows });
+  } catch (error) {
+    console.error("Error fetching comment likes:", error);
+    res.status(500).json({ error: "Failed to fetch comment likes" });
+  }
+};
