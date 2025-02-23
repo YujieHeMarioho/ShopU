@@ -31,7 +31,7 @@ const SocialFeed = () => {
 
     const [comments, setComments] = useState([]);
     const [newComment, setNewComment] = useState("");
-    const [username, setUsername] = useState("User");
+    const username = user.name;
 
   const handleShowComments = (post_id) => {
     setSelectedPostId(post_id);
@@ -46,31 +46,52 @@ const SocialFeed = () => {
 
   const addComment = async () => {
     if (!newComment.trim()) return;
-  
-    try {
-      const token = await getAccessTokenSilently();
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/comments`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({ postId: selectedPostId, userId: user.sub, text: newComment })
-      });
-  
-      if (!response.ok) throw new Error("Failed to post comment");
-  
-      const newCommentData = await response.json();
-      setComments((prev) => ({
+
+    // Optimistically add the new comment to the UI
+    const newCommentData = {
+        id: Date.now(),  // Temporary ID, will be replaced by the actual ID from the backend if needed
+        user_id: user.sub,
+        name: username,  // Assuming `username` is correctly set
+        text: newComment,
+        likes: 0,  // Assuming likes is 0 initially
+    };
+
+    setComments((prev) => ({
         ...prev,
-        [selectedPostId]: [...(prev[selectedPostId] || []), newCommentData]
-      }));
-  
-      setNewComment("");
+        [selectedPostId]: [
+            ...(prev[selectedPostId] || []), 
+            newCommentData
+        ],
+    }));
+
+    setNewComment("");  // Reset the new comment input
+
+    try {
+        const token = await getAccessTokenSilently();
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/comments`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+            },
+            body: JSON.stringify({ postId: selectedPostId, userId: user.sub, text: newComment }),
+        });
+
+        if (!response.ok) throw new Error("Failed to post comment");
+
+        const postedCommentData = await response.json();
+        // You may want to update the comment with the actual response data if necessary
+        setComments((prev) => ({
+            ...prev,
+            [selectedPostId]: prev[selectedPostId].map(comment =>
+                comment.id === newCommentData.id ? { ...comment, ...postedCommentData } : comment
+            ),
+        }));
+
     } catch (error) {
-      console.error(error);
+        console.error("Error posting comment:", error);
     }
-  };
+};
 
     const handleCardClick = (post) => {
         setSelectedCard(post);
