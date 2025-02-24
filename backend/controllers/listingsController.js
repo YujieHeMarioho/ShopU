@@ -58,6 +58,7 @@ export const getAllListings = async (req, res) => {
           l.star_rating, 
           l.price;
       `;
+
   try {
     const result = await pool.query(query);
     // Log the full result using JSON.stringify to ensure all keys are visible.
@@ -475,6 +476,74 @@ export const uploadImages = async (req, res) => {
   } catch (err) {
     console.error("Error uploading images:", err);
     res.status(500).json({ message: "Error uploading files", error: err });
+  }
+};
+
+// returns listings of the same category
+export const getSimilarListings = async ( req, res ) => {
+  const category = req.params.category;
+  const listingID = req.params.id;
+  const categoryQuery = `SELECT category_id FROM public.categories WHERE name = $1`;
+  const query = `
+        SELECT
+            l.listing_id,
+            l.user_id,
+            l.title,
+            l.description,
+            c.name AS category,  -- Get the category name
+            l.item_type,
+            l.star_rating,
+            l.price,
+            ARRAY_AGG(li.file_key) AS file_keys 
+        FROM listings l
+        JOIN categories c ON l.category_id = c.category_id
+        INNER JOIN listing_images li ON l.listing_id = li.listing_id
+        WHERE l.category_id = $1  -- Filter by the provided category ID
+        AND l.listing_id != $2    -- Exclude the current listing (to avoid showing the same one)
+        GROUP BY
+            l.listing_id, 
+            l.user_id,  
+            l.title, 
+            l.description, 
+            c.name, 
+            l.item_type, 
+            l.star_rating, 
+            l.price;
+      `;
+
+    try {
+    const categoryResult = await pool.query(categoryQuery, [category]);
+    const categoryID = categoryResult.rows[0].category_id;
+    const result = await pool.query(query, [categoryID, listingID]);
+
+    // Log the full result using JSON.stringify to ensure all keys are visible.
+    console.log("Fetched category Listings:", JSON.stringify(result.rows, null, 2));
+
+    // Loop through each listing and generate signed URLs
+    const categoryListings = await Promise.all(
+      result.rows.map(async (listing) => {
+        console.log("Listing user_id:", listing.user_id); // Debug: Check each seller's user_id
+        // Generate pre-signed URLs for file_keys
+        const signedUrls = await Promise.all(
+          (listing.file_keys || []).map(async (fileKey) => {
+            const command = new GetObjectCommand({
+              Bucket: bucketName,
+              Key: fileKey,
+            });
+            return getSignedUrl(s3, command, { expiresIn: 86400 }); // URL expires in 1 day
+          })
+        );
+        return {
+          ...listing,
+          file_keys: signedUrls,
+        };
+      })
+    );
+
+    res.status(200).json(categoryListings);
+  } catch (err) {
+    console.error('Error running query:', err);
+    res.status(500).json({ error: 'Database error' });
   }
 };
 

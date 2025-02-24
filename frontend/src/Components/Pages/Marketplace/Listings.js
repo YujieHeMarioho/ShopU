@@ -9,13 +9,14 @@ function ListingModal({ show, onHide, listing }) {
    const [dropDownTitle, setDropDownTitle] = useState('Select an Option');
    const { getAccessTokenSilently, user, isAuthenticated } = useAuth0();
    const navigate = useNavigate();
-
-   // Edit Mode State
    const [isEditing, setIsEditing] = useState(false);
    const [editTitle, setEditTitle] = useState(listing?.title || '');
    const [editPrice, setEditPrice] = useState(listing?.price || '');
    const [editDescription, setEditDescription] = useState(listing?.description || '');
    const [showConfirm, setShowConfirm] = useState(false); // Confirmation Modal
+   const [categoryListings, setCategoryListings] = useState([]);
+
+   const isOwner = isAuthenticated && listing && listing.user_id === user?.sub;
 
    useEffect(() => {
       if (isEditing) {
@@ -25,30 +26,15 @@ function ListingModal({ show, onHide, listing }) {
       }
    }, [isEditing, listing]);
 
-   if (!listing) return null;
+   useEffect(() => {
+      if (!listing) return;
+      sameCategoryListings();
+   }, [listing]);
 
-   const isOwner = isAuthenticated && listing.user_id === user?.sub;
+   console.log(categoryListings);
 
    const handleDropDownClick = (option) => {
       setDropDownTitle(option);
-   };
-
-
-   const handleDeleteClick = async () => {
-      try {
-         const token = await getAccessTokenSilently();
-
-         await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings/${listing.id}/delete`, {
-            method: "DELETE",
-            headers: {
-               'Authorization': `Bearer ${token}`,
-            },
-         });
-
-         window.location.reload();
-      } catch (error) {
-         console.error("Error deleting listing:", error);
-      }
    };
 
    const handleEditClick = () => {
@@ -104,43 +90,103 @@ function ListingModal({ show, onHide, listing }) {
       onHide(); // Close modal
    };
 
-     // NEW: Function to handle messaging the seller using listing.user_id
-  const handleMessageSeller = async () => {
-   // Log the keys and full listing object for debugging
-   console.log("Listing object keys:", Object.keys(listing));
-   console.log("Listing object:", listing);
- 
-   // Use user_id or seller_id from the listing (whichever exists)
-   const sellerId = listing.user_id || listing.seller_id;
-   if (!sellerId) {
-     alert('Seller information is not available.');
-     return;
-   }
- 
-   try {
-     const token = await getAccessTokenSilently();
-     const response = await axios.post(
-       `${process.env.REACT_APP_BACKEND_URL}/api/conversations`,
-       { 
-         user1_id: user.sub, 
-         user2_id: sellerId 
-       },
-       { headers: { Authorization: `Bearer ${token}` } }
-     );
-     navigate(`/chat/${response.data.conversation_id}`);
-   } catch (error) {
-     console.error(
-       'Error starting conversation with seller:',
-       error.response ? error.response.data : error.message
-     );
-     alert('Unable to start conversation with seller. Please try again.');
-   }
- };
+   const handleDeleteClick = async () => {
+      try {
+         const token = await getAccessTokenSilently();
+
+         await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings/${listing.id}/delete`, {
+            method: "DELETE",
+            headers: {
+               'Authorization': `Bearer ${token}`,
+            },
+         });
+
+         window.location.reload();
+      } catch (error) {
+         console.error("Error deleting listing:", error);
+      }
+   };
+
+   // NEW: Function to handle messaging the seller using listing.user_id
+   const handleMessageSeller = async () => {
+      // Log the keys and full listing object for debugging
+      console.log("Listing object keys:", Object.keys(listing));
+      console.log("Listing object:", listing);
+
+      // Use user_id or seller_id from the listing (whichever exists)
+      const sellerId = listing.user_id || listing.seller_id;
+      if (!sellerId) {
+         alert('Seller information is not available.');
+         return;
+      }
+
+      try {
+         const token = await getAccessTokenSilently();
+         const response = await axios.post(
+            `${process.env.REACT_APP_BACKEND_URL}/api/conversations`,
+            {
+               user1_id: user.sub,
+               user2_id: sellerId
+            },
+            { headers: { Authorization: `Bearer ${token}` } }
+         );
+         navigate(`/chat/${response.data.conversation_id}`);
+      } catch (error) {
+         console.error(
+            'Error starting conversation with seller:',
+            error.response ? error.response.data : error.message
+         );
+         alert('Unable to start conversation with seller. Please try again.');
+      }
+   };
+
+   const sameCategoryListings = async () => {
+      console.log(listing.id);
+      console.log(listing.category);
+      
+      try {
+         const token = await getAccessTokenSilently();
+
+         const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings/${listing.id}/category/${listing.category}`, {
+            headers: {
+               'Authorization': `Bearer ${token}`,
+            },
+         });
+
+         const rawData = await response.json();
+
+         // Map the data to match the desired format, now including user_id
+         const formattedData = rawData.map(item => ({
+            id: item.listing_id,
+            user_id: item.user_id,  
+            title: item.title,
+            description: item.description,
+            category: item.category,
+            type: item.item_type,
+            rating: item.star_rating,
+            price: item.price,
+            image: item.file_keys,  
+         }));
+
+         setCategoryListings(formattedData);
+      }
+      catch (error) {
+         console.error('Error fetching similar listings:', error);
+      }
+   };
+
 
    return (
       <>
          {/* Main Listing Modal */}
          <Modal show={show} onHide={handleCloseModal} dialogClassName='modal' centered className={styles.modal}>
+      {!listing ? (
+         // Fallback UI while loading or if listing is missing
+         <Modal.Body className={styles.modalBody}>
+            <p>Loading listing details...</p>
+         </Modal.Body>
+      ) : (
+         <>
             <Modal.Header closeButton className={styles.modalHeader}>
                <Modal.Title className={styles.cardTitle}>
                   {isEditing ? (
@@ -227,7 +273,9 @@ function ListingModal({ show, onHide, listing }) {
             <Modal.Footer>
                <h5>Add future similar listings here</h5>
             </Modal.Footer>
-         </Modal>
+         </>
+      )}
+   </Modal>
 
          {/* Confirmation Popup */}
          <Modal show={showConfirm} onHide={() => setShowConfirm(false)} centered>
