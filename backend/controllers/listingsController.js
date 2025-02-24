@@ -516,9 +516,6 @@ export const getSimilarListings = async ( req, res ) => {
     const categoryID = categoryResult.rows[0].category_id;
     const result = await pool.query(query, [categoryID, listingID]);
 
-    // Log the full result using JSON.stringify to ensure all keys are visible.
-    console.log("Fetched category Listings:", JSON.stringify(result.rows, null, 2));
-
     // Loop through each listing and generate signed URLs
     const categoryListings = await Promise.all(
       result.rows.map(async (listing) => {
