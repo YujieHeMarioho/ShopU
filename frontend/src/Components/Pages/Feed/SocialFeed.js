@@ -7,15 +7,14 @@ import { Route, Routes } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { Modal } from 'react-bootstrap';
 import {  FaHeart, FaRegHeart, FaTrash} from 'react-icons/fa';
+import Masonry from 'react-masonry-css';
+import { useInView } from 'react-intersection-observer';
 
 const SocialFeed = () => {
     const [feed, setFeed] = useState([]);
     const [userFeed, setUserFeed] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [newPost, setNewPost] = useState({ title: '', content: '', imageUrl: '' });
-    const [editPost, setEditPost] = useState(null);
-    const [isPostLoading, setIsPostLoading] = useState(false);
     const [selectedCard, setSelectedCard] = useState(null);
     const [showComments, setShowComments] = useState(false);
     const [selectedPostId, setSelectedPostId] = useState(null);
@@ -23,8 +22,10 @@ const SocialFeed = () => {
     const [selectedImage, setSelectedImage] = useState(null); // State for uploaded image
     const [isGridLayout, setIsGridLayout] = useState(true); // State to toggle layout
     const { user, isAuthenticated, getAccessTokenSilently, isLoading: authLoading } = useAuth0();
-    const [likes, setLikes] = useState(0);
     const [isLiked, setIsLiked] = useState(false);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
+    const { ref, inView } = useInView({ threshold: 0.5 });
     const navigate = useNavigate();
 
     const userId = isAuthenticated ? user?.sub : null;
@@ -80,7 +81,7 @@ const SocialFeed = () => {
         if (!response.ok) throw new Error("Failed to post comment");
 
         const postedCommentData = await response.json();
-        // You may want to update the comment with the actual response data if necessary
+        
         setComments((prev) => ({
             ...prev,
             [selectedPostId]: prev[selectedPostId].map(comment =>
@@ -101,19 +102,23 @@ const SocialFeed = () => {
         setSelectedCard(null);
     };
 
-    const fetchFeed = async () => {
+    const fetchFeed = async (pageNumber) => {
         try {
             const token = await getAccessTokenSilently();
 
-            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed`, {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed?page=${pageNumber}`, {
                 headers: {
                   'Authorization': `Bearer ${token}`,
                 },
               });
             if (!response.ok) throw new Error(`Failed to fetch feed: ${response.statusText}`);
             const rawFeed = await response.json();
-            setFeed(rawFeed);
-            console.log('Raw Feed:', rawFeed);
+            if (rawFeed.length === 0) setHasMore(false);
+            setFeed(prevFeed => {
+              const existingPostIds = new Set(prevFeed.map(post => post.post_id));
+              const newPosts = rawFeed.filter(post => !existingPostIds.has(post.post_id));
+              return [...prevFeed, ...newPosts];
+          });
         } catch (err) {
             console.error('Error fetching feed:', err);
             setError('Failed to load feed. Please try again later.');
@@ -154,49 +159,6 @@ const SocialFeed = () => {
 
     const createFeedPost = async () => {
         handleCreateNewPost();
-
-
-        // setIsPostLoading(true);
-        // const uId = userId;
-        // try {
-        //     const response = await fetch('${process.env.REACT_APP_BACKEND_URL}/api/feed/create', {
-        //         method: 'POST',
-        //         headers: { 'Content-Type': 'application/json' },
-        //         body: JSON.stringify({ ...newPost, uId }),
-        //     });
-        //     if (!response.ok) throw new Error('Failed to create post');
-        //     const createdPost = await response.json();
-        //     setFeed((prev) => [createdPost, ...prev]);
-        //     setUserFeed((prev) => [createdPost, ...prev]);
-        //     setNewPost({ title: '', content: '', imageUrl: '' });   // TODO: Update method with fillable form
-        // } catch (err) {
-        //     console.error('Error creating post:', err);
-        // } finally {
-        //     setIsPostLoading(false);
-        // }
-    };
-
-    const handlePostOperation = async (postId, method, updatedPost = null) => {
-        setIsPostLoading(true);
-        const url = `${process.env.REACT_APP_BACKEND_URL}/api/feed/${postId}`;
-        const options = {
-            method,
-            headers: { 'Content-Type': 'application/json' },
-            body: updatedPost ? JSON.stringify(updatedPost) : null,
-        };
-
-        try {
-            const response = await fetch(url, options);
-            if (!response.ok) throw new Error(`Failed to ${method.toLowerCase()} post`);
-            const updatedData = await response.json();
-            setFeed((prev) => prev.map((post) => (post.post_id === postId ? updatedData : post)));
-            setUserFeed((prev) => prev.map((post) => (post.post_id === postId ? updatedData : post)));
-            setEditPost(null);
-        } catch (err) {
-            console.error('Error updating post:', err);
-        } finally {
-            setIsPostLoading(false);
-        }
     };
 
     const toggleLayout = () => {
@@ -228,8 +190,8 @@ const SocialFeed = () => {
         }
       };
 
-      const reloadFeed = () => {
-        fetchFeed();  // Call the fetchFeed function to reload posts
+      const reloadFeed = async (page) => {
+        fetchFeed(page);  // Call the fetchFeed function to reload posts
     };
 
     const handleCommentLike = async (commentId) => {
@@ -277,12 +239,18 @@ const SocialFeed = () => {
     //     }
     // }, [userId]);
     useEffect(() => {
-        fetchFeed();
-    }, []);  // Runs only once when the component mounts
+      fetchFeed(page);
+    }, [page]); // Runs only once when the component mounts
+
+    useEffect(() => {
+      if (inView && hasMore) {
+        setPage(prevPage => prevPage + 1);
+      }
+    }, [inView, hasMore, feed.length]);
     
     
 
-    if (loading) return <p>Loading feed...</p>;
+    if (loading && page === 1) return <p>Loading feed...</p>;
     if (error) return <p>{error}</p>;
 
     return (
@@ -299,12 +267,17 @@ const SocialFeed = () => {
     <Button onClick={createFeedPost} variant="outline-primary"> Create new Post</Button>
 
             {/* Display the feed */}
-            <div className={`${styles.feedContainer} ${isGridLayout ? styles.gridView : styles.scrollView}`}>
-                {feed.length === 0 ? (
-                    <p>No posts available.</p>
-                ) : (
-                    feed.map((post) => (
-                        <div key={post.post_id} className={styles.gridItem} onClick={isGridLayout ? () => handleCardClick(post) : undefined}>
+            <div className={styles.feedContainer}>
+
+            {/* Masonry Layout */}
+            {isGridLayout ? (
+                <Masonry
+                    breakpointCols={{ default: 5, 1024: 2, 768: 1 }}
+                    className={styles.masonryGrid}
+                    columnClassName={styles.masonryColumn}
+                >
+                    {feed.map((post, index) => (
+                        <div key={post.post_id} className={styles.gridItem} ref={index === feed.length - 1 ? ref : null} onClick={() => handleCardClick(post)}>
                             <SocialCard
                                 post_id={post.post_id}                // Directly passing post_id
                                 image={post.image}                 // Passing image URL
@@ -322,25 +295,43 @@ const SocialFeed = () => {
                                 reloadFeed={reloadFeed}
                             />
                         </div>
-                    ))
-                )}
-            </div>
+                    ))}
+                </Masonry>
+            ) : (
+                // Scroll Layout (Stacked View)
+                <div className={styles.scrollView}>
+                    {feed.map((post, index) => (
+                        <div key={post.post_id} className={styles.scrollItem} ref={index === feed.length - 1 ? ref : null} onClick={() => handleCardClick(post)}>
+                            <SocialCard
+                                post_id={post.post_id}                // Directly passing post_id
+                                image={post.image}                 // Passing image URL
+                                title={post.title}                     // Passing title
+                                description={post.content}             // Passing content as description
+                                profilePic={post.profile_pic_url}      // Passing profile picture URL
+                                author={post.author}                   // Passing author name
+                                authorId={post.author_id}              // Passing author ID
+                                initialLikes={post.likes_count}        // Mapping likes_count to initialLikes
+                                initialShares={post.shares}            // Mapping shares to initialShares
+                                isLikedAlready={post.isliked}                 // Check if post already liked by user
+                                tags={post.tags}                       // Passing tags
+                                listingId={post.listing_id}                       // Passing link
+                                onShowComments={()=>handleShowComments(post.post_id)} // Handling show post comments
+                                reloadFeed={reloadFeed}
+                            />
+                        </div>
+                    ))}
+                </div>
+            )}
 
-
+            {/* Loading Indicator */}
+            {loading && <p>Loading more posts...</p>}
+        </div>
     {/* Post Modal */}
     <Modal show={!!selectedCard} onHide={closeCardModal} centered>
         <Modal.Header closeButton>
         </Modal.Header>
 
-        <Modal.Body
-            style={{
-                color: "#000000",
-                textAlign: "center",
-                display: "flex",
-                justifyContent: "center",
-                flexDirection: "column",
-            }}
-        >
+        <Modal.Body className={styles.modalBody}>
             {selectedCard && (
                 <SocialCard
                     post_id={selectedCard.post_id}
@@ -355,6 +346,8 @@ const SocialFeed = () => {
                     isLikedAlready={selectedCard.isliked}
                     tags={selectedCard.tags}
                     listingId={selectedCard.listing_id}
+                    onShowComments={()=>handleShowComments(selectedCard.post_id)} // Handling show post comments
+                    reloadFeed={reloadFeed}
                 />
             )}
         </Modal.Body>

@@ -57,10 +57,7 @@ export const SocialCard = ({
   ];
 
   useEffect(() => {
-    if (user) {
-      console.log('User ID:', user.sub); // Access the user ID (sub) here
-    }
-  }, [user]);
+  },[]);
 
   const handleSave = async () => {
     setLoading(true);
@@ -158,7 +155,6 @@ export const SocialCard = ({
       window.open(fullLink, '_blank');
     }
   };
-  console.log("user.sub:", user?.sub, "author:", author);
   return (
     <div className={styles.socialCard}>
       <div className={styles.header}>
