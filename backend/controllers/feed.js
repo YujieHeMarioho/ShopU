@@ -44,7 +44,7 @@ export const getAllFeedPosts = async (req, res) => {
         u.user_id AS author_id,
         f.likes_count,
         f.listing_id,
-        ARRAY_AGG(t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL) AS tags, -- Aggregate tags into an array
+        COALESCE(ARRAY_AGG(t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL), ARRAY[]::TEXT[]) AS tags,
         EXISTS (
             SELECT 1
             FROM post_likes pl
@@ -166,8 +166,6 @@ export const likeFeedPost = async (req, res) => {
 export const getUserFeedPosts = async (req, res) => {
   try {
     const userId = extractUserIdFromToken(req); // Extract user ID from token
-
-
     const query = `
        SELECT
         f.post_id,
@@ -180,7 +178,7 @@ export const getUserFeedPosts = async (req, res) => {
         u.user_id AS author_id,
         f.likes_count,
         f.listing_id,
-        ARRAY_AGG(t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL) AS tags, -- Aggregate tags into an array
+        COALESCE(ARRAY_AGG(t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL), ARRAY[]::TEXT[]) AS tags,
         EXISTS (
             SELECT 1
             FROM post_likes pl
