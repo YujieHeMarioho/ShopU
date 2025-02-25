@@ -14,98 +14,99 @@ import { useParams } from 'react-router-dom';
 
 const Profile = () => {
   const { userId } = useParams();
-  const { user, getAccessTokenSilently } = useAuth0();  
+  const { user, getAccessTokenSilently } = useAuth0();
   const { name, picture, email, updated_at, created_at } = user;
   const isOwnProfile = !userId || userId === user.sub;
   const targetUserId = isOwnProfile ? user.sub : userId;
 
-    const [formData, setFormData] = useState({
-      name: name || '',
-      email: email || '',
-      picture: ''});
-      
-    const [message, setMessage] = useState('');
-    const [key, setKey] = useState('posts'); // Default active tab
-    const [userPosts, setUserPosts] = useState([]); // Placeholder for posts
-    const [userListings, setUserListings] = useState([]); // Placeholder for listings
-    const [userStatistics, setUserStatistics] = useState({}); // Placeholder for statistics
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [isGridLayout, setIsGridLayout] = useState(true); // State to toggle layout
-    const [selectedCard, setSelectedCard] = useState(null);
-    const [listings, setListings] = useState([]);
-    const [createdCommunities, setCreatedCommunities] = useState([]);
-    const [userData, setUserData] = useState([]);
+  const [formData, setFormData] = useState({
+    name: name || '',
+    email: email || '',
+    picture: ''
+  });
 
-    const [newProfilePicture, setNewProfilePicture] = useState(null);
+  const [message, setMessage] = useState('');
+  const [key, setKey] = useState('posts'); // Default active tab
+  const [userPosts, setUserPosts] = useState([]); // Placeholder for posts
+  const [userListings, setUserListings] = useState([]); // Placeholder for listings
+  const [userStatistics, setUserStatistics] = useState({}); // Placeholder for statistics
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isGridLayout, setIsGridLayout] = useState(true); // State to toggle layout
+  const [selectedCard, setSelectedCard] = useState(null);
+  const [listings, setListings] = useState([]);
+  const [createdCommunities, setCreatedCommunities] = useState([]);
+  const [userData, setUserData] = useState([]);
 
-     const handleCardClick = (post) => {
-      console.log("Card clicked:", post);
-      setSelectedCard(post);
-    };
+  const [newProfilePicture, setNewProfilePicture] = useState(null);
 
-    useEffect(() => {
-      fetchUserInfo(userId || user.sub);
-      fetchUserPosts(userId || user.sub);
-
-      // Fetch user posts, listings, and statistics here
-      fetchUserPosts();
-      fetchUserListings();
-      fetchUserStatistics();
-      fetchUserCommunities();
-      fetchUserProfilePicture();
-    }, [userId]);
-
-    const reloadFeed = () => {
-      fetchUserPosts();  // Call the fetchFeed function to reload posts
-    };
-
-    const fetchUserProfilePicture = async () => {
-      const userID = user?.sub;
-
-      try {
-         const token = await getAccessTokenSilently();
-
-         const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/${userID}/profile-picture`, {
-            method: "GET",
-            headers: {
-               'Authorization': `Bearer ${token}`,
-            },
-         });
-
-         const data = await response.json();
-         formData.picture = data;
-      } catch (error) {
-         console.error("Error deleting listing:", error);
-      }
-    };
-  
-
-    const fetchUserPosts = async () => {
-      try {
-          const token = await getAccessTokenSilently();
-  
-          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/user/${targetUserId}`, {
-              headers: {
-                  'Authorization': `Bearer ${token}`,
-              },
-          });
-  
-          if (!response.ok) throw new Error(`Failed to fetch user posts: ${response.statusText}`);
-  
-          const rawUserPosts = await response.json();
-          setUserPosts(rawUserPosts);
-      } catch (error) {
-          console.error('Error fetching user posts:', error);
-          setError('Failed to load user posts. Please try again later.');
-      } finally {
-          setLoading(false);
-      }
+  const handleCardClick = (post) => {
+    console.log("Card clicked:", post);
+    setSelectedCard(post);
   };
 
-  
-  const fetchUserInfo = async(id)=>{
-    try{
+  useEffect(() => {
+    fetchUserInfo(userId || user.sub);
+    fetchUserPosts(userId || user.sub);
+
+    // Fetch user posts, listings, and statistics here
+    fetchUserPosts();
+    fetchUserListings();
+    fetchUserStatistics();
+    fetchUserCommunities();
+    fetchUserProfilePicture();
+  }, [userId]);
+
+  const reloadFeed = () => {
+    fetchUserPosts();  // Call the fetchFeed function to reload posts
+  };
+
+  const fetchUserProfilePicture = async () => {
+    const userID = user?.sub;
+
+    try {
+      const token = await getAccessTokenSilently();
+
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/${userID}/profile-picture`, {
+        method: "GET",
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+      formData.picture = data;
+    } catch (error) {
+      console.error("Error deleting listing:", error);
+    }
+  };
+
+
+  const fetchUserPosts = async () => {
+    try {
+      const token = await getAccessTokenSilently();
+
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/user/${targetUserId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) throw new Error(`Failed to fetch user posts: ${response.statusText}`);
+
+      const rawUserPosts = await response.json();
+      setUserPosts(rawUserPosts);
+    } catch (error) {
+      console.error('Error fetching user posts:', error);
+      setError('Failed to load user posts. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const fetchUserInfo = async (id) => {
+    try {
       const token = await getAccessTokenSilently();
       const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/user/${id}`,
         {
@@ -114,357 +115,369 @@ const Profile = () => {
           }
         });
 
-        const userData = response.data;
-    
-        // Map the data to match the desired format
-        const formattedData = {
-          user_id: response.data.user_id,
-          create_date: response.data.create_date,
-          email: response.data.email,
-          name: response.data.name,
-          profile_image: response.data.profile_image
-        };
-        setUserData(formattedData);
+      const userData = response.data;
 
-        setFormData({
-          name: userData.name || '',
-          email: userData.email || '',
-          picture: userData.picture || ''
-        });
+      // Map the data to match the desired format
+      const formattedData = {
+        user_id: response.data.user_id,
+        create_date: response.data.create_date,
+        email: response.data.email,
+        name: response.data.name,
+        profile_image: response.data.profile_image
+      };
+      setUserData(formattedData);
+
+      setFormData({
+        name: userData.name || '',
+        email: userData.email || '',
+        picture: userData.picture || ''
+      });
 
 
     } catch (error) {
       console.error('Error user data:', error);
     }
   }
-  
-    const fetchUserListings = async () => {
-      // Fetch listings logic (replace with your actual API)
-      try{
-        const token = await getAccessTokenSilently();
-        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings/user/${targetUserId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
 
-        const rawData = await response.json();
-    
-        // Map the data to match the desired format
-        const formattedData = rawData.map(item => ({
-          id: item.listing_id,
-          title: item.title,
-          description: item.description,
-          category: item.category,
-          type: item.item_type,
-          rating: item.star_rating,
-          price: item.price,
-          image: item.file_keys,
-        }));
-    
-        setUserListings(formattedData);
-      } catch (error) {
-        console.error('Error fetching listings:', error);
-      }
-    };
+  const fetchUserListings = async () => {
+    // Fetch listings logic (replace with your actual API)
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings/user/${targetUserId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
 
-    const fetchUserCommunities = async()=>{
-      try{
-        const token = await getAccessTokenSilently();
-    
-        //get created communities
-        const createdCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/created/${targetUserId}`,
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            }
-          });
-        setCreatedCommunities(createdCommunityResponse.data);
-      } catch (error) {
-        console.error('Error fetching communities:', error);
-      }
-    }
+      const rawData = await response.json();
 
-    const fetchUserStatistics = async () => {
-      try {
-        const token = await getAccessTokenSilently();
-        
-        // Fetch post count
-        const postResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/user/count/${targetUserId}`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-    
-        if (!postResponse.ok) {
-          throw new Error('Failed to fetch post count');
-        }
-    
-        const postCount = await postResponse.json();
-    
-        // Fetch listing count
-        const listingResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings/user/count/${targetUserId}`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-    
-        if (!listingResponse.ok) {
-          throw new Error('Failed to fetch listing count');
-        }
-    
-        const listingCount = await listingResponse.json();
-    
-        // Fetch friends count
-        const friendsResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/friends/count/${targetUserId}`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-    
-        if (!friendsResponse.ok) {
-          throw new Error('Failed to fetch friends count');
-        }
-    
-        const friendsCount = await friendsResponse.json();
-    
-        // Combine all statistics
-        setUserStatistics({
-          posts: postCount.count,
-          listings: listingCount.count,
-          friends: friendsCount.count,
-        });
-      } catch (error) {
-        console.error('Error fetching user statistics:', error);
-        setError('Failed to load user statistics. Please try again later.');
-      }
-    };
-    
-  
-    const handleInputChange = (e) => {
-      const { name, type, files, value } = e.target;
-    
-      setFormData((prevState) => ({
-        ...prevState,
-        [name]: type === "file" ? files[0] : value, // Store the file object instead of value
+      // Map the data to match the desired format
+      const formattedData = rawData.map(item => ({
+        id: item.listing_id,
+        title: item.title,
+        description: item.description,
+        category: item.category,
+        type: item.item_type,
+        rating: item.star_rating,
+        price: item.price,
+        image: item.file_keys,
       }));
-    };
-    
-    // Save changes to the backend
-    const handleSaveChanges = async () => {
-      try {
-        const token = await getAccessTokenSilently();
-        let newPicture = null;
 
-        if (newProfilePicture){
-          const newPictureForm = new FormData();
-          newPictureForm.append('picture', newProfilePicture);
+      setUserListings(formattedData);
+    } catch (error) {
+      console.error('Error fetching listings:', error);
+    }
+  };
 
-          const upload = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/users/upload`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-            body: newPictureForm,
-          });
+  const fetchUserCommunities = async () => {
+    try {
+      const token = await getAccessTokenSilently();
 
-         newPicture = await upload.json();
-        }
-        
-        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/users`, {
-          method: 'PATCH',
+      //get created communities
+      const createdCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/created/${targetUserId}`,
+        {
           headers: {
-            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          }
+        });
+      setCreatedCommunities(createdCommunityResponse.data);
+    } catch (error) {
+      console.error('Error fetching communities:', error);
+    }
+  }
+
+  const fetchUserStatistics = async () => {
+    try {
+      const token = await getAccessTokenSilently();
+
+      // Fetch post count
+      const postResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/user/count/${targetUserId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!postResponse.ok) {
+        throw new Error('Failed to fetch post count');
+      }
+
+      const postCount = await postResponse.json();
+
+      // Fetch listing count
+      const listingResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings/user/count/${targetUserId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!listingResponse.ok) {
+        throw new Error('Failed to fetch listing count');
+      }
+
+      const listingCount = await listingResponse.json();
+
+      // Fetch friends count
+      const friendsResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/friends/count/${targetUserId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!friendsResponse.ok) {
+        throw new Error('Failed to fetch friends count');
+      }
+
+      const friendsCount = await friendsResponse.json();
+
+      // Combine all statistics
+      setUserStatistics({
+        posts: postCount.count,
+        listings: listingCount.count,
+        friends: friendsCount.count,
+      });
+    } catch (error) {
+      console.error('Error fetching user statistics:', error);
+      setError('Failed to load user statistics. Please try again later.');
+    }
+  };
+
+
+  const handleInputChange = (e) => {
+    const { name, type, files, value } = e.target;
+
+    setFormData((prevState) => ({
+      ...prevState,
+      [name]: type === "file" ? files[0] : value, // Store the file object instead of value
+    }));
+  };
+
+  // Save changes to the backend
+  const handleSaveChanges = async () => {
+    try {
+      const token = await getAccessTokenSilently();
+      let newPicture = null;
+
+      if (newProfilePicture) {
+        const newPictureForm = new FormData();
+        newPictureForm.append('picture', newProfilePicture);
+
+        const upload = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/users/upload`, {
+          method: 'POST',
+          headers: {
             'Authorization': `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            email: formData.email,
-            name: formData.name,
-            picture: newPicture.fileKey,
-          }),
+          body: newPictureForm,
         });
-  
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.message || 'Failed to save changes');
-        }
-        setMessage('Profile updated successfully!');
-        window.location.reload();
-      } catch (error) {
-        console.error('Error saving user:', error);
-        setMessage('Error saving profile: ' + error.message);
+
+        newPicture = await upload.json();
       }
-    };
+
+      const requestBody = {
+        email: formData.email,
+        name: formData.name,
+      };
+
+      if (newPicture && newPicture.fileKey) {
+        requestBody.picture = newPicture.fileKey;
+      }
+      
+
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/users`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to save changes');
+      }
+      setMessage('Profile updated successfully!');
+      window.location.reload();
+    } catch (error) {
+      console.error('Error saving user:', error);
+      setMessage('Error saving profile: ' + error.message);
+    }
+  };
 
 
-    return (
-      <Container className="my-5">
-        <Card className="shadow-sm profile-card mb-4">
-          <Card.Header className="profile-header">
+  return (
+    <Container className="my-5">
+      <Card className="shadow-sm profile-card mb-4">
+        <Card.Header className="profile-header">
           {isOwnProfile && (
             <h3 className="mb-0">Profile</h3>
           )}
 
-          </Card.Header>
-          <Card.Body>
-            <Row className="align-items-center">
-              {/* Profile Picture */}
-              <Col md={3} className="text-center mb-4 mb-md-0">
-                <img
-                  src={formData.picture}
-                  alt="Profile"
-                  className="rounded-circle img-fluid profile-picture"
-                  style={{ width: '150px', height: '150px', objectFit: 'cover' }}
+        </Card.Header>
+        <Card.Body>
+          <Row className="align-items-center">
+            {/* Profile Picture */}
+            <Col md={3} className="text-center mb-4 mb-md-0">
+              <img
+                src={formData.picture}
+                alt="Profile"
+                className="rounded-circle img-fluid profile-picture"
+                style={{ width: '150px', height: '150px', objectFit: 'cover' }}
+              />
+            </Col>
+
+            <Col md={9}>
+              {/* Name Input */}
+              <InputGroup className="mb-3">
+                <InputGroup.Text id="name">Name</InputGroup.Text>
+                <Form.Control
+                  placeholder="Name"
+                  aria-label="Name"
+                  aria-describedby="Name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  readOnly={!isOwnProfile}
+                  className={`${!isOwnProfile ? styles.readOnlyInput : ''}`}
                 />
-              </Col>
-  
-              <Col md={9}>
-                {/* Name Input */}
-                <InputGroup className="mb-3">
-                  <InputGroup.Text id="name">Name</InputGroup.Text>
-                  <Form.Control
-                    placeholder="Name"
-                    aria-label="Name"
-                    aria-describedby="Name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    readOnly={!isOwnProfile}
-                    className={`${!isOwnProfile ? styles.readOnlyInput : ''}`}
-                    />
-                </InputGroup>
-  
-                  <InputGroup className="mb-3">
-                    <InputGroup.Text id="email">Email</InputGroup.Text>
-                    <Form.Control
-                      placeholder="Email"
-                      aria-label="Email"
-                      aria-describedby="Email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      readOnly={!isOwnProfile}
-                      className={`${!isOwnProfile ? styles.readOnlyInput : ''}`}
-                    />
-                  </InputGroup>
-  
-                {isOwnProfile && (
-                  <InputGroup className="mb-3">
-                    <InputGroup.Text id="picture">Upload Profile Picture</InputGroup.Text>
-                        <input type="file" accept="image/jpeg, image/png, image/jpg, image/gif" onChange={(e) => setNewProfilePicture(e.target.files[0])} />
-                  </InputGroup>
-                )}
+              </InputGroup>
 
-                {isOwnProfile && (
-                  <Button variant="outline-primary" className="mt-3" onClick={handleSaveChanges}>
-                    <FaEdit className="me-2" />
-                    Save Changes
-                  </Button>
-                )}
-  
-                {/* Feedback Message */}
-                {message && (
-                  <p className={`mt-3 ${message.includes('Error') ? 'text-danger' : 'text-success'}`}>
-                    {message}
-                  </p>
-                )}
-              </Col>
-            </Row>
-          </Card.Body>
-          <Card.Footer className="text-muted text-end">
-            Member since: {new Date(userData.create_date).toLocaleDateString()}
-          </Card.Footer>
-        </Card>
+              <InputGroup className="mb-3">
+                <InputGroup.Text id="email">Email</InputGroup.Text>
+                <Form.Control
+                  placeholder="Email"
+                  aria-label="Email"
+                  aria-describedby="Email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  readOnly={!isOwnProfile}
+                  className={`${!isOwnProfile ? styles.readOnlyInput : ''}`}
+                />
+              </InputGroup>
 
-        {/* Tabs Section */}
-        <Tabs activeKey={key} onSelect={(k) => setKey(k)} id="profile-tabs" className="mb-3">
-        <Tab eventKey="posts" title="Posts">
-            <div className={`${styles.feedContainer} ${isGridLayout ? styles.gridView : styles.scrollView}`}>
-              {userPosts.length === 0 ? (
-                <p>No posts available.</p>
-              ) : (
-                userPosts.map((post) => (
-                  <div key={post.post_id} className={styles.gridItem} onClick={() => handleCardClick(post)}>
-                    <SocialCard
-                      post_id={post.post_id}                // Directly passing post_id
-                      image={post.image}                   // Passing image URL
-                      title={post.title}                   // Passing title
-                      description={post.content}           // Passing content as description
-                      profilePic={post.profile_pic_url}    // Passing profile picture URL
-                      author={post.author}                 // Passing author name
-                      authorId={post.author_id}            // Passing author ID
-                      initialLikes={post.likes_count}      // Mapping likes_count to initialLikes
-                      initialShares={post.shares}          // Mapping shares to initialShares
-                      isLikedAlready={post.is_liked}       // Check if post already liked by user
-                      tags={post.tags}                     // Passing tags
-                      reloadFeed={reloadFeed}
+              {isOwnProfile && (
+                <InputGroup className={`mb-3 ${styles.profilePictureGroup}`}>
+                  <InputGroup.Text id="picture" className={styles.profilePictureLabel}>Upload Profile Picture</InputGroup.Text>
+                  <div className={styles.profilePictureInputWrapper}>
+                    <input
+                      type="file"
+                      accept="image/jpeg, image/png, image/jpg, image/gif"
+                      onChange={(e) => setNewProfilePicture(e.target.files[0])}
+                      className={`form-control ${styles.profilePictureInput}`}
                     />
                   </div>
-                ))
+                </InputGroup>
               )}
-            </div>
-          </Tab>
+              {isOwnProfile && (
+                <Button variant="outline-primary" className="mt-3" onClick={handleSaveChanges}>
+                  <FaEdit className="me-2" />
+                  Save Changes
+                </Button>
+              )}
 
-          <Tab eventKey="listings" title="Listings">
-            <div className={styles.cardGridContainer}>
-              <CardGrid 
-                listings={userListings} // Pass the listings here
-                className={styles.cardGrid} 
-                openListingDetails={handleCardClick} // Pass the card click handler here
-              />
-            </div>
-          </Tab>
-          <Tab eventKey="communities" title="Communities">
-          <p className='section-title'>Your Created Communities</p>
-            <div className="your-community-grid">
-            {createdCommunities.length === 0 ? (
-                <p>You haven't created any communities.</p>
+              {/* Feedback Message */}
+              {message && (
+                <p className={`mt-3 ${message.includes('Error') ? 'text-danger' : 'text-success'}`}>
+                  {message}
+                </p>
+              )}
+            </Col>
+          </Row>
+        </Card.Body>
+        <Card.Footer className="text-muted text-end">
+          Member since: {new Date(userData.create_date).toLocaleDateString()}
+        </Card.Footer>
+      </Card>
+
+      {/* Tabs Section */}
+      <Tabs activeKey={key} onSelect={(k) => setKey(k)} id="profile-tabs" className="mb-3">
+        <Tab eventKey="posts" title="Posts">
+          <div className={`${styles.feedContainer} ${isGridLayout ? styles.gridView : styles.scrollView}`}>
+            {userPosts.length === 0 ? (
+              <p>No posts available.</p>
             ) : (
-                createdCommunities.map((community) => (
-                    <div key={community.community_id} className="your-community-card">
-                        <img
-                            src={community.imageUrl}
-                            alt={community.community_id}
-                            className="community-image"
-                        />
-                        <div className="community-info">
-                            <h3>{community.name || `Community ${community.community_id}`}</h3>
-                            <p>Created At: {new Date(community.created_at).toLocaleString()}</p>
-                            {/*<p>Joined At: {new Date(community.joined_at).toLocaleString()}</p>*/}
-                        </div>
-                        <button className="leave-button" onClick={() => leaveCommunity(community.community_id)}>
-                            Leave {/*FIXME: add delete community ability*/}
-                        </button>
-                    </div>
-                ))
+              userPosts.map((post) => (
+                <div key={post.post_id} className={styles.gridItem} onClick={() => handleCardClick(post)}>
+                  <SocialCard
+                    post_id={post.post_id}                // Directly passing post_id
+                    image={post.image}                   // Passing image URL
+                    title={post.title}                   // Passing title
+                    description={post.content}           // Passing content as description
+                    profilePic={post.profile_pic_url}    // Passing profile picture URL
+                    author={post.author}                 // Passing author name
+                    authorId={post.author_id}            // Passing author ID
+                    initialLikes={post.likes_count}      // Mapping likes_count to initialLikes
+                    initialShares={post.shares}          // Mapping shares to initialShares
+                    isLikedAlready={post.is_liked}       // Check if post already liked by user
+                    tags={post.tags}                     // Passing tags
+                    reloadFeed={reloadFeed}
+                  />
+                </div>
+              ))
             )}
-            </div>
-          </Tab>
-          <Tab eventKey="statistics" title="Statistics">
-            <Card className="profile-tab-statistics mb-3">
-              <Card.Body>
-                <h5>User Statistics</h5>
-                <ul>
-                  <li>Posts: {userStatistics.posts}</li>
-                  <li>Listings: {userStatistics.listings}</li>
-                  <li>Followers: {userStatistics.friends}</li>
-                </ul>
-              </Card.Body>
-            </Card>
-          </Tab>
-        {isOwnProfile && ( 
+          </div>
+        </Tab>
+
+        <Tab eventKey="listings" title="Listings">
+          <div className={styles.cardGridContainer}>
+            <CardGrid
+              listings={userListings} // Pass the listings here
+              className={styles.cardGrid}
+              openListingDetails={handleCardClick} // Pass the card click handler here
+            />
+          </div>
+        </Tab>
+        <Tab eventKey="communities" title="Communities">
+          <p className='section-title'>Your Created Communities</p>
+          <div className="your-community-grid">
+            {createdCommunities.length === 0 ? (
+              <p>You haven't created any communities.</p>
+            ) : (
+              createdCommunities.map((community) => (
+                <div key={community.community_id} className="your-community-card">
+                  <img
+                    src={community.imageUrl}
+                    alt={community.community_id}
+                    className="community-image"
+                  />
+                  <div className="community-info">
+                    <h3>{community.name || `Community ${community.community_id}`}</h3>
+                    <p>Created At: {new Date(community.created_at).toLocaleString()}</p>
+                    {/*<p>Joined At: {new Date(community.joined_at).toLocaleString()}</p>*/}
+                  </div>
+                  <button className="leave-button" onClick={() => leaveCommunity(community.community_id)}>
+                    Leave {/*FIXME: add delete community ability*/}
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+        </Tab>
+        <Tab eventKey="statistics" title="Statistics">
+          <Card className="profile-tab-statistics mb-3">
+            <Card.Body>
+              <h5>User Statistics</h5>
+              <ul>
+                <li>Posts: {userStatistics.posts}</li>
+                <li>Listings: {userStatistics.listings}</li>
+                <li>Followers: {userStatistics.friends}</li>
+              </ul>
+            </Card.Body>
+          </Card>
+        </Tab>
+        {isOwnProfile && (
           <Tab eventKey="preferences" title="User Preferences">
             <UserPreferences />
           </Tab>
         )}
       </Tabs>
 
-        
-        {/* JSON Section */}
-        {/*<Card className="shadow-sm">
+
+      {/* JSON Section */}
+      {/*<Card className="shadow-sm">
           <Card.Header className="bg-secondary text-white">
             <h4 className="mb-0">User Information</h4>
           </Card.Header>
@@ -483,8 +496,8 @@ const Profile = () => {
           </Card.Body>
         </Card>
         */}
-      </Container>
-    );
-  };
+    </Container>
+  );
+};
 
 export default Profile;

@@ -181,8 +181,6 @@ export const updateUser = async (req, res) => {
   }
 
   try {
-    console.log('picture', picture);
-
     if (picture != null) {
       const currentImageQuery = `SELECT profile_image from users WHERE user_id = $1;`
       const result = await pool.query(currentImageQuery, [userId]);
