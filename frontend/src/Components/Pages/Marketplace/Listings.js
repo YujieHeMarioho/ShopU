@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Modal, Button, Dropdown, Carousel, Form } from 'react-bootstrap';
+import { CardGrid } from '../../Common';
 import styles from './Listings.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
@@ -39,6 +40,10 @@ function ListingModal({ show, onHide, listing }) {
 
    const handleEditClick = () => {
       setIsEditing(true); // Enable edit mode
+   };
+   
+   const handleCardClick = (listing) => {
+      navigate(`/marketplace?listingId=${listing.id}`);
    };
 
    const handleSaveClick = async () => {
@@ -143,7 +148,7 @@ function ListingModal({ show, onHide, listing }) {
    const sameCategoryListings = async () => {
       console.log(listing.id);
       console.log(listing.category);
-      
+
       try {
          const token = await getAccessTokenSilently();
 
@@ -270,7 +275,8 @@ function ListingModal({ show, onHide, listing }) {
                   </p>
                </div>
             </Modal.Body>
-            <Modal.Footer>
+            <Modal.Footer className={styles.modalFooter}>
+               <CardGrid listings={categoryListings} className={styles.cardGrid} openListingDetails={handleCardClick}/>
                <h5>Add future similar listings here</h5>
             </Modal.Footer>
          </>
