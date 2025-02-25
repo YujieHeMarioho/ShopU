@@ -22,10 +22,10 @@ router.get('/feed', getAllFeedPosts);
 router.get('/feed/count', getFeedPostCount);
 
 // Get feed posts for a specific user
-router.get('/feed/user', getUserFeedPosts);
+router.get('/feed/user/:user_id', getUserFeedPosts);
 
 // Get all feed posts count
-router.get('/feed/user/count', getUserFeedPostsCount);
+router.get('/feed/user/count/:user_id', getUserFeedPostsCount);
 
 // Create a new feed post
 router.post('/feed/create', createFeedPost);

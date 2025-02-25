@@ -92,8 +92,6 @@ export const getUserInfo = async (req, res) => {
       }
     );
 
-    console.log('User Details from Auth0:', response.data); // Log the full response
-
     // Check if user data is present
     if (!response.data) {
       return res.status(404).json({ message: 'User not found' });
@@ -102,13 +100,41 @@ export const getUserInfo = async (req, res) => {
     // Extract necessary fields
     const { nickname, name, picture, email } = response.data; // Include email
 
+    const query = 'SELECT * FROM users WHERE user_id = $1';
+    const result = await pool.query(query, [user_id]);
+   
+    let create_date, profile_image;
+    if(result.rows.length > 0)
+    {
+      ({ create_date, profile_image } = result.rows[0]);
+    }
+    else{
+      res.status(500).json({ message: 'Error fetching user details', error: error.message });
+    }
+
     res.status(200).json({
-      username: nickname || name || 'Unnamed User',
+      name: nickname || name || 'Unnamed User',
       email: email || 'No Email Provided', // Return email
-      picture: picture || 'https://via.placeholder.com/40', // Fallback image
+      picture: profile_image || 'https://via.placeholder.com/40', // Fallback image
+      create_date: create_date,
     });
   } catch (error) {
     console.error('Error fetching user details:', error.response ? error.response.data : error.message);
+    res.status(500).json({ message: 'Error fetching user details', error: error.message });
+  }
+};
+
+// Get User Info
+export const getCurrentUserInfo = async (req, res) => {
+  const query = 'SELECT * FROM users WHERE user_id = $1';
+
+  try {
+    const userId = extractUserIdFromToken(req); // Extract user ID from token
+    const result = await pool.query(query, [userId]);
+    res.json(result.rows[0]);
+
+  } catch (error) {
+      console.error('Error running query:', err);
     res.status(500).json({ message: 'Error fetching user details', error: error.message });
   }
 };
@@ -297,4 +323,23 @@ export const getProfilePicture = async (req, res) => {
   }
 }
 
-export default { updateUser, getAllAuth0Users, createUser, getUserInfo, getUserSearch };
+const extractUserIdFromToken = (req) => {
+  const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+  let user_id;
+  
+  if (!token) {
+    throw new Error('Token is missing from the authorization header');
+  }
+
+  try {
+    const decodedToken = jwtDecode(token);
+    user_id = decodedToken.sub; // Assuming 'sub' is the user_id
+  } catch (err) {
+    console.error('Error decoding token:', err); // Log the error for debugging
+    throw new Error('Invalid token');
+  }
+
+  return user_id;
+};
+
+export default { updateUser, getAllAuth0Users, createUser, getUserInfo, getUserSearch, getCurrentUserInfo };

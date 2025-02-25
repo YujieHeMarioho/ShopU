@@ -67,7 +67,8 @@ function App() {
             <Route path="/create-service-listing" element={<AuthenticationGuard component={CreateListingPage} />} />
             <Route path="/friends" element={<AuthenticationGuard component={Friends} />} />
             <Route path="/community" element={<AuthenticationGuard component={Communities} />} />
-            <Route path="/profile" element={<AuthenticationGuard component={Profile} />} />
+            <Route exact path="/profile" element={<AuthenticationGuard component={Profile} />} />
+            <Route exact path="/profile/:userId" element={<AuthenticationGuard component={Profile} />} />
             <Route path="/edit-image" element={<AuthenticationGuard component={EditImage} />} />
             <Route path="/post-details" element={<AuthenticationGuard component={PostDetails} />} />
             <Route path="/Become A Seller" element={<BecomeASeller />} />

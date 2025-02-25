@@ -118,18 +118,17 @@ const MessagesPage = () => {
       uniqueIds.forEach((id, idx) => {
         userIdToDetailsMap[id] = userDetailsList[idx];
       });
+      const conversationsData = conversationsResponse.data;
 
-      const enhancedConvs = data.map((conv) => {
-        const otherId =
-          conv.user1_id.toLowerCase() === user.sub.toLowerCase() ? conv.user2_id : conv.user1_id;
-        const { username, picture } = userIdToDetailsMap[otherId] || {
-          username: 'Unknown User',
-          picture: 'https://via.placeholder.com/40',
-        };
+      // Step 6: Enhance conversations with the other participant's username and profile picture
+      const enhancedConversations = conversationsData.map((conv) => {
+        const isUser1 = conv.user1_id === user.sub;
+
         return {
           ...conv,
-          otherUsername: username,
-          otherProfilePicture: picture,
+          otherUserId: isUser1 ? conv.user2_id : conv.user1_id,
+          otherUsername: isUser1 ? conv.user2_name : conv.user1_name,
+          otherProfilePicture: isUser1 ? conv.user2_profile_image : conv.user1_profile_image,
           // If this conversation is currently selected, force unread_count to 0
           unread_count:
             selectedConversation && conv.conversation_id === selectedConversation.conversation_id

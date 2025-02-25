@@ -9,7 +9,6 @@ export const CardComponent = ({ image, title, description, price, onListingClick
   const [isFavorited, setIsFavorited] = useState(false);
   const [alertMessage, setAlertMessage] = useState(null);
 
-  console.log("this is Image", image);
     // Fetch the current favorite status when the component loads
     useEffect(() => {
       const fetchFavoriteStatus = async () => {

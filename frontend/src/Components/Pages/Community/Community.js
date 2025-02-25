@@ -4,6 +4,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import axios from 'axios';
 import styles from './Community.module.css';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { use } from 'react';
 
 const Communities = () => {
 
@@ -20,9 +21,9 @@ const Communities = () => {
   const [newCommunityDescription, setNewCommunityDescription] = useState('');
   const [communityImage, setCommunityImage] = useState(null);
 
-  const { getAccessTokenSilently } = useAuth0();  
+  const { getAccessTokenSilently, user } = useAuth0();  
 
-  useLayoutEffect(() => {
+  useLayoutEffect(() => {    
     if (isLoading) {
         const fetchUserInfo = async () => {
             try {
@@ -48,7 +49,7 @@ const Communities = () => {
                   }
                 );
                 //created communities
-                const createdCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/created`,
+                const createdCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/created/${user.sub}`,
                   {
                     headers: {
                       'Authorization': `Bearer ${token}`,
