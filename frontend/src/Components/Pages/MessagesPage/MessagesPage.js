@@ -118,10 +118,9 @@ const MessagesPage = () => {
       uniqueIds.forEach((id, idx) => {
         userIdToDetailsMap[id] = userDetailsList[idx];
       });
-      const conversationsData = conversationsResponse.data;
-
+      
       // Step 6: Enhance conversations with the other participant's username and profile picture
-      const enhancedConversations = conversationsData.map((conv) => {
+      const enhancedConvs = data.map((conv) => {
         const isUser1 = conv.user1_id === user.sub;
 
         return {
