@@ -64,7 +64,7 @@ router.delete('/feed/comments/:commentId', deleteComment);
 router.post('/feed/comments/:commentId/like', likeComment);
 
 // Route to unlike a comment
-router.delete('/feed/comments/:commentId/unlike', unlikeComment);
+router.delete('/feed/comments/:commentId/like', unlikeComment);
 
 // Route to get likes for a comment
 router.get('/feed/comments/:commentId/likes', getLikesForComment);

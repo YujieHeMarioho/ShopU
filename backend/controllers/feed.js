@@ -519,15 +519,24 @@ export const uploadImage = async (req, res) => {
 // Get all comments for a post
 export const getPostComments = async (req, res) => {
   const { postId } = req.params;
+  const userId = extractUserIdFromToken(req); // Get userId from the token
 
   try {
     const result = await pool.query(
-      `SELECT c.comment_id, c.post_id, c.user_id, c.text, c.created_at, u.name
+      `SELECT c.comment_id, c.post_id, c.user_id, c.text, c.created_at, u.name,
+              COUNT(pcl.comment_id) AS like_count,
+              EXISTS (
+                SELECT 1
+                FROM post_comment_likes pcl
+                WHERE pcl.comment_id = c.comment_id AND pcl.user_id = $2
+              ) AS isLiked
        FROM post_comments c 
        JOIN users u ON c.user_id = u.user_id 
+       LEFT JOIN post_comment_likes pcl ON c.comment_id = pcl.comment_id
        WHERE c.post_id = $1 
+       GROUP BY c.comment_id, c.post_id, c.user_id, c.text, c.created_at, u.name
        ORDER BY c.created_at ASC`,
-      [postId]
+      [postId, userId]
     );
 
     res.json(result.rows);
@@ -539,7 +548,8 @@ export const getPostComments = async (req, res) => {
 
 // Add a comment to a post
 export const addComment = async (req, res) => {
-  const { postId, userId, text } = req.body;
+  const { postId, text } = req.body;
+  const userId = extractUserIdFromToken(req); // Get userId from the token
 
   if (!text.trim()) {
     return res.status(400).json({ error: "Comment cannot be empty" });
@@ -560,10 +570,10 @@ export const addComment = async (req, res) => {
   }
 };
 
-// Delete a comment
+// Delete comment
 export const deleteComment = async (req, res) => {
   const { commentId } = req.params;
-  const { userId } = req.body;
+  const userId = extractUserIdFromToken(req); // Get userId from the token
 
   try {
     const result = await pool.query(
@@ -582,11 +592,10 @@ export const deleteComment = async (req, res) => {
   }
 };
 
-// Like a comment
+// Like comment
 export const likeComment = async (req, res) => {
   const { commentId } = req.params;
-  const { userId } = req.body;
-
+  const userId = extractUserIdFromToken(req); // Get userId from the token
   try {
     await pool.query(
       `INSERT INTO post_comment_likes (comment_id, user_id) 
@@ -602,11 +611,10 @@ export const likeComment = async (req, res) => {
   }
 };
 
-// Unlike a comment
+// Unlike comment
 export const unlikeComment = async (req, res) => {
   const { commentId } = req.params;
-  const { userId } = req.body;
-
+  const userId = extractUserIdFromToken(req); // Get userId from the token
   try {
     const result = await pool.query(
       `DELETE FROM post_comment_likes WHERE comment_id = $1 AND user_id = $2 RETURNING *`,

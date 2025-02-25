@@ -22,7 +22,6 @@ const SocialFeed = () => {
     const [selectedImage, setSelectedImage] = useState(null); // State for uploaded image
     const [isGridLayout, setIsGridLayout] = useState(true); // State to toggle layout
     const { user, isAuthenticated, getAccessTokenSilently, isLoading: authLoading } = useAuth0();
-    const [isLiked, setIsLiked] = useState(false);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const { ref, inView } = useInView({ threshold: 0.5 });
@@ -32,6 +31,7 @@ const SocialFeed = () => {
 
     const [comments, setComments] = useState([]);
     const [newComment, setNewComment] = useState("");
+    const [isLiked, setIsLiked] = useState({});
     const username = user.name;
 
   const handleShowComments = (post_id) => {
@@ -146,11 +146,22 @@ const SocialFeed = () => {
 
     const fetchComments = async (postId) => {
         try {
-          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/comments/${postId}`);
+          const token = await getAccessTokenSilently();
+          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/comments/${postId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
           if (!response.ok) throw new Error("Failed to fetch comments");
       
           const data = await response.json();
+          const initialLikesState = data.reduce((acc, comment) => {
+            acc[comment.comment_id] = comment.isliked; // Set initial like status for each comment
+            return acc;
+          }, {});
+
           setComments((prev) => ({ ...prev, [postId]: data }));  // Store comments by postId
+          setIsLiked(initialLikesState); 
         } catch (error) {
           console.error(error);
         }
@@ -194,42 +205,118 @@ const SocialFeed = () => {
         fetchFeed(page);  // Call the fetchFeed function to reload posts
     };
 
-    const handleCommentLike = async (commentId) => {
+    const handleCommentLike = async (commentId, currentLikeStatus) => {
+        try {
+            // Optimistically update UI by toggling the like status and adjusting the like count
+            setIsLiked((prev) => ({
+                ...prev,
+                [commentId]: !currentLikeStatus, // Toggle like status
+            }));
+    
+            setComments((prevComments) => {
+                const updatedComments = { ...prevComments };
+                const updatedPostComments = updatedComments[selectedPostId].map((comment) => {
+                    if (comment.comment_id === commentId) {
+                        return {
+                            ...comment,
+                            like_count: currentLikeStatus
+                                ? comment.like_count - 1 // Decrease like count if already liked
+                                : comment.like_count + 1, // Increase like count if not liked
+                        };
+                    }
+                    return comment;
+                });
+                updatedComments[selectedPostId] = updatedPostComments;
+                return updatedComments;
+            });
+    
+            // Send the like/unlike request to the backend
+            const token = await getAccessTokenSilently();
+            const method = currentLikeStatus ? 'DELETE' : 'POST'; // Use DELETE if already liked, POST if not liked
+    
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/comments/${commentId}/like`, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+    
+            if (!response.ok) throw new Error('Failed to update like status');
+    
+            // Optionally, if needed, fetch the updated like count from the backend and update the state
+            const updatedCommentData = await response.json();
+            setComments((prevComments) => {
+                const updatedComments = { ...prevComments };
+                const updatedPostComments = updatedComments[selectedPostId].map((comment) => {
+                    if (comment.comment_id === commentId) {
+                        return {
+                            ...comment,
+                            like_count: updatedCommentData.like_count || comment.like_count, // Update like count if returned from backend
+                        };
+                    }
+                    return comment;
+                });
+                updatedComments[selectedPostId] = updatedPostComments;
+                return updatedComments;
+            });
+    
+        } catch (error) {
+            console.error("Error updating like status:", error);
+    
+            // Revert optimistic UI changes if the request fails
+            setIsLiked((prev) => ({
+                ...prev,
+                [commentId]: currentLikeStatus,  // Revert the like status
+            }));
+    
+            setComments((prevComments) => {
+                const updatedComments = { ...prevComments };
+                const updatedPostComments = updatedComments[selectedPostId].map((comment) => {
+                    if (comment.comment_id === commentId) {
+                        return {
+                            ...comment,
+                            like_count: currentLikeStatus
+                                ? comment.like_count + 1
+                                : comment.like_count - 1, // Revert like count
+                        };
+                    }
+                    return comment;
+                });
+                updatedComments[selectedPostId] = updatedPostComments;
+                return updatedComments;
+            });
+        }
+    };
+    
+
+    const handleDeleteComment = async (commentId) => {
         try {
             const token = await getAccessTokenSilently();
-            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/comments/${commentId}/like`, {
-              method: 'POST', // Or DELETE if unliking
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-              }
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/comments/${commentId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
             });
-        
-            if (!response.ok) throw new Error('Failed to update like status');
-          } catch (error) {
-            console.error(error);
-          }
-      };
-
-      const handleDeleteComment = async (commentId) => {
-        try {
-          const token = await getAccessTokenSilently();
-          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/comments/${commentId}`, {
-            method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            }
-          });
     
-          if (!response.ok) throw new Error("Failed to delete comment");
+            if (!response.ok) throw new Error("Failed to delete comment");
     
-          // Remove the deleted comment from the list
-          setComments(prev => prev.filter(comment => comment.id !== commentId));
+            // Remove the deleted comment from the local state (optimistic update)
+            setComments((prevComments) => {
+                const updatedComments = { ...prevComments };
+                const updatedPostComments = updatedComments[selectedPostId].filter(
+                    (comment) => comment.comment_id !== commentId
+                );
+                updatedComments[selectedPostId] = updatedPostComments;
+                return updatedComments;
+            });
         } catch (error) {
-          console.error('Error deleting comment:', error);
+            console.error("Error deleting comment:", error);
         }
-      };
+    };
+    
 
     // useEffect(() => {
     //     if (userId) {
@@ -272,7 +359,7 @@ const SocialFeed = () => {
             {/* Masonry Layout */}
             {isGridLayout ? (
                 <Masonry
-                    breakpointCols={{ default: 5, 1024: 2, 768: 1 }}
+                    breakpointCols={{ default: 8, 2560: 6, 1920:5, 1280: 3, 1024: 2, 768: 1 }}
                     className={styles.masonryGrid}
                     columnClassName={styles.masonryColumn}
                 >
@@ -417,42 +504,45 @@ const SocialFeed = () => {
 
          {/* Comments Modal */}
          <Modal show={showComments} onHide={handleCloseComments} animation={true} className="bottom-modal" dialogClassName="modal-dialog-bottom">
-      <Modal.Header closeButton>
-        <Modal.Title style={{ color: 'black' }}>Comments</Modal.Title>
-      </Modal.Header>
-      <Modal.Body className={styles.modalBody}>
-        <div className="space-y-2">
-          {(comments[selectedPostId] || []).map((comment, index) => (
-            <div key={index} className={styles.commentContainer}>
-              {/* Comment text container */}
-              <div className={styles.commentText}>
-                <strong>{comment.name}:</strong> {comment.text}
+            <Modal.Header closeButton>
+                <Modal.Title style={{ color: 'black' }}>Comments</Modal.Title>
+            </Modal.Header>
+            <Modal.Body className={styles.modalBody}>
+                <div className="space-y-2">
+                {(comments[selectedPostId] || []).map((comment) => (
+                    <div key={comment.comment_id} className={styles.commentContainer}>
+                        {/* Comment text container */}
+                        <div className={styles.commentText}>
+                            <strong>{comment.name}:</strong> {comment.text}
 
-                {/* Like button and count */}
-                <div className={styles.likeContainer}>
-                  <Button
-                    variant="link"
-                    onClick={() => handleCommentLike(comment.id)} // Pass comment id to like/unlike
-                    className={isLiked ? styles.liked : ''}
-                  >
-                    {isLiked ? <FaHeart /> : <FaRegHeart />}
-                  </Button>
-                  <span className={styles.likeCount}>{comment.likes || 0}</span> {/* Display the number of likes */}
+                            {/* Like button and count */}
+                            <div className={styles.likeContainer}>
+                                <Button
+                                    variant="link"
+                                    onClick={() => handleCommentLike(comment.comment_id, isLiked[comment.comment_id])}
+                                    style={{ color: isLiked[comment.comment_id] ? 'red' : 'gray' }}
+                                >
+                                    {isLiked[comment.comment_id] ? <FaHeart /> : <FaRegHeart />}
+                                </Button>
+                                <span className={styles.likeCount}>{comment.like_count || 0}</span> {/* Display the number of likes */}
+                            </div>
+                        </div>
+
+                        {/* Delete button for the comment */}
+                        {(comment.user_id === userId) && (
+                            <Button
+                                variant="link"
+                                onClick={() => handleDeleteComment(comment.comment_id)}
+                                className={styles.deleteButton}
+                            >
+                                <FaTrash />
+                            </Button>
+                        )}
+                    </div>
+                ))}
                 </div>
-              </div>
-              {/* Delete button for the comment */}
-              {(comment.user_id === userId) && (
-                  <Button
-                    variant="link"
-                    onClick={() => handleDeleteComment(comment.id)}
-                    className={styles.deleteButton}
-                  >
-                    <FaTrash />
-                  </Button>
-                )}
-            </div>
-          ))}
-        </div>
+
+
 
         {/* New comment input */}
         <div className="mt-4 d-flex">
