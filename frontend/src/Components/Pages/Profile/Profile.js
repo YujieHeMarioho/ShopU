@@ -14,10 +14,11 @@ import { useParams } from 'react-router-dom';
 
 const Profile = () => {
   const { userId } = useParams();
-  const { user, getAccessTokenSilently } = useAuth0();  
+  const { user, isAuthenticated, getAccessTokenSilently, isLoading: authLoading } = useAuth0(); 
   const { name, picture, email, updated_at, created_at } = user;
   const isOwnProfile = !userId || userId === user.sub;
   const targetUserId = isOwnProfile ? user.sub : userId;
+  const currUserId = isAuthenticated ? user?.sub : null;
 
     const [formData, setFormData] = useState({
       name: name || '',
@@ -715,7 +716,7 @@ const handleDeleteComment = async (commentId) => {
                             </div>
 
                             {/* Delete button for the comment */}
-                            {(comment.user_id === userId) && (
+                            {(comment.user_id === currUserId) && (
                                 <Button
                                     variant="link"
                                     onClick={() => handleDeleteComment(comment.comment_id)}
