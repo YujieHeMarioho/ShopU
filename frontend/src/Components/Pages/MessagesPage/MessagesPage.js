@@ -118,19 +118,24 @@ const MessagesPage = () => {
       uniqueIds.forEach((id, idx) => {
         userIdToDetailsMap[id] = userDetailsList[idx];
       });
-        const conversationsData = conversationsResponse.data;
+      const conversationsData = conversationsResponse.data;
 
-        // Step 6: Enhance conversations with the other participant's username and profile picture
-        const enhancedConversations = conversationsData.map((conv) => {
-          const isUser1 = conv.user1_id === user.sub;
-  
-          return {
-            ...conv,
-            otherUserId: isUser1 ? conv.user2_id : conv.user1_id,
-            otherUsername: isUser1 ? conv.user2_name : conv.user1_name,
-            otherProfilePicture: isUser1 ? conv.user2_profile_image : conv.user1_profile_image,    
-          };
-        });
+      // Step 6: Enhance conversations with the other participant's username and profile picture
+      const enhancedConversations = conversationsData.map((conv) => {
+        const isUser1 = conv.user1_id === user.sub;
+
+        return {
+          ...conv,
+          otherUserId: isUser1 ? conv.user2_id : conv.user1_id,
+          otherUsername: isUser1 ? conv.user2_name : conv.user1_name,
+          otherProfilePicture: isUser1 ? conv.user2_profile_image : conv.user1_profile_image,
+          // If this conversation is currently selected, force unread_count to 0
+          unread_count:
+            selectedConversation && conv.conversation_id === selectedConversation.conversation_id
+              ? 0
+              : conv.unread_count || 0,
+        };
+      });
 
       setConversations(enhancedConvs);
       setError(null);

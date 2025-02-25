@@ -353,17 +353,10 @@ const Profile = () => {
   
                 {isOwnProfile && (
                   <InputGroup className="mb-3">
-                    <InputGroup.Text id="picture">Picture URL</InputGroup.Text>
-                    <Form.Control
-                      placeholder="Picture"
-                      aria-label="Picture"
-                      aria-describedby="Picture"
-                      name="picture"
-                      value={formData.picture}
-                      onChange={handleInputChange}
+                    <InputGroup.Text id="picture">Upload Profile Picture</InputGroup.Text>
+                        <input type="file" accept="image/jpeg, image/png, image/jpg, image/gif" onChange={(e) => setNewProfilePicture(e.target.files[0])} />
                       readOnly={!isOwnProfile}
-                      className={`${!isOwnProfile ? styles.readOnlyInput : ''}`}
-                    />
+                      className={`${!isOwnProfile ? styles.readOnlyInput : ''}`}  
                   </InputGroup>
                 )}
 
