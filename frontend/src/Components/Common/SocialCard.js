@@ -55,14 +55,10 @@ export const SocialCard = ({
     { id: 5, name: "Ethan", profilePic: "https://randomuser.me/api/portraits/men/5.jpg" },
     { id: 6, name: "Fiona", profilePic: "https://randomuser.me/api/portraits/women/6.jpg" },
   ];
-<<<<<<< frontend/src/Components/Common/SocialCard.js
 
   useEffect(() => {
   },[]);
 
-=======
-  
->>>>>>> frontend/src/Components/Common/SocialCard.js
   const handleSave = async () => {
     setLoading(true);
     try {
