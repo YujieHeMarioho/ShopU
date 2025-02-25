@@ -86,6 +86,7 @@ function ListingModal({ show, onHide, listing }) {
          setShowConfirm(true); // Show confirmation popup
       } else {
          onHide(); // Close modal normally if not editing
+         setCategoryListings([]);
       }
    };
 
@@ -276,7 +277,7 @@ function ListingModal({ show, onHide, listing }) {
                </div>
             </Modal.Body>
             <Modal.Footer className={styles.modalFooter}>
-               <CardGrid listings={categoryListings} className={styles.cardGrid} openListingDetails={handleCardClick}/>
+               <CardGrid listings={categoryListings} className={styles.listingCardGrid} openListingDetails={handleCardClick}/>
                <h5>Add future similar listings here</h5>
             </Modal.Footer>
          </>
