@@ -1,5 +1,6 @@
 import express from 'express';
-import { updateUser, getAllAuth0Users, createUser, getUserInfo, getUserCount, getUserSearch } from '../controllers/users.js';  
+import { updateUser, getAllAuth0Users, createUser, getUserInfo, getUserCount, uploadProfileImage, getUserSearch, getProfilePicture } from '../controllers/users.js';  
+import upload from '../middleware/multer.js';
 
 const router = express.Router();
 
@@ -12,6 +13,13 @@ router.post('/users', createUser);
 router.patch('/users', updateUser);
 router.get('/user/:user_id', getUserInfo);
 router.get('/users/search', getUserSearch);
+
+// upload a new profile image
+router.post('/users/upload',  upload.single('picture'), uploadProfileImage);
+
+// Get user profile picutre
+router.get('/:user_id/profile-picture', getProfilePicture);
+
 
 
 export default router;
