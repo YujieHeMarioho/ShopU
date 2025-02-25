@@ -4,6 +4,7 @@ import {
   getConversations,
   getMessages,
   sendMessage,
+  markConversationMessagesRead,
 } from '../controllers/messagesController.js';
 
 const router = express.Router();
@@ -19,5 +20,8 @@ router.get('/:conversationId/messages', getMessages);
 
 // Route to send a message in a specific conversation
 router.post('/:conversationId/messages', sendMessage);
+
+// NEW: Route to mark all messages in a conversation as read
+router.post('/:conversationId/mark-read', markConversationMessagesRead);
 
 export default router;

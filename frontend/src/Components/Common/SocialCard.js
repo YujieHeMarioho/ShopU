@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button, Modal, Form, Card} from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { FaThumbsUp, FaShare, FaHeart, FaRegHeart, FaComment } from 'react-icons/fa';
 import styles from './SocialCard.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
@@ -55,10 +55,14 @@ export const SocialCard = ({
     { id: 5, name: "Ethan", profilePic: "https://randomuser.me/api/portraits/men/5.jpg" },
     { id: 6, name: "Fiona", profilePic: "https://randomuser.me/api/portraits/women/6.jpg" },
   ];
+<<<<<<< frontend/src/Components/Common/SocialCard.js
 
   useEffect(() => {
   },[]);
 
+=======
+  
+>>>>>>> frontend/src/Components/Common/SocialCard.js
   const handleSave = async () => {
     setLoading(true);
     try {
@@ -158,7 +162,9 @@ export const SocialCard = ({
   return (
     <div className={styles.socialCard}>
       <div className={styles.header}>
-        <img src={profilePic} alt={`${author}'s profile`} className={styles.profilePic} />
+        <Link to={`/profile/${authorId}`}>
+          <img src={profilePic} alt={'Profile'} className={styles.profilePic} />
+        </Link>
         <span className={styles.author}>{author}</span>
       </div>
 
