@@ -9,7 +9,13 @@ import {
     updateFeedPost, 
     shareFeedPost,
     likeFeedPost,
-    uploadImage
+    uploadImage,
+    getPostComments,
+    addComment,
+    deleteComment,
+    likeComment,
+    unlikeComment,
+    getLikesForComment
 } from '../controllers/feed.js';
 import upload from '../middleware/multer.js';
 
@@ -44,5 +50,23 @@ router.post('/feed/:id/like', likeFeedPost);
 
 // Upload image to S3
 router.post('/feed/upload', upload.single('postImage'), uploadImage);
+
+// Get all comments for a post
+router.get('/feed/comments/:postId', getPostComments);
+
+// Route to add a comment to a post
+router.post('/feed/comments', addComment);
+
+// Route to delete a comment
+router.delete('/feed/comments/:commentId', deleteComment);
+
+// Route to like a comment
+router.post('/feed/comments/:commentId/like', likeComment);
+
+// Route to unlike a comment
+router.delete('/feed/comments/:commentId/like', unlikeComment);
+
+// Route to get likes for a comment
+router.get('/feed/comments/:commentId/likes', getLikesForComment);
 
 export default router;
