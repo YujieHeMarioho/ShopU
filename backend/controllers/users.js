@@ -107,13 +107,22 @@ export const getUserInfo = async (req, res) => {
     if(result.rows.length > 0)
     {
       ({ create_date, profile_image } = result.rows[0]);
+      
+      const command = new GetObjectCommand({
+        Bucket: bucketName,
+        Key: profile_image,
+      });
+
+      // Generate the signed URL
+      const imageURL = await getSignedUrl(s3, command, { expiresIn: 86400 });
+      profile_image = imageURL;
     }
     else{
       res.status(500).json({ message: 'Error fetching user details', error: error.message });
     }
-
+    
     res.status(200).json({
-      name: nickname || name || 'Unnamed User',
+      name: name || 'Unnamed User',
       email: email || 'No Email Provided', // Return email
       picture: profile_image || 'https://via.placeholder.com/40', // Fallback image
       create_date: create_date,
@@ -131,6 +140,19 @@ export const getCurrentUserInfo = async (req, res) => {
   try {
     const userId = extractUserIdFromToken(req); // Extract user ID from token
     const result = await pool.query(query, [userId]);
+
+    const imageKey = result.rows[0]?.profile_image;
+
+    const command = new GetObjectCommand({
+      Bucket: bucketName,
+      Key: imageKey,
+    });
+
+    // Generate the signed URL
+    const imageURL = await getSignedUrl(s3, command, { expiresIn: 86400 });
+
+    result.rows[0].profile_image = imageURL;
+
     res.json(result.rows[0]);
 
   } catch (error) {
@@ -159,6 +181,8 @@ export const updateUser = async (req, res) => {
   }
 
   try {
+    console.log('picture', picture);
+
     if (picture != null) {
       const currentImageQuery = `SELECT profile_image from users WHERE user_id = $1;`
       const result = await pool.query(currentImageQuery, [userId]);

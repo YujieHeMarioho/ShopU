@@ -271,7 +271,7 @@ const Profile = () => {
             body: newPictureForm,
           });
 
-          newPicture = await upload.json();
+         newPicture = await upload.json();
         }
         
         const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/users`, {
@@ -355,8 +355,6 @@ const Profile = () => {
                   <InputGroup className="mb-3">
                     <InputGroup.Text id="picture">Upload Profile Picture</InputGroup.Text>
                         <input type="file" accept="image/jpeg, image/png, image/jpg, image/gif" onChange={(e) => setNewProfilePicture(e.target.files[0])} />
-                      readOnly={!isOwnProfile}
-                      className={`${!isOwnProfile ? styles.readOnlyInput : ''}`}  
                   </InputGroup>
                 )}
 
