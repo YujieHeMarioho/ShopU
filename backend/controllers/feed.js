@@ -647,3 +647,19 @@ export const getLikesForComment = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch comment likes" });
   }
 };
+
+export const getPostCommentCount = async (req, res) => {
+  const { postId } = req.params;
+
+  try {
+    const result = await pool.query(
+      `SELECT COUNT(*) AS comment_count FROM post_comments WHERE post_id = $1`,
+      [postId]
+    );
+
+    res.json({ comment_count: result.rows[0].comment_count });
+  } catch (error) {
+    console.error("Error fetching comment count:", error);
+    res.status(500).json({ error: "Failed to fetch comment count" });
+  }
+};

@@ -15,7 +15,8 @@ import {
     deleteComment,
     likeComment,
     unlikeComment,
-    getLikesForComment
+    getLikesForComment,
+    getPostCommentCount
 } from '../controllers/feed.js';
 import upload from '../middleware/multer.js';
 
@@ -68,5 +69,7 @@ router.delete('/feed/comments/:commentId/like', unlikeComment);
 
 // Route to get likes for a comment
 router.get('/feed/comments/:commentId/likes', getLikesForComment);
+
+router.get('/feed/comments/count/:postId', getPostCommentCount);
 
 export default router;

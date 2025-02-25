@@ -56,8 +56,34 @@ export const SocialCard = ({
     { id: 6, name: "Fiona", profilePic: "https://randomuser.me/api/portraits/women/6.jpg" },
   ];
 
+  const fetchNumComments = async (postId) => {
+    try {
+        const token = await getAccessTokenSilently();
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/comments/count/${postId}`, {
+            headers: {
+                "Authorization": `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) throw new Error("Failed to fetch number of comments");
+
+        const data = await response.json();
+        
+        setNumComments(data.comment_count || 0); // Ensure fallback to 0
+
+    } catch (error) {
+        console.error("Error fetching number of comments:", error);
+    }
+  };
+
+  // Fetch the comment count when the component mounts
   useEffect(() => {
-  },[]);
+      if (post_id) {
+          fetchNumComments(post_id);
+      }
+  }, [post_id]);
+
+
 
   const handleSave = async () => {
     setLoading(true);
