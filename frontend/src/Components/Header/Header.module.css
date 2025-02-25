@@ -331,3 +331,13 @@
     object-fit: cover;
     margin-bottom: var(--padding-medium);
 }
+
+.unreadDot {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 8px;
+    height: 8px;
+    background-color: red;
+    border-radius: 50%;
+}

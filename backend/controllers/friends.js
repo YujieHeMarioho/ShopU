@@ -38,13 +38,8 @@ export const getFriends = async (req, res) => {
 };
 
 export const getFriendsCount = async (req, res) => {
-  let user_id;
-  const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
-  
+  const { user_id } = req.params;  
   try {
-    const decodedToken = jwtDecode(token);
-    user_id = decodedToken.sub;
-
     // Check if user_id is explicitly passed (optional)
     if (req.query.user_id && req.query.user_id !== user_id) {
       console.error('Mismatched user_id in request.');

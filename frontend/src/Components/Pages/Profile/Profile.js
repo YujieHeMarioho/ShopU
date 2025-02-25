@@ -9,18 +9,21 @@ import styles from './Profile.module.css';
 import { SocialCard } from '../../Common';
 import { CardGrid } from '../../Common';
 import leaveCommunity from '../Community/Community';
+import { useParams } from 'react-router-dom';
 
 
 const Profile = () => {
+  const { userId } = useParams();
   const { user, getAccessTokenSilently } = useAuth0();  
   const { name, picture, email, updated_at, created_at } = user;
+  const isOwnProfile = !userId || userId === user.sub;
+  const targetUserId = isOwnProfile ? user.sub : userId;
 
     const [formData, setFormData] = useState({
       name: name || '',
       email: email || '',
-      picture: picture || ''});
+      picture: ''});
       
-  
     const [message, setMessage] = useState('');
     const [key, setKey] = useState('posts'); // Default active tab
     const [userPosts, setUserPosts] = useState([]); // Placeholder for posts
@@ -32,6 +35,9 @@ const Profile = () => {
     const [selectedCard, setSelectedCard] = useState(null);
     const [listings, setListings] = useState([]);
     const [createdCommunities, setCreatedCommunities] = useState([]);
+    const [userData, setUserData] = useState([]);
+
+    const [newProfilePicture, setNewProfilePicture] = useState(null);
 
      const handleCardClick = (post) => {
       console.log("Card clicked:", post);
@@ -39,22 +45,47 @@ const Profile = () => {
     };
 
     useEffect(() => {
+      fetchUserInfo(userId || user.sub);
+      fetchUserPosts(userId || user.sub);
+
       // Fetch user posts, listings, and statistics here
       fetchUserPosts();
       fetchUserListings();
       fetchUserStatistics();
       fetchUserCommunities();
-    }, []);
+      fetchUserProfilePicture();
+    }, [userId]);
 
     const reloadFeed = () => {
       fetchUserPosts();  // Call the fetchFeed function to reload posts
     };
 
+    const fetchUserProfilePicture = async () => {
+      const userID = user?.sub;
+
+      try {
+         const token = await getAccessTokenSilently();
+
+         const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/${userID}/profile-picture`, {
+            method: "GET",
+            headers: {
+               'Authorization': `Bearer ${token}`,
+            },
+         });
+
+         const data = await response.json();
+         formData.picture = data;
+      } catch (error) {
+         console.error("Error deleting listing:", error);
+      }
+    };
+  
+
     const fetchUserPosts = async () => {
       try {
           const token = await getAccessTokenSilently();
   
-          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/user`, {
+          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/user/${targetUserId}`, {
               headers: {
                   'Authorization': `Bearer ${token}`,
               },
@@ -64,7 +95,6 @@ const Profile = () => {
   
           const rawUserPosts = await response.json();
           setUserPosts(rawUserPosts);
-          console.log('User Posts:', rawUserPosts);
       } catch (error) {
           console.error('Error fetching user posts:', error);
           setError('Failed to load user posts. Please try again later.');
@@ -72,13 +102,47 @@ const Profile = () => {
           setLoading(false);
       }
   };
+
+  
+  const fetchUserInfo = async(id)=>{
+    try{
+      const token = await getAccessTokenSilently();
+      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/user/${id}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        });
+
+        const userData = response.data;
+    
+        // Map the data to match the desired format
+        const formattedData = {
+          user_id: response.data.user_id,
+          create_date: response.data.create_date,
+          email: response.data.email,
+          name: response.data.name,
+          profile_image: response.data.profile_image
+        };
+        setUserData(formattedData);
+
+        setFormData({
+          name: userData.name || '',
+          email: userData.email || '',
+          picture: userData.picture || ''
+        });
+
+
+    } catch (error) {
+      console.error('Error user data:', error);
+    }
+  }
   
     const fetchUserListings = async () => {
       // Fetch listings logic (replace with your actual API)
       try{
         const token = await getAccessTokenSilently();
-  
-        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings/user`, {
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings/user/${targetUserId}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
           },
@@ -109,7 +173,7 @@ const Profile = () => {
         const token = await getAccessTokenSilently();
     
         //get created communities
-        const createdCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/created`,
+        const createdCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/created/${targetUserId}`,
           {
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -126,7 +190,7 @@ const Profile = () => {
         const token = await getAccessTokenSilently();
         
         // Fetch post count
-        const postResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/user/count`, {
+        const postResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/user/count/${targetUserId}`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -140,7 +204,7 @@ const Profile = () => {
         const postCount = await postResponse.json();
     
         // Fetch listing count
-        const listingResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings/user/count`, {
+        const listingResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings/user/count/${targetUserId}`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -154,7 +218,7 @@ const Profile = () => {
         const listingCount = await listingResponse.json();
     
         // Fetch friends count
-        const friendsResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/friends/count`, {
+        const friendsResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/friends/count/${targetUserId}`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -181,17 +245,34 @@ const Profile = () => {
     
   
     const handleInputChange = (e) => {
-      const { name, value } = e.target;
+      const { name, type, files, value } = e.target;
+    
       setFormData((prevState) => ({
         ...prevState,
-        [name]: value,
+        [name]: type === "file" ? files[0] : value, // Store the file object instead of value
       }));
     };
-  
+    
     // Save changes to the backend
     const handleSaveChanges = async () => {
       try {
         const token = await getAccessTokenSilently();
+        let newPicture = null;
+
+        if (newProfilePicture){
+          const newPictureForm = new FormData();
+          newPictureForm.append('picture', newProfilePicture);
+
+          const upload = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/users/upload`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+            body: newPictureForm,
+          });
+
+          newPicture = await upload.json();
+        }
         
         const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/users`, {
           method: 'PATCH',
@@ -202,7 +283,7 @@ const Profile = () => {
           body: JSON.stringify({
             email: formData.email,
             name: formData.name,
-            picture: formData.picture
+            picture: newPicture.fileKey,
           }),
         });
   
@@ -211,17 +292,22 @@ const Profile = () => {
           throw new Error(data.message || 'Failed to save changes');
         }
         setMessage('Profile updated successfully!');
+        window.location.reload();
       } catch (error) {
         console.error('Error saving user:', error);
         setMessage('Error saving profile: ' + error.message);
       }
     };
 
+
     return (
       <Container className="my-5">
         <Card className="shadow-sm profile-card mb-4">
           <Card.Header className="profile-header">
-            <h3 className="mb-0">Your Profile</h3>
+          {isOwnProfile && (
+            <h3 className="mb-0">Profile</h3>
+          )}
+
           </Card.Header>
           <Card.Body>
             <Row className="align-items-center">
@@ -246,40 +332,40 @@ const Profile = () => {
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
-                  />
+                    readOnly={!isOwnProfile}
+                    className={`${!isOwnProfile ? styles.readOnlyInput : ''}`}
+                    />
                 </InputGroup>
   
-                {/* Email Input */}
-                <InputGroup className="mb-3">
-                  <InputGroup.Text id="email">Email</InputGroup.Text>
-                  <Form.Control
-                    placeholder="Email"
-                    aria-label="Email"
-                    aria-describedby="Email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                  />
-                </InputGroup>
+                  <InputGroup className="mb-3">
+                    <InputGroup.Text id="email">Email</InputGroup.Text>
+                    <Form.Control
+                      placeholder="Email"
+                      aria-label="Email"
+                      aria-describedby="Email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      readOnly={!isOwnProfile}
+                      className={`${!isOwnProfile ? styles.readOnlyInput : ''}`}
+                    />
+                  </InputGroup>
   
-                {/* Picture URL Input */}
-                <InputGroup className="mb-3">
-                  <InputGroup.Text id="picture">Picture URL</InputGroup.Text>
-                  <Form.Control
-                    placeholder="Picture"
-                    aria-label="Picture"
-                    aria-describedby="Picture"
-                    name="picture"
-                    value={formData.picture}
-                    onChange={handleInputChange}
-                  />
-                </InputGroup>
-  
-                {/* Save Changes Button */}
-                <Button variant="outline-primary" className="mt-3" onClick={handleSaveChanges}>
-                  <FaEdit className="me-2" />
-                  Save Changes
-                </Button>
+                {isOwnProfile && (
+                  <InputGroup className="mb-3">
+                    <InputGroup.Text id="picture">Upload Profile Picture</InputGroup.Text>
+                        <input type="file" accept="image/jpeg, image/png, image/jpg, image/gif" onChange={(e) => setNewProfilePicture(e.target.files[0])} />
+                      readOnly={!isOwnProfile}
+                      className={`${!isOwnProfile ? styles.readOnlyInput : ''}`}  
+                  </InputGroup>
+                )}
+
+                {isOwnProfile && (
+                  <Button variant="outline-primary" className="mt-3" onClick={handleSaveChanges}>
+                    <FaEdit className="me-2" />
+                    Save Changes
+                  </Button>
+                )}
   
                 {/* Feedback Message */}
                 {message && (
@@ -291,7 +377,7 @@ const Profile = () => {
             </Row>
           </Card.Body>
           <Card.Footer className="text-muted text-end">
-            Member since: {new Date(created_at).toLocaleDateString()}
+            Member since: {new Date(userData.create_date).toLocaleDateString()}
           </Card.Footer>
         </Card>
 
@@ -311,6 +397,7 @@ const Profile = () => {
                       description={post.content}           // Passing content as description
                       profilePic={post.profile_pic_url}    // Passing profile picture URL
                       author={post.author}                 // Passing author name
+                      authorId={post.author_id}            // Passing author ID
                       initialLikes={post.likes_count}      // Mapping likes_count to initialLikes
                       initialShares={post.shares}          // Mapping shares to initialShares
                       isLikedAlready={post.is_liked}       // Check if post already liked by user
@@ -370,9 +457,11 @@ const Profile = () => {
               </Card.Body>
             </Card>
           </Tab>
-        <Tab eventKey="preferences" title="User Preferences">
-          <UserPreferences />
-        </Tab>
+        {isOwnProfile && ( 
+          <Tab eventKey="preferences" title="User Preferences">
+            <UserPreferences />
+          </Tab>
+        )}
       </Tabs>
 
         

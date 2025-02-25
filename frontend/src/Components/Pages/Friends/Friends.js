@@ -42,7 +42,7 @@ const Friends = () => {
                 console.log(`Friend ${friend.friend_id} Details:`, friendResponse.data);
                 return { 
                   ...friend, 
-                  username: friendResponse.data.username, 
+                  name: friendResponse.data.name, 
                   email: friendResponse.data.email, // Include email
                   profile_picture: friendResponse.data.picture 
                 };
@@ -50,7 +50,7 @@ const Friends = () => {
                 console.error(`Error fetching data for friend_id ${friend.friend_id}:`, error.response ? error.response.data : error.message);
                 return { 
                   ...friend, 
-                  username: 'Unknown User', 
+                  name: 'Unknown User', 
                   email: 'No Email Provided', // Fallback for email
                   profile_picture: 'https://via.placeholder.com/100' 
                 };
@@ -202,7 +202,6 @@ const Friends = () => {
 
   return (
     <div className={styles.friendsContainer}>
-      <h1 className={styles.pageTitle}>Friends</h1>
 
       {/* Add Friend Section */}
       <div className={styles.addFriendSection}>
@@ -225,7 +224,7 @@ const Friends = () => {
 
       {/* Friends List */}
       <div className={styles.friendsListSection}>
-        <h2>Your Friends</h2>
+        <h2>Current Friends</h2>
         {friends.length === 0 ? (
           <p className={styles.noFriends}>You have no friends yet. Add some friends to get started!</p>
         ) : (
@@ -234,11 +233,11 @@ const Friends = () => {
               <div key={friend.friend_id} className={styles.friendCard}>
                 <img
                   src={friend.profile_picture} 
-                  alt={friend.username} 
+                  alt={friend.name} 
                   className={styles.friendAvatar}
                 />
                 <div className={styles.friendInfo}>
-                <h3>{friend.username}</h3>
+                <h3>{friend.name}</h3>
                 <p><strong>Friended At:</strong> {new Date(friend.friended_at).toLocaleString()}</p>
                 </div>
                 <div className={styles.friendActions}>

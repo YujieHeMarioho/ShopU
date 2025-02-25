@@ -3,20 +3,38 @@ import { pool } from '../pool.js';
 // Get all conversations for a user
 export const getConversations = async (req, res) => {
   const { userId } = req.params;
-  console.log('Fetching conversations for user:', userId); // Debug log
 
   try {
+    // This query:
+    // 1) Fetches all conversations for the user
+    // 2) LEFT JOIN with a subquery that counts unread messages per conversation
+    // 3) COALESCE() to handle cases where no unread messages exist
     const result = await pool.query(
-      `SELECT * FROM conversations WHERE user1_id = $1 OR user2_id = $1`,
+      `
+      SELECT c.*,
+             COALESCE(unread.unread_count, 0) AS unread_count
+        FROM conversations c
+        LEFT JOIN (
+          SELECT conversation_id,
+                 COUNT(*) AS unread_count
+            FROM messages
+           WHERE is_read = FALSE
+             AND sender_id <> $1  -- Only messages from the *other* user
+        GROUP BY conversation_id
+        ) AS unread ON c.conversation_id = unread.conversation_id
+       WHERE c.user1_id = $1
+          OR c.user2_id = $1
+      `,
       [userId]
     );
-    console.log('Conversations fetched:', result.rows); // Debug log
+
     res.json(result.rows);
   } catch (error) {
     console.error('Error fetching conversations:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
 
 // Get all messages for a specific conversation
 export const getMessages = async (req, res) => {
@@ -79,6 +97,34 @@ export const sendMessage = async (req, res) => {
     res.status(201).json(result.rows[0]);
   } catch (error) {
     console.error('Error sending message:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+
+
+
+// NEW: Mark all messages as read
+export const markConversationMessagesRead = async (req, res) => {
+  const { conversationId } = req.params;
+  const { userId } = req.body; // The user reading the conversation
+
+  console.log("markConversationMessagesRead called with:", { conversationId, userId });
+  
+  try {
+    const result = await pool.query(
+      `UPDATE messages
+         SET is_read = TRUE
+       WHERE conversation_id = $1
+         AND sender_id <> $2
+         AND is_read = FALSE
+       RETURNING message_id;`,
+      [conversationId, userId]
+    );
+    console.log("Rows updated:", result.rows);
+    res.status(200).json({ success: true, updated: result.rows.length });
+  } catch (error) {
+    console.error('Error marking messages as read:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
