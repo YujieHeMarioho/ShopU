@@ -1,24 +1,26 @@
-import React, {useState, useEffect} from 'react';
-import {useAuth0} from '@auth0/auth0-react';
+import React, { useState, useEffect } from 'react';
+import { useAuth0 } from '@auth0/auth0-react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import {Container, Row, Col, Card, Button, InputGroup, Form, Tab, Tabs, Modal} from 'react-bootstrap';
-import {FaEnvelope, FaUser, FaEdit, FaRegHeart, FaHeart, FaTrash} from 'react-icons/fa';
+import { Container, Row, Col, Card, Button, InputGroup, Form, Tab, Tabs, Modal } from 'react-bootstrap';
+import { FaEnvelope, FaUser, FaEdit, FaRegHeart, FaHeart, FaTrash } from 'react-icons/fa';
 import './Profile.module.css'; // Optional: Custom CSS
 import UserPreferences from './UserPreferences';
 import styles from './Profile.module.css';
-import {SocialCard} from '../../Common';
-import {CardGrid} from '../../Common';
+import { SocialCard } from '../../Common';
+import { CardGrid } from '../../Common';
 import leaveCommunity from '../Community/Community';
-import {useParams} from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
 
 const Profile = () => {
-    const {userId} = useParams();
-    const {user, isAuthenticated, getAccessTokenSilently, isLoading: authLoading} = useAuth0();
-    const {name, picture, email, updated_at, created_at} = user;
+    const { userId } = useParams();
+    const { user, isAuthenticated, getAccessTokenSilently, isLoading: authLoading } = useAuth0();
+    const { name, picture, email, updated_at, created_at } = user;
     const isOwnProfile = !userId || userId === user.sub;
     const targetUserId = isOwnProfile ? user.sub : userId;
     const currUserId = isAuthenticated ? user?.sub : null;
+    const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
         name: name || '',
@@ -88,7 +90,7 @@ const Profile = () => {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`,
                 },
-                body: JSON.stringify({postId: selectedPostId, userId: user.sub, text: newComment}),
+                body: JSON.stringify({ postId: selectedPostId, userId: user.sub, text: newComment }),
             });
 
             if (!response.ok) throw new Error("Failed to post comment");
@@ -98,7 +100,7 @@ const Profile = () => {
             setComments((prev) => ({
                 ...prev,
                 [selectedPostId]: prev[selectedPostId].map(comment =>
-                    comment.id === newCommentData.id ? {...comment, ...postedCommentData} : comment
+                    comment.id === newCommentData.id ? { ...comment, ...postedCommentData } : comment
                 ),
             }));
 
@@ -123,7 +125,7 @@ const Profile = () => {
                 return acc;
             }, {});
 
-            setComments((prev) => ({...prev, [postId]: data}));  // Store comments by postId
+            setComments((prev) => ({ ...prev, [postId]: data }));  // Store comments by postId
             setIsLiked(initialLikesState);
         } catch (error) {
             console.error(error);
@@ -139,7 +141,7 @@ const Profile = () => {
             }));
 
             setComments((prevComments) => {
-                const updatedComments = {...prevComments};
+                const updatedComments = { ...prevComments };
                 const updatedPostComments = updatedComments[selectedPostId].map((comment) => {
                     if (comment.comment_id === commentId) {
                         return {
@@ -172,7 +174,7 @@ const Profile = () => {
             // Optionally, if needed, fetch the updated like count from the backend and update the state
             const updatedCommentData = await response.json();
             setComments((prevComments) => {
-                const updatedComments = {...prevComments};
+                const updatedComments = { ...prevComments };
                 const updatedPostComments = updatedComments[selectedPostId].map((comment) => {
                     if (comment.comment_id === commentId) {
                         return {
@@ -196,7 +198,7 @@ const Profile = () => {
             }));
 
             setComments((prevComments) => {
-                const updatedComments = {...prevComments};
+                const updatedComments = { ...prevComments };
                 const updatedPostComments = updatedComments[selectedPostId].map((comment) => {
                     if (comment.comment_id === commentId) {
                         return {
@@ -230,7 +232,7 @@ const Profile = () => {
 
             // Remove the deleted comment from the local state (optimistic update)
             setComments((prevComments) => {
-                const updatedComments = {...prevComments};
+                const updatedComments = { ...prevComments };
                 const updatedPostComments = updatedComments[selectedPostId].filter(
                     (comment) => comment.comment_id !== commentId
                 );
@@ -246,6 +248,10 @@ const Profile = () => {
     const handleCardClick = (post) => {
         console.log("Card clicked:", post);
         setSelectedCard(post);
+    };
+
+    const handleListingCardClick = (listing) => {
+        navigate(`/marketplace?listingId=${listing.id}`);
     };
 
     useEffect(() => {
@@ -449,7 +455,7 @@ const Profile = () => {
 
 
     const handleInputChange = (e) => {
-        const {name, type, files, value} = e.target;
+        const { name, type, files, value } = e.target;
 
         setFormData((prevState) => ({
             ...prevState,
@@ -527,7 +533,7 @@ const Profile = () => {
                                 src={formData.picture}
                                 alt="Profile"
                                 className="rounded-circle img-fluid profile-picture"
-                                style={{width: '150px', height: '150px', objectFit: 'cover'}}
+                                style={{ width: '150px', height: '150px', objectFit: 'cover' }}
                             />
                         </Col>
 
@@ -577,7 +583,7 @@ const Profile = () => {
                             )}
                             {isOwnProfile && (
                                 <Button variant="outline-primary" className="mt-3" onClick={handleSaveChanges}>
-                                    <FaEdit className="me-2"/>
+                                    <FaEdit className="me-2" />
                                     Save Changes
                                 </Button>
                             )}
@@ -605,7 +611,7 @@ const Profile = () => {
                         ) : (
                             userPosts.map((post) => (
                                 <div key={post.post_id} className={styles.gridItem}
-                                     onClick={() => handleCardClick(post)}>
+                                    onClick={() => handleCardClick(post)}>
                                     <SocialCard
                                         post_id={post.post_id}                // Directly passing post_id
                                         image={post.image}                 // Passing image URL
@@ -633,7 +639,7 @@ const Profile = () => {
                         <CardGrid
                             listings={userListings} // Pass the listings here
                             className={styles.cardGrid}
-                            openListingDetails={handleCardClick} // Pass the card click handler here
+                            openListingDetails={handleListingCardClick} // Pass the card click handler here
                         />
                     </div>
                 </Tab>
@@ -656,7 +662,7 @@ const Profile = () => {
                                         {/*<p>Joined At: {new Date(community.joined_at).toLocaleString()}</p>*/}
                                     </div>
                                     <button className="leave-button"
-                                            onClick={() => leaveCommunity(community.community_id)}>
+                                        onClick={() => leaveCommunity(community.community_id)}>
                                         Leave {/*FIXME: add delete community ability*/}
                                     </button>
                                 </div>
@@ -678,7 +684,7 @@ const Profile = () => {
                 </Tab>
                 {isOwnProfile && (
                     <Tab eventKey="preferences" title="User Preferences">
-                        <UserPreferences/>
+                        <UserPreferences />
                     </Tab>
                 )}
             </Tabs>
@@ -706,9 +712,9 @@ const Profile = () => {
         */}
             {/* Comments Modal */}
             <Modal show={showComments} onHide={handleCloseComments} animation={true} className="bottom-modal"
-                   dialogClassName="modal-dialog-bottom">
+                dialogClassName="modal-dialog-bottom">
                 <Modal.Header closeButton>
-                    <Modal.Title style={{color: 'black'}}>Comments</Modal.Title>
+                    <Modal.Title style={{ color: 'black' }}>Comments</Modal.Title>
                 </Modal.Header>
                 <Modal.Body className={styles.modalBody}>
                     <div className="space-y-2">
@@ -723,9 +729,9 @@ const Profile = () => {
                                         <Button
                                             variant="link"
                                             onClick={() => handleCommentLike(comment.comment_id, isLiked[comment.comment_id])}
-                                            style={{color: isLiked[comment.comment_id] ? 'red' : 'gray'}}
+                                            style={{ color: isLiked[comment.comment_id] ? 'red' : 'gray' }}
                                         >
-                                            {isLiked[comment.comment_id] ? <FaHeart/> : <FaRegHeart/>}
+                                            {isLiked[comment.comment_id] ? <FaHeart /> : <FaRegHeart />}
                                         </Button>
                                         <span
                                             className={styles.likeCount}>{comment.like_count || 0}</span> {/* Display the number of likes */}
@@ -739,7 +745,7 @@ const Profile = () => {
                                         onClick={() => handleDeleteComment(comment.comment_id)}
                                         className={styles.deleteButton}
                                     >
-                                        <FaTrash/>
+                                        <FaTrash />
                                     </Button>
                                 )}
                             </div>
