@@ -56,8 +56,34 @@ export const SocialCard = ({
     { id: 6, name: "Fiona", profilePic: "https://randomuser.me/api/portraits/women/6.jpg" },
   ];
 
+  const fetchNumComments = async (postId) => {
+    try {
+        const token = await getAccessTokenSilently();
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/comments/count/${postId}`, {
+            headers: {
+                "Authorization": `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) throw new Error("Failed to fetch number of comments");
+
+        const data = await response.json();
+        
+        setNumComments(data.comment_count || 0); // Ensure fallback to 0
+
+    } catch (error) {
+        console.error("Error fetching number of comments:", error);
+    }
+  };
+
+  // Fetch the comment count when the component mounts
   useEffect(() => {
-  },[]);
+      if (post_id) {
+          fetchNumComments(post_id);
+      }
+  }, [post_id]);
+
+
 
   const handleSave = async () => {
     setLoading(true);
@@ -91,6 +117,34 @@ export const SocialCard = ({
       setLoading(false);
     }
   };
+
+  const handleDelete = async (selectedPostId) => {
+    if (!selectedPostId) return; // Ensure postId exists
+  
+    try {
+      const token = await getAccessTokenSilently();
+      setLoading(true); // Show loading state
+  
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/${selectedPostId}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+  
+      if (!response.ok) throw new Error("Failed to delete post");
+  
+      // Remove post from UI
+      reloadFeed();
+  
+      setIsEditing(false); // Close modal
+    } catch (error) {
+      console.error("Error deleting post:", error);
+    } finally {
+      setLoading(false); // Reset loading state
+    }
+  };
+  
 
   const handleClose = () => {
     // Reset all states to null when closing the modal
@@ -221,7 +275,7 @@ export const SocialCard = ({
           <FaComment style={{ marginRight: '5px' }} />
           {numComments}
         </Button>
-        {user?.sub !== author && (<Button
+        {user?.sub !== authorId && (<Button
           variant="light"
           onClick={handleFavoriteClick}
           className={styles.button}
@@ -377,7 +431,10 @@ export const SocialCard = ({
         </Modal.Body>
 
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setIsEditing(false)}>Cancel</Button>
+        <Button variant="secondary" onClick={() => setIsEditing(false)}>Cancel</Button>
+        <Button variant="danger" onClick={()=> handleDelete(post_id)} disabled={loading}>
+            {loading ? "Deleting..." : "Delete Post"}
+          </Button>
           <Button variant="primary" onClick={handleSave} disabled={loading}>
             {loading ? "Saving..." : "Save Changes"}
           </Button>
