@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAllListings, createListing, getFavoritedListings, getCommunityListings, uploadImages, getAllCategories, editListing, deleteListing, getListingCount, getAllUserListings, getUserListingsCount, getAUsersListings } from '../controllers/listingsController.js';
+import { getAllListings, createListing, getFavoritedListings, getCommunityListings, uploadImages, getAllCategories, editListing, deleteListing, getListingCount, getAllUserListings, getUserListingsCount, getSimilarListings, getAUsersListings } from '../controllers/listingsController.js';
 import upload from '../middleware/multer.js';
 
 const router = express.Router();
@@ -8,6 +8,8 @@ const router = express.Router();
 router.get('/listings', getAllListings);  // When a GET request is made to /api/listings, run getAllListings
 
 router.get('/listings/count', getListingCount);
+
+router.get('/listings/:id/category/:category', getSimilarListings);
 
 router.get('/listings/user/:user_id', getAUsersListings);  // When a GET request is made to /api/listings, run getAllListings
 
