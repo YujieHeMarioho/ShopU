@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Modal, Form } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
-import { FaThumbsUp, FaShare, FaHeart, FaRegHeart } from 'react-icons/fa';
+import { Button, Modal, Form, Card} from 'react-bootstrap';
+import { useNavigate, Link } from 'react-router-dom';
+import { FaThumbsUp, FaShare, FaHeart, FaRegHeart, FaComment } from 'react-icons/fa';
 import styles from './SocialCard.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
 
@@ -19,7 +19,8 @@ export const SocialCard = ({
   isLikedAlready,
   tags = [],
   listingId,
-  reloadFeed             // Tags for the post
+  reloadFeed,
+  onShowComments
 }) => {
   const { user, getAccessTokenSilently } = useAuth0();
   const navigate = useNavigate();
@@ -28,6 +29,7 @@ export const SocialCard = ({
   const [isLiked, setIsLiked] = useState(isLikedAlready);
   const [isShared, setIsShared] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [isCommentMode, setIsComment] = useState(false);
   const [alertMessage, setAlertMessage] = useState(null);
   const [showShareModal, setShowShareModal] = useState(false);
   const [selectedFriend, setSelectedFriend] = useState(null);
@@ -42,6 +44,8 @@ export const SocialCard = ({
   const [communities, setCommunities] = useState(['Tech Group', 'Gaming Hub']);
   const [selectedOption, setSelectedOption] = useState('');
   const [loading, setLoading] = useState(false);
+  const [numComments, setNumComments] = useState(3);
+  
 
   const friends = [
     { id: 1, name: "Alice", profilePic: "https://randomuser.me/api/portraits/women/1.jpg" },
@@ -52,11 +56,34 @@ export const SocialCard = ({
     { id: 6, name: "Fiona", profilePic: "https://randomuser.me/api/portraits/women/6.jpg" },
   ];
 
-  useEffect(() => {
-    if (user) {
-      console.log('User ID:', user.sub); // Access the user ID (sub) here
+  const fetchNumComments = async (postId) => {
+    try {
+        const token = await getAccessTokenSilently();
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/comments/count/${postId}`, {
+            headers: {
+                "Authorization": `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) throw new Error("Failed to fetch number of comments");
+
+        const data = await response.json();
+        
+        setNumComments(data.comment_count || 0); // Ensure fallback to 0
+
+    } catch (error) {
+        console.error("Error fetching number of comments:", error);
     }
-  }, [user]);
+  };
+
+  // Fetch the comment count when the component mounts
+  useEffect(() => {
+      if (post_id) {
+          fetchNumComments(post_id);
+      }
+  }, [post_id]);
+
+
 
   const handleSave = async () => {
     setLoading(true);
@@ -90,6 +117,34 @@ export const SocialCard = ({
       setLoading(false);
     }
   };
+
+  const handleDelete = async (selectedPostId) => {
+    if (!selectedPostId) return; // Ensure postId exists
+  
+    try {
+      const token = await getAccessTokenSilently();
+      setLoading(true); // Show loading state
+  
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/${selectedPostId}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+  
+      if (!response.ok) throw new Error("Failed to delete post");
+  
+      // Remove post from UI
+      reloadFeed();
+  
+      setIsEditing(false); // Close modal
+    } catch (error) {
+      console.error("Error deleting post:", error);
+    } finally {
+      setLoading(false); // Reset loading state
+    }
+  };
+  
 
   const handleClose = () => {
     // Reset all states to null when closing the modal
@@ -154,11 +209,12 @@ export const SocialCard = ({
       window.open(fullLink, '_blank');
     }
   };
-
   return (
     <div className={styles.socialCard}>
       <div className={styles.header}>
-        <img src={profilePic} alt={`${author}'s profile`} className={styles.profilePic} />
+        <Link to={`/profile/${authorId}`}>
+          <img src={profilePic} alt={'Profile'} className={styles.profilePic} />
+        </Link>
         <span className={styles.author}>{author}</span>
       </div>
 
@@ -170,6 +226,16 @@ export const SocialCard = ({
       ) : (
         image && <img src={image} alt="Post content" className={styles.media} />
       )}
+
+    <div className={styles.viewItemBar} onClick={(e)=>e.stopPropagation()}>
+      <Button
+        variant="primary"
+        onClick={handleViewItem}
+        className={styles.viewItemButton}
+      >
+        View Item
+      </Button>
+    </div>
 
 
       <div className={styles.body}>
@@ -188,20 +254,6 @@ export const SocialCard = ({
       )}
 
       <div className={styles.footer}>
-        {
-          (
-            <div className={styles.viewItemContainer}>
-              <Button
-                variant="primary"
-                onClick={handleViewItem}
-                className={styles.viewItemButton}
-              >
-                View Item
-              </Button>
-            </div>
-          )
-        }
-
         <Button
           variant="light"
           onClick={handleLikeClick}
@@ -213,20 +265,32 @@ export const SocialCard = ({
         </Button>
         <Button
           variant="light"
-          onClick={handleShareClick}
+          onClick={(e)=>{
+            e.stopPropagation();
+            onShowComments(post_id);
+          }}
           className={styles.button}
-          style={{ color: isShared ? 'green' : 'gray' }}
+          style={{ color: isCommentMode ? 'blue' : 'gray' }}
         >
-          <FaShare style={{ marginRight: '5px' }} />
-          {shares}
+          <FaComment style={{ marginRight: '5px' }} />
+          {numComments}
         </Button>
-        <Button
+        {user?.sub !== authorId && (<Button
           variant="light"
           onClick={handleFavoriteClick}
           className={styles.button}
           style={{ color: isFavorited ? 'red' : 'gray' }}
         >
           {isFavorited ? <FaHeart /> : <FaRegHeart />}
+        </Button>)}
+        <Button
+          variant="light"
+          onClick={handleShareClick}
+          className={styles.button}
+          style={{ color: isShared ? 'green' : 'gray' }}
+        >
+          <FaShare style={{ marginRight: '5px' }} />
+          {shares}
         </Button>
         {user?.sub === authorId && (
           <Button variant="outline-warning" size="sm" onClick={(e) => {
@@ -367,7 +431,10 @@ export const SocialCard = ({
         </Modal.Body>
 
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setIsEditing(false)}>Cancel</Button>
+        <Button variant="secondary" onClick={() => setIsEditing(false)}>Cancel</Button>
+        <Button variant="danger" onClick={()=> handleDelete(post_id)} disabled={loading}>
+            {loading ? "Deleting..." : "Delete Post"}
+          </Button>
           <Button variant="primary" onClick={handleSave} disabled={loading}>
             {loading ? "Saving..." : "Save Changes"}
           </Button>

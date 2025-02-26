@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAllListings, createListing, getFavoritedListings, uploadImages, getAllCategories, editListing, deleteListing, getListingCount, getAllUserListings, getUserListingsCount, getSimilarListings } from '../controllers/listingsController.js';
+import { getAllListings, createListing, getFavoritedListings, uploadImages, getAllCategories, editListing, deleteListing, getListingCount, getAllUserListings, getUserListingsCount, getSimilarListings, getAUsersListings } from '../controllers/listingsController.js';
 import upload from '../middleware/multer.js';
 
 const router = express.Router();
@@ -11,11 +11,11 @@ router.get('/listings/count', getListingCount);
 
 router.get('/listings/:id/category/:category', getSimilarListings);
 
-//router.get('/listings/:userId', getAllUserListings);  // When a GET request is made to /api/listings, run getAllListings
+router.get('/listings/user/:user_id', getAUsersListings);  // When a GET request is made to /api/listings, run getAllListings
 
 router.get('/listings/user', getAllUserListings);  // When a GET request is made to /api/listings, run getAllListings
 
-router.get('/listings/user/count', getUserListingsCount);
+router.get('/listings/user/count/:user_id', getUserListingsCount);
 
 
 // get all favorited listings for a specific user

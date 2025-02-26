@@ -9,7 +9,14 @@ import {
     updateFeedPost, 
     shareFeedPost,
     likeFeedPost,
-    uploadImage
+    uploadImage,
+    getPostComments,
+    addComment,
+    deleteComment,
+    likeComment,
+    unlikeComment,
+    getLikesForComment,
+    getPostCommentCount
 } from '../controllers/feed.js';
 import upload from '../middleware/multer.js';
 
@@ -22,10 +29,10 @@ router.get('/feed', getAllFeedPosts);
 router.get('/feed/count', getFeedPostCount);
 
 // Get feed posts for a specific user
-router.get('/feed/user', getUserFeedPosts);
+router.get('/feed/user/:user_id', getUserFeedPosts);
 
 // Get all feed posts count
-router.get('/feed/user/count', getUserFeedPostsCount);
+router.get('/feed/user/count/:user_id', getUserFeedPostsCount);
 
 // Create a new feed post
 router.post('/feed/create', createFeedPost);
@@ -44,5 +51,25 @@ router.post('/feed/:id/like', likeFeedPost);
 
 // Upload image to S3
 router.post('/feed/upload', upload.single('postImage'), uploadImage);
+
+// Get all comments for a post
+router.get('/feed/comments/:postId', getPostComments);
+
+// Route to add a comment to a post
+router.post('/feed/comments', addComment);
+
+// Route to delete a comment
+router.delete('/feed/comments/:commentId', deleteComment);
+
+// Route to like a comment
+router.post('/feed/comments/:commentId/like', likeComment);
+
+// Route to unlike a comment
+router.delete('/feed/comments/:commentId/like', unlikeComment);
+
+// Route to get likes for a comment
+router.get('/feed/comments/:commentId/likes', getLikesForComment);
+
+router.get('/feed/comments/count/:postId', getPostCommentCount);
 
 export default router;

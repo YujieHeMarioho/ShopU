@@ -6,7 +6,7 @@ const router = express.Router();
 //friends APIs
 // get all friends 
 router.get('/friends', getFriends)
-router.get('/friends/count', getFriendsCount)
+router.get('/friends/count/:user_id', getFriendsCount)
 //add new friend for the current user
 router.post('/friends', addFriend)
 //add new friend for the current user

@@ -33,7 +33,8 @@ const s3 = new S3Client({
 const buckets = {
   feed: process.env.BUCKET_NAME_FEED,
   listings: process.env.BUCKET_NAME_LISTINGS,
-  community: process.env.BUCKET_NAME_COMMUNITIES
+  community: process.env.BUCKET_NAME_COMMUNITIES,
+  profile: process.env.BUCKET_NAME_PROFILE
 };
 
 export { pool, s3, buckets };

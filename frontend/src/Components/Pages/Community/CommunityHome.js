@@ -59,7 +59,7 @@ const CommunityHome = () => {
               console.log(`Member ${member.user_id} Details:`, memberResponse.data);
               return { 
                 ...member, 
-                username: memberResponse.data.username, 
+                name: memberResponse.data.name, 
                 email: memberResponse.data.email, // Include email
                 profile_picture: memberResponse.data.picture 
               };
@@ -67,7 +67,7 @@ const CommunityHome = () => {
               console.error(`Error fetching data for member id ${member.user_id}:`, error.response ? error.response.data : error.message);
               return { 
                 ...member, 
-                username: 'Unknown User', 
+                name: 'Unknown User', 
                 email: 'No Email Provided', // Fallback for email
                 profile_picture: 'https://via.placeholder.com/100' 
               };
@@ -117,11 +117,11 @@ const CommunityHome = () => {
           <div key={member.user_id} className={styles.memberCard}>
             <img
               src={member.profile_picture || 'https://via.placeholder.com/100'}
-              alt={member.username || `User ${member.user_id}`}
+              alt={member.name || `User ${member.user_id}`}
               className={styles.memberAvatar}
             />
             <div className={styles.memberInfo}>
-              <h3>{member.username || `User ${member.user_id}`}</h3>
+              <h3>{member.name || `User ${member.user_id}`}</h3>
             </div>
             <div className={styles.memberActions}>
                <button
