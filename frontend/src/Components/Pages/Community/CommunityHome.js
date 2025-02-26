@@ -2,15 +2,25 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
 import axios from 'axios';
-import {CardGrid} from '../../Common'
+import {CardGrid, SocialCard} from '../../Common'
+import Masonry from 'react-masonry-css';
+import ListingModal from '../Marketplace/Listings';
+import { Modal } from 'react-bootstrap';
 import styles from "./CommunityHome.module.css";
+import feedStyles from '../Feed/SocialFeed.module.css';
+import listingStyles from '../../Common/CardGrid.module.css'
 
 const CommunityHome = () => {
   const { community_id } = useParams(); // Get community id from URL
   const [community, setCommunity] = useState({});
   const [members, setMembers] = useState([]);
+  const [listings, setListings] = useState([]);
   const [feed, setFeed] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showListingModal, setShowListingModal] = useState(false);
+  const [selectedListing, setSelectedListing] = useState(null);
+  const [selectedCard, setSelectedCard] = useState(null);
+  const [showModal, setShowModal] = useState(false); // State to toggle the modal
   const { getAccessTokenSilently } = useAuth0();
 
   useEffect(() => {
@@ -82,10 +92,127 @@ const CommunityHome = () => {
         alert('Failed to load community members. Please try again later.');
       };
     }
+
+    //get listings in this community
+    const getCommunityListings = async () => {
+      try {
+        const token = await getAccessTokenSilently();
+
+        const response = await axios.get(
+          `${process.env.REACT_APP_BACKEND_URL}/api/listings/communities/${community_id}`,
+          {  
+            headers: {
+              Authorization: `Bearer ${token}`,
+            }, 
+          }
+        );
+
+        // Map the data to match the desired format, now including user_id
+        const formattedData = response.data.map(item => ({
+          id: item.listing_id,
+          user_id: item.user_id,  // NEW: Include the seller's user_id
+          title: item.title,
+          description: item.description,
+          category: item.category,
+          type: item.item_type,
+          rating: item.star_rating,
+          price: item.price,
+          image: item.file_keys,  // or item.file_keys[0] if you only want one image
+          
+        }));
+
+        console.log('Fetched info:', formattedData); // Debugging log
+        setListings(formattedData);
+      } catch (error) {
+        console.error('Error fetching community info:', error);
+      }
+    };
+
+    //get posts of this community
+    const getCommunityPosts = async () => {
+      try {
+        const token = await getAccessTokenSilently();
+
+        const response = await axios.get(
+          `${process.env.REACT_APP_BACKEND_URL}/api/feed/communities/${community_id}`,
+          {  
+            headers: {
+              Authorization: `Bearer ${token}`,
+            }, 
+          }
+        );
+
+        console.log('Fetched posts:', response.data); // Debugging log
+        setFeed(response.data);
+      } catch (error) {
+        console.error('Error fetching community info:', error);
+      }
+    };
+
     getCommunityDetails();
     fetchCommunityMembersInfo();
+    getCommunityListings();
+    getCommunityPosts();
     setIsLoading(false);
   });
+
+  // Handler when user clicks a listing
+  const handleCardClick = (listing) => {
+    setSelectedListing(listing);
+    setShowListingModal(true);
+  };
+
+  // Close modal for listing popup
+  const handleCloseListingModal = () => {
+    setShowListingModal(false);
+    setSelectedListing(null);
+  };
+
+  //stuff for dealing with feeds
+
+  const handleFeedCardClick = (post) => {
+    setSelectedCard(post);
+  };
+
+  const closeCardModal = () => {
+    setSelectedCard(null);
+  };
+
+  const handleLike = async (postId, currentLikes, isLiked) => {
+    // Optimistic UI update for likes count
+    setFeed((prev) =>
+        prev.map((post) =>
+            post.post_id === postId
+                ? { ...post, likes: isLiked ? currentLikes + 1 : currentLikes - 1, is_liked: !isLiked }
+                : post
+        )
+    );
+
+    try {
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/like/${postId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ is_liked: !isLiked }),
+        });
+        if (!response.ok) throw new Error('Failed to like post');
+        const updatedData = await response.json();
+        setFeed((prev) =>
+            prev.map((post) => (post.post_id === postId ? updatedData : post))
+        );
+    } catch (err) {
+        console.error('Error liking post:', err);
+    }
+};
+
+const shareFeedPost = async (postId) => {
+    try {
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/share/${postId}`, { method: 'POST' });
+        if (!response.ok) throw new Error('Failed to share post');
+        alert('Post shared successfully!');
+    } catch (err) {
+        console.error('Error sharing post:', err);
+    }
+};
 
   return (
     <div> 
@@ -142,37 +269,73 @@ const CommunityHome = () => {
       </div>
       <p className={styles.sectionTitle}>Listings</p>
       <div>
-        {/* FIXME: this is placeholder stuff. need to fix tables to match with communities. */}
-        <CardGrid listings={[]} openListingDetails={setIsLoading} />
+        <CardGrid className={listingStyles.cardGrid} styles="padding: 0" listings={listings} openListingDetails={handleCardClick} />
       </div>
       <p className={styles.sectionTitle}>Social Posts</p>
       <div>
-        {/* FIXME: this is placeholder stuff. need to fix tables to match with communities. */}
-        <p>No posts available.</p>
-        {/* {feed.length === 0 ? (
-          <p>No posts available.</p> */
-        // ) : (
-        //   feed.map((post) => (
-        //     <div key={post.post_id} className={styles.gridItem}> 
-        //       <SocialCard
-        //         post_id={post.post_id}                // Directly passing post_id
-        //         image={post.image}                 // Passing image URL
-        //         title={post.title}                     // Passing title
-        //         description={post.content}             // Passing content as description
-        //         profilePic={post.profile_pic_url}      // Passing profile picture URL
-        //         author={post.author}                   // Passing author name
-        //         initialLikes={post.likes_count}        // Mapping likes_count to initialLikes
-        //         initialShares={post.shares}            // Mapping shares to initialShares
-        //         isLikedAlready={post.isliked}                 // Check if post already liked by user
-        //         tags={post.tags}                       // Passing tags
-        //         onLike={() => handleLike(post.post_id, post.likes_count, post.is_liked)} // Handling like action
-        //         onShare={() => shareFeedPost(post.post_id)}  // Handling share action
-        //       />
-        //     </div>
-        //   ))
-        // )
+        {feed.length === 0 ? (
+          <p className={styles.defaultFiller}>No posts available.</p>
+        ) : (
+          <Masonry
+            breakpointCols={{ default: 8, 2560: 6, 1920:5, 1280: 3, 1024: 2, 768: 1 }}
+            className={feedStyles.masonryGrid}
+            columnClassName={feedStyles.masonryColumn}
+          >
+          {feed.map((post) => (
+            <div key={post.post_id} className={feedStyles.gridItem} onClick={() => handleFeedCardClick(post)}> 
+              <SocialCard
+                post_id={post.post_id}                // Directly passing post_id
+                image={post.image}                 // Passing image URL
+                title={post.title}                     // Passing title
+                description={post.content}             // Passing content as description
+                profilePic={post.profile_pic_url}      // Passing profile picture URL
+                author={post.author}                   // Passing author name
+                initialLikes={post.likes_count}        // Mapping likes_count to initialLikes
+                initialShares={post.shares}            // Mapping shares to initialShares
+                isLikedAlready={post.isliked}                 // Check if post already liked by user
+                tags={post.tags}                       // Passing tags
+                onLike={() => handleLike(post.post_id, post.likes_count, post.is_liked)} // Handling like action
+                onShare={() => shareFeedPost(post.post_id)}  // Handling share action
+              />
+            </div>
+          ))}
+          </Masonry>
+        )
         }
       </div>
+      <ListingModal show={showListingModal} onHide={handleCloseListingModal} listing={selectedListing} />
+      {/* Feed Modal */}
+      <Modal show={!!selectedCard} onHide={closeCardModal} centered>
+        <Modal.Header closeButton>
+        </Modal.Header>
+
+        <Modal.Body
+            style={{
+                color: "#000000",
+                textAlign: "center",
+                display: "flex",
+                justifyContent: "center",
+                flexDirection: "column",
+            }}
+        >
+            {selectedCard && (
+                <SocialCard
+                    post_id={selectedCard.post_id}
+                    image={selectedCard.image}
+                    title={selectedCard.title}
+                    description={selectedCard.content}
+                    profilePic={selectedCard.profile_pic_url}
+                    author={selectedCard.author}
+                    initialLikes={selectedCard.likes_count}
+                    initialShares={selectedCard.shares}
+                    isLikedAlready={selectedCard.isliked}
+                    tags={selectedCard.tags}
+                    onLike={() => handleLike(selectedCard.post_id, selectedCard.likes_count, selectedCard.is_liked)}
+                    onShare={() => shareFeedPost(selectedCard.post_id)}
+                />
+            )}
+        </Modal.Body>
+      </Modal>
     </div>
   )
 };

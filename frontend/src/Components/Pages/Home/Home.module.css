@@ -119,23 +119,30 @@
 /* Dynamic Statistics Section */
 .statistics-section {
     background-color: #e5e7eb;
-    padding: 50px 0;
+    padding: 50px 20px;
     width: 100%;
+    display: flex;
+    justify-content: center; /* Centers the section */
 }
 
 .statistics {
-    display: flex;
-    justify-content: space-around;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 20px;
+    justify-content: center; /* Centers the grid */
+    align-items: center;
+    max-width: 900px; /* Limits max width to keep it balanced */
+    width: 100%;
 }
 
 .stat {
     background-color: white;
     padding: 30px;
     border-radius: 8px;
-    width: 250px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     text-align: center;
+    width: 100%;
+    max-width: 250px; /* Ensures uniform size */
 }
 
 .stat h3 {
@@ -151,10 +158,11 @@
 
 /* Hover Section */
 .hover-categories {
-    display: flex;
-    justify-content: space-around;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 20px;
     margin-top: 30px;
+    width: 100%;
 }
 
 .category-card {
@@ -173,11 +181,13 @@
 
 .testimonials {
     padding: 50px 0;
+    text-align: center;
 }
 
 .testimonial-cards {
     display: flex;
-    justify-content: space-around;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 30px;
 }
 
@@ -203,4 +213,57 @@
     font-size: 18px;
     color: #777;
     margin-top: 10px;
+}
+
+/* Tablet View (768px and below) */
+@media screen and (max-width: 768px) {
+    .features {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .feature {
+        width: 90%;
+    }
+
+    .statistics {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .hover-categories {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .testimonial-cards {
+        flex-direction: column;
+        align-items: center;
+    }
+}
+
+/* Mobile View (480px and below) */
+@media screen and (max-width: 480px) {
+    .banner h1 {
+        font-size: 28px;
+    }
+
+    .banner p {
+        font-size: 16px;
+    }
+
+    .statistics {
+        grid-template-columns: 1fr;
+    }
+
+    .hover-categories {
+        grid-template-columns: 1fr;
+    }
+
+    .call-to-action h2 {
+        font-size: 24px;
+    }
+
+    .cta-button {
+        font-size: 16px;
+        padding: 12px 24px;
+    }
 }
