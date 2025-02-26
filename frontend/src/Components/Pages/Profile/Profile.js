@@ -46,6 +46,7 @@ const Profile = () => {
     const username = user.name;
     const [selectedPostId, setSelectedPostId] = useState(null);
 
+
     const handleShowComments = (post_id) => {
         setSelectedPostId(post_id);
         setShowComments(true);
@@ -610,7 +611,7 @@ const Profile = () => {
                                         image={post.image}                 // Passing image URL
                                         title={post.title}                     // Passing title
                                         description={post.content}             // Passing content as description
-                                        profilePic={post.profile_pic_url}      // Passing profile picture URL
+                                        profilePic={post.profile}      // Passing profile picture URL
                                         author={post.author}                   // Passing author name
                                         authorId={post.author_id}              // Passing author ID
                                         initialLikes={post.likes_count}        // Mapping likes_count to initialLikes

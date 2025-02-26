@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import sharp from 'sharp';
 
 const bucketName = buckets.feed;
+const profileBucketName = buckets.profile;
 
 // Helper function to extract user_id from the token
 const extractUserIdFromToken = (req) => {
@@ -37,7 +38,7 @@ export const getAllFeedPosts = async (req, res) => {
         f.post_id,
         f.title,
         f.content,
-        f.image_url as profile,
+        u.profile_image as profile,
         fi.file_key as image,
         f.date_created,
         u.NAME AS author,
@@ -82,6 +83,16 @@ export const getAllFeedPosts = async (req, res) => {
               // Generate the signed URL
               feed.image = await getSignedUrl(s3, command, { expiresIn: 86400 });
           }
+
+          if (feed.profile) {
+            const command = new GetObjectCommand({
+                Bucket: profileBucketName,
+                Key: feed.profile,
+            });
+
+            // Generate the signed URL
+            feed.profile = await getSignedUrl(s3, command, { expiresIn: 86400 });
+        }
   
           // Return the modified row
           return feed;
@@ -173,7 +184,7 @@ export const getUserFeedPosts = async (req, res) => {
         f.post_id,
         f.title,
         f.content,
-        f.image_url as profile,
+        u.profile_image as profile,
         fi.file_key as image,
         f.date_created,
         u.NAME AS author,
@@ -219,6 +230,17 @@ export const getUserFeedPosts = async (req, res) => {
               // Generate the signed URL
               feed.image = await getSignedUrl(s3, command, { expiresIn: 86400 });
           }
+
+          
+          if (feed.profile) {
+            const command = new GetObjectCommand({
+                Bucket: profileBucketName,
+                Key: feed.profile,
+            });
+
+            // Generate the signed URL
+            feed.profile = await getSignedUrl(s3, command, { expiresIn: 86400 });
+        }
   
           // Return the modified row
           return feed;

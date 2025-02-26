@@ -432,7 +432,7 @@ const SocialFeed = () => {
                                 image={post.image}                 // Passing image URL
                                 title={post.title}                     // Passing title
                                 description={post.content}             // Passing content as description
-                                profilePic={post.profile_pic_url}      // Passing profile picture URL
+                                profilePic={post.profile}      // Passing profile picture URL
                                 author={post.author}                   // Passing author name
                                 authorId={post.author_id}              // Passing author ID
                                 initialLikes={post.likes_count}        // Mapping likes_count to initialLikes
@@ -456,7 +456,7 @@ const SocialFeed = () => {
                                 image={post.image}                 // Passing image URL
                                 title={post.title}                     // Passing title
                                 description={post.content}             // Passing content as description
-                                profilePic={post.profile_pic_url}      // Passing profile picture URL
+                                profilePic={post.profile}      // Passing profile picture URL
                                 author={post.author}                   // Passing author name
                                 authorId={post.author_id}              // Passing author ID
                                 initialLikes={post.likes_count}        // Mapping likes_count to initialLikes
@@ -487,7 +487,7 @@ const SocialFeed = () => {
                     image={selectedCard.image}
                     title={selectedCard.title}
                     description={selectedCard.content}
-                    profilePic={selectedCard.profile_pic_url}
+                    profilePic={selectedCard.profile}
                     author={selectedCard.author}
                     authorId={selectedCard.author_id}
                     initialLikes={selectedCard.likes_count}
