@@ -129,3 +129,27 @@
 .profilePictureInput {
   width: auto;
 }
+
+/* Ensure comment text and username are black */
+.commentText {
+  color: black;
+  display: flex;
+  align-items: center;  /* Align the text and like button */
+  justify-content: space-between;  /* Ensure the heart button is aligned to the right */
+}
+
+/* Optional: Adjust padding for the comment container */
+.commentContainer {
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+/* Adjust spacing between comment text and like button */
+.commentText strong {
+  margin-right: 5px;
+}
+
+/* Modal Body Styling */
+.modalBody {
+  padding: 20px;
+}

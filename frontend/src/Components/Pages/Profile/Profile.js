@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import axios from 'axios';
-import { Container, Row, Col, Card, Button, InputGroup, Form, Tab, Tabs } from 'react-bootstrap';
-import { FaEnvelope, FaUser, FaEdit } from 'react-icons/fa';
+import { Container, Row, Col, Card, Button, InputGroup, Form, Tab, Tabs, Modal } from 'react-bootstrap';
+import { FaEnvelope, FaUser, FaEdit, FaRegHeart, FaHeart, FaTrash } from 'react-icons/fa';
 import './Profile.module.css'; // Optional: Custom CSS
 import UserPreferences from './UserPreferences';
 import styles from './Profile.module.css';
@@ -14,10 +14,11 @@ import { useParams } from 'react-router-dom';
 
 const Profile = () => {
   const { userId } = useParams();
-  const { user, getAccessTokenSilently } = useAuth0();
+  const { user, isAuthenticated, getAccessTokenSilently, isLoading: authLoading } = useAuth0();
   const { name, picture, email, updated_at, created_at } = user;
   const isOwnProfile = !userId || userId === user.sub;
   const targetUserId = isOwnProfile ? user.sub : userId;
+  const currUserId = isAuthenticated ? user?.sub : null;
 
   const [formData, setFormData] = useState({
     name: name || '',
@@ -38,6 +39,208 @@ const Profile = () => {
   const [createdCommunities, setCreatedCommunities] = useState([]);
   const [userData, setUserData] = useState([]);
 
+    const [newProfilePicture, setNewProfilePicture] = useState(null);
+    const [showComments, setShowComments] = useState(false);
+    const [comments, setComments] = useState([]);
+    const [newComment, setNewComment] = useState("");
+    const [isLiked, setIsLiked] = useState({});
+    const username = user.name;
+    const [selectedPostId, setSelectedPostId] = useState(null);
+
+    const handleShowComments = (post_id) => {
+      setSelectedPostId(post_id);
+      setShowComments(true);
+      fetchComments(post_id);
+    };
+
+    const handleCloseComments = () => {
+      setShowComments(false);
+      setSelectedPostId(null);
+    };
+
+    const addComment = async () => {
+      if (!newComment.trim()) return;
+
+      // Optimistically add the new comment to the UI
+      const newCommentData = {
+          id: Date.now(),  // Temporary ID, will be replaced by the actual ID from the backend if needed
+          user_id: user.sub,
+          name: username,  // Assuming `username` is correctly set
+          text: newComment,
+          likes: 0,  // Assuming likes is 0 initially
+      };
+
+      setComments((prev) => ({
+          ...prev,
+          [selectedPostId]: [
+              ...(prev[selectedPostId] || []),
+              newCommentData
+          ],
+      }));
+
+      setNewComment("");  // Reset the new comment input
+
+      try {
+          const token = await getAccessTokenSilently();
+          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/comments`, {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${token}`,
+              },
+              body: JSON.stringify({ postId: selectedPostId, userId: user.sub, text: newComment }),
+          });
+
+          if (!response.ok) throw new Error("Failed to post comment");
+
+          const postedCommentData = await response.json();
+
+          setComments((prev) => ({
+              ...prev,
+              [selectedPostId]: prev[selectedPostId].map(comment =>
+                  comment.id === newCommentData.id ? { ...comment, ...postedCommentData } : comment
+              ),
+          }));
+
+      } catch (error) {
+          console.error("Error posting comment:", error);
+      }
+  };
+
+  const fetchComments = async (postId) => {
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/comments/${postId}`, {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+      if (!response.ok) throw new Error("Failed to fetch comments");
+
+      const data = await response.json();
+      const initialLikesState = data.reduce((acc, comment) => {
+        acc[comment.comment_id] = comment.isliked; // Set initial like status for each comment
+        return acc;
+      }, {});
+
+      setComments((prev) => ({ ...prev, [postId]: data }));  // Store comments by postId
+      setIsLiked(initialLikesState);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleCommentLike = async (commentId, currentLikeStatus) => {
+    try {
+        // Optimistically update UI by toggling the like status and adjusting the like count
+        setIsLiked((prev) => ({
+            ...prev,
+            [commentId]: !currentLikeStatus, // Toggle like status
+        }));
+
+        setComments((prevComments) => {
+            const updatedComments = { ...prevComments };
+            const updatedPostComments = updatedComments[selectedPostId].map((comment) => {
+                if (comment.comment_id === commentId) {
+                    return {
+                        ...comment,
+                        like_count: currentLikeStatus
+                            ? comment.like_count - 1 // Decrease like count if already liked
+                            : comment.like_count + 1, // Increase like count if not liked
+                    };
+                }
+                return comment;
+            });
+            updatedComments[selectedPostId] = updatedPostComments;
+            return updatedComments;
+        });
+
+        // Send the like/unlike request to the backend
+        const token = await getAccessTokenSilently();
+        const method = currentLikeStatus ? 'DELETE' : 'POST'; // Use DELETE if already liked, POST if not liked
+
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/comments/${commentId}/like`, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) throw new Error('Failed to update like status');
+
+        // Optionally, if needed, fetch the updated like count from the backend and update the state
+        const updatedCommentData = await response.json();
+        setComments((prevComments) => {
+            const updatedComments = { ...prevComments };
+            const updatedPostComments = updatedComments[selectedPostId].map((comment) => {
+                if (comment.comment_id === commentId) {
+                    return {
+                        ...comment,
+                        like_count: updatedCommentData.like_count || comment.like_count, // Update like count if returned from backend
+                    };
+                }
+                return comment;
+            });
+            updatedComments[selectedPostId] = updatedPostComments;
+            return updatedComments;
+        });
+
+    } catch (error) {
+        console.error("Error updating like status:", error);
+
+        // Revert optimistic UI changes if the request fails
+        setIsLiked((prev) => ({
+            ...prev,
+            [commentId]: currentLikeStatus,  // Revert the like status
+        }));
+
+        setComments((prevComments) => {
+            const updatedComments = { ...prevComments };
+            const updatedPostComments = updatedComments[selectedPostId].map((comment) => {
+                if (comment.comment_id === commentId) {
+                    return {
+                        ...comment,
+                        like_count: currentLikeStatus
+                            ? comment.like_count + 1
+                            : comment.like_count - 1, // Revert like count
+                    };
+                }
+                return comment;
+            });
+            updatedComments[selectedPostId] = updatedPostComments;
+            return updatedComments;
+        });
+    }
+};
+
+
+const handleDeleteComment = async (commentId) => {
+    try {
+        const token = await getAccessTokenSilently();
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/comments/${commentId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) throw new Error("Failed to delete comment");
+
+        // Remove the deleted comment from the local state (optimistic update)
+        setComments((prevComments) => {
+            const updatedComments = { ...prevComments };
+            const updatedPostComments = updatedComments[selectedPostId].filter(
+                (comment) => comment.comment_id !== commentId
+            );
+            updatedComments[selectedPostId] = updatedPostComments;
+            return updatedComments;
+        });
+    } catch (error) {
+        console.error("Error deleting comment:", error);
+    }
+};
   const [newProfilePicture, setNewProfilePicture] = useState(null);
 
   const handleCardClick = (post) => {
@@ -283,7 +486,7 @@ const Profile = () => {
       if (newPicture && newPicture.fileKey) {
         requestBody.picture = newPicture.fileKey;
       }
-      
+
 
       const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/users`, {
         method: 'PATCH',
@@ -395,31 +598,33 @@ const Profile = () => {
       {/* Tabs Section */}
       <Tabs activeKey={key} onSelect={(k) => setKey(k)} id="profile-tabs" className="mb-3">
         <Tab eventKey="posts" title="Posts">
-          <div className={`${styles.feedContainer} ${isGridLayout ? styles.gridView : styles.scrollView}`}>
-            {userPosts.length === 0 ? (
-              <p>No posts available.</p>
-            ) : (
-              userPosts.map((post) => (
-                <div key={post.post_id} className={styles.gridItem} onClick={() => handleCardClick(post)}>
-                  <SocialCard
-                    post_id={post.post_id}                // Directly passing post_id
-                    image={post.image}                   // Passing image URL
-                    title={post.title}                   // Passing title
-                    description={post.content}           // Passing content as description
-                    profilePic={post.profile_pic_url}    // Passing profile picture URL
-                    author={post.author}                 // Passing author name
-                    authorId={post.author_id}            // Passing author ID
-                    initialLikes={post.likes_count}      // Mapping likes_count to initialLikes
-                    initialShares={post.shares}          // Mapping shares to initialShares
-                    isLikedAlready={post.is_liked}       // Check if post already liked by user
-                    tags={post.tags}                     // Passing tags
-                    reloadFeed={reloadFeed}
-                  />
-                </div>
-              ))
-            )}
-          </div>
-        </Tab>
+            <div className={`${styles.feedContainer} ${isGridLayout ? styles.gridView : styles.scrollView}`}>
+              {userPosts.length === 0 ? (
+                <p>No posts available.</p>
+              ) : (
+                userPosts.map((post) => (
+                  <div key={post.post_id} className={styles.gridItem} onClick={() => handleCardClick(post)}>
+                    <SocialCard
+                      post_id={post.post_id}                // Directly passing post_id
+                      image={post.image}                 // Passing image URL
+                      title={post.title}                     // Passing title
+                      description={post.content}             // Passing content as description
+                      profilePic={post.profile_pic_url}      // Passing profile picture URL
+                      author={post.author}                   // Passing author name
+                      authorId={post.author_id}              // Passing author ID
+                      initialLikes={post.likes_count}        // Mapping likes_count to initialLikes
+                      initialShares={post.shares}            // Mapping shares to initialShares
+                      isLikedAlready={post.isliked}                 // Check if post already liked by user
+                      tags={post.tags}                       // Passing tags
+                      listingId={post.listing_id}                       // Passing link
+                      onShowComments={()=>handleShowComments(post.post_id)} // Handling show post comments
+                      reloadFeed={reloadFeed}
+                    />
+                  </div>
+                ))
+              )}
+            </div>
+          </Tab>
 
         <Tab eventKey="listings" title="Listings">
           <div className={styles.cardGridContainer}>
@@ -496,8 +701,64 @@ const Profile = () => {
           </Card.Body>
         </Card>
         */}
-    </Container>
-  );
-};
+        {/* Comments Modal */}
+        <Modal show={showComments} onHide={handleCloseComments} animation={true} className="bottom-modal" dialogClassName="modal-dialog-bottom">
+            <Modal.Header closeButton>
+                <Modal.Title style={{ color: 'black' }}>Comments</Modal.Title>
+            </Modal.Header>
+                <Modal.Body className={styles.modalBody}>
+                    <div className="space-y-2">
+                    {(comments[selectedPostId] || []).map((comment) => (
+                        <div key={comment.comment_id} className={styles.commentContainer}>
+                            {/* Comment text container */}
+                            <div className={styles.commentText}>
+                                <strong>{comment.name}:</strong> {comment.text}
+
+                                {/* Like button and count */}
+                                <div className={styles.likeContainer}>
+                                    <Button
+                                        variant="link"
+                                        onClick={() => handleCommentLike(comment.comment_id, isLiked[comment.comment_id])}
+                                        style={{ color: isLiked[comment.comment_id] ? 'red' : 'gray' }}
+                                    >
+                                        {isLiked[comment.comment_id] ? <FaHeart /> : <FaRegHeart />}
+                                    </Button>
+                                    <span className={styles.likeCount}>{comment.like_count || 0}</span> {/* Display the number of likes */}
+                                </div>
+                            </div>
+
+                            {/* Delete button for the comment */}
+                            {(comment.user_id === currUserId) && (
+                                <Button
+                                    variant="link"
+                                    onClick={() => handleDeleteComment(comment.comment_id)}
+                                    className={styles.deleteButton}
+                                >
+                                    <FaTrash />
+                                </Button>
+                            )}
+                        </div>
+                    ))}
+                    </div>
+
+
+
+            {/* New comment input */}
+            <div className="mt-4 d-flex">
+              <input
+                type="text"
+                className="form-control"
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Add a comment..."
+              />
+              <Button className="ml-2" onClick={addComment} variant="primary">Post</Button>
+            </div>
+          </Modal.Body>
+        </Modal>
+      </Container>
+
+    );
+  };
 
 export default Profile;

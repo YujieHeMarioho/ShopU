@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaSearch, FaShoppingCart, FaHeart, FaBars, FaUser, FaEnvelope } from 'react-icons/fa';
+import { FaSearch, FaShoppingCart, FaHeart, FaBars, FaUser, FaEnvelope, FaTimes } from 'react-icons/fa';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import styles from './Header.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
@@ -9,9 +9,11 @@ import axios from 'axios';
 const Header = () => {
     const [showCategoriesPopup, setShowCategoriesPopup] = useState(false);
     const [showSidebar, setShowSidebar] = useState(false);
-    const [isMobile, setIsMobile] = useState(false);
+    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
     const [categories, setCategories] = useState([]);
     const [unreadTotal, setUnreadTotal] = useState(0);
+    const [showMobileLinks, setShowMobileLinks] = useState(false);
+
 
     const location = useLocation();
     const navigate = useNavigate();
@@ -28,6 +30,11 @@ const Header = () => {
         fetchFilters();
         return () => window.removeEventListener('resize', handleResize);
     }, []);
+
+    useEffect(() => {
+        setShowSidebar(false);
+        setShowMobileLinks(false);
+    }, [location.pathname]);
 
     // Fetch filters for categories
     const fetchFilters = useCallback(async () => {
@@ -48,9 +55,9 @@ const Header = () => {
         setShowCategoriesPopup(prevState => !prevState);
     }, []);
 
-    const toggleSidebar = useCallback(() => {
-        setShowSidebar(prevState => !prevState);
-    }, []);
+    const toggleSidebar = () => {
+        setShowSidebar((prev) => !prev);
+    };
 
     const getActiveLinkClass = useCallback(
         (path) => (location.pathname === path ? styles.activeLink : ''),
@@ -124,6 +131,7 @@ const Header = () => {
                 </div>
 
                 {/* Icons */}
+                {!isMobile && (
                 <div className={styles.iconContainer}>
                     <div
                         className={styles.icon}
@@ -150,11 +158,58 @@ const Header = () => {
                     <div className={styles.icon} onClick={handleAuthAction}>
                         <FaUser />
                     </div>
+                </div> )}
+                
+                {/* Hamburger Menu for Mobile */}
+                {isMobile && (
+                <div className={styles.icon} onClick={toggleSidebar}>
+                    <FaBars />
                 </div>
+                )}
             </div>
+
+            {/* Fullscreen Sidebar for Mobile */}
+            {isMobile && showSidebar && (
+                <div className={styles.fullScreenSidebar}>
+                    <button className={styles.closeButton} onClick={toggleSidebar}>
+                        <FaTimes />
+                    </button>
+                    <div className={styles.sidebarContent}>
+                        <div className={styles.sidebarItem} onClick={() => navigate('/cart')}>
+                            <FaShoppingCart className={styles.sidebarIcon} />
+                            <span>Cart</span>
+                        </div>
+                        <div className={styles.sidebarItem} onClick={() => navigate('/favorites')}>
+                            <FaHeart className={styles.sidebarIcon} />
+                            <span>Favorites</span>
+                        </div>
+                        <div className={styles.sidebarItem} onClick={() => navigate('/messages')}>
+                            <FaEnvelope className={styles.sidebarIcon} />
+                            <span>Messages</span>
+                            {unreadTotal > 0 && <span className={styles.unreadDot}></span>}
+                        </div>
+                        <div className={styles.sidebarItem} onClick={handleAuthAction}>
+                            <FaUser className={styles.sidebarIcon} />
+                            <span>{isAuthenticated ? "Profile" : "Sign In"}</span>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Second Layer */}
             <div className={styles.secondLayer}>
+
+                  {/* Mobile Dropdown Toggle */}
+                    {isMobile && (
+                        <button 
+                            className={styles.mobileLinksToggle} 
+                            onClick={() => setShowMobileLinks(prev => !prev)}
+                        >
+                            {showMobileLinks ? "Close Menu" : "Menu"}
+                        </button>
+                    )}
+
+                {!isMobile && (
                 <button
                     className={styles.categoriesButton}
                     onClick={toggleCategoriesPopup}
@@ -163,6 +218,7 @@ const Header = () => {
                     <FaBars className={styles.categoriesIcon} />
                     All Categories
                 </button>
+                )}
 
                 {showCategoriesPopup && (
                     <div className={styles.categoriesPopup}>
@@ -179,7 +235,7 @@ const Header = () => {
                 )}
 
                 {/* Links */}
-                <div className={styles.linksContainer}>
+                <div className={`${styles.linksContainer} ${isMobile && showMobileLinks ? styles.active : ""}`}>
                     {[
                         'Home',
                         'Marketplace',
@@ -192,14 +248,27 @@ const Header = () => {
                             key={link}
                             href={`/${link}`}
                             className={getActiveLinkClass(`/${link}`)}
+                            onClick={() => setShowMobileLinks(false)}
                         >
                             {link.replace('-', ' ')}
                         </a>
                     ))}
+                    {/* Move Auth Button Inside Mobile Menu */}
+                    {isMobile && !isLoading && (
+                        <button
+                            className={styles.signIn}
+                            onClick={() => {
+                                isAuthenticated ? handleLogout() : loginWithRedirect();
+                                setShowMobileLinks(false); // Close menu after action
+                            }}
+                        >
+                            {isAuthenticated ? "Logout" : "Sign In"}
+                        </button>
+                    )}
                 </div>
 
                 {/* Auth Buttons */}
-                <div className={styles.buttonsContainer}>
+                {!isMobile && (<div className={styles.buttonsContainer}>
                     {!isLoading && (
                         <>
                             {isAuthenticated ? (
@@ -221,7 +290,7 @@ const Header = () => {
                             )}
                         </>
                     )}
-                </div>
+                </div> )}
             </div>
 
             {/* Sidebar (if any) */}

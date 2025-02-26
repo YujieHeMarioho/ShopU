@@ -32,6 +32,7 @@ const SocialFeed = () => {
     const [comments, setComments] = useState([]);
     const [newComment, setNewComment] = useState("");
     const [isLiked, setIsLiked] = useState({});
+    const [likeCount, setLikeCount] = useState({});
     const username = user.name;
 
   const handleShowComments = (post_id) => {
@@ -48,13 +49,16 @@ const SocialFeed = () => {
   const addComment = async () => {
     if (!newComment.trim()) return;
 
+    const tempId = Date.now();
+
     // Optimistically add the new comment to the UI
     const newCommentData = {
-        id: Date.now(),  // Temporary ID, will be replaced by the actual ID from the backend if needed
+        id: tempId,  // Temporary ID, will be replaced by the actual ID from the backend if needed
         user_id: user.sub,
         name: username,  // Assuming `username` is correctly set
         text: newComment,
-        likes: 0,  // Assuming likes is 0 initially
+        like_count: 0,  // Assuming likes is 0 initially
+        isliked: false
     };
 
     setComments((prev) => ({
@@ -63,6 +67,16 @@ const SocialFeed = () => {
             ...(prev[selectedPostId] || []), 
             newCommentData
         ],
+    }));
+
+    setLikeCount((prev) => ({
+      ...prev,
+      [tempId]: 0, // Set like count to 0 for new comment
+    }));
+
+    setIsLiked((prev) => ({
+        ...prev,
+        [tempId]: false, // Set like status to false for new comment
     }));
 
     setNewComment("");  // Reset the new comment input
@@ -85,12 +99,40 @@ const SocialFeed = () => {
         setComments((prev) => ({
             ...prev,
             [selectedPostId]: prev[selectedPostId].map(comment =>
-                comment.id === newCommentData.id ? { ...comment, ...postedCommentData } : comment
+                comment.id === tempId ? { ...comment, ...postedCommentData } : comment
             ),
+        }));
+
+        // Update like count and like status with actual backend data
+        setLikeCount((prev) => ({
+            ...prev,
+            [postedCommentData.comment_id]: postedCommentData.like_count ?? 0,
+        }));
+
+        setIsLiked((prev) => ({
+            ...prev,
+            [postedCommentData.comment_id]: postedCommentData.isliked ?? false,
         }));
 
     } catch (error) {
         console.error("Error posting comment:", error);
+        // Rollback optimistic UI update in case of error
+        setComments((prev) => ({
+            ...prev,
+            [selectedPostId]: prev[selectedPostId].filter(comment => comment.id !== tempId),
+        }));
+
+        setLikeCount((prev) => {
+            const updated = { ...prev };
+            delete updated[tempId];
+            return updated;
+        });
+
+        setIsLiked((prev) => {
+            const updated = { ...prev };
+            delete updated[tempId];
+            return updated;
+        });
     }
 };
 
@@ -160,8 +202,14 @@ const SocialFeed = () => {
             return acc;
           }, {});
 
+          const initialLikeCounts = data.reduce((acc, comment) => {
+            acc[comment.comment_id] = comment.like_count; // Set initial like count
+            return acc;
+          }, {});
+
           setComments((prev) => ({ ...prev, [postId]: data }));  // Store comments by postId
           setIsLiked(initialLikesState); 
+          setLikeCount(initialLikeCounts);
         } catch (error) {
           console.error(error);
         }
@@ -212,6 +260,11 @@ const SocialFeed = () => {
                 ...prev,
                 [commentId]: !currentLikeStatus, // Toggle like status
             }));
+
+            setLikeCount((prev) => ({
+              ...prev,
+              [commentId]: currentLikeStatus ? prev[commentId] - 1 : prev[commentId] + 1, // Adjust like count
+            }));
     
             setComments((prevComments) => {
                 const updatedComments = { ...prevComments };
@@ -246,6 +299,10 @@ const SocialFeed = () => {
     
             // Optionally, if needed, fetch the updated like count from the backend and update the state
             const updatedCommentData = await response.json();
+            setLikeCount((prev) => ({
+              ...prev,
+              [commentId]: updatedCommentData.like_count ?? prev[commentId], // Update like count if returned from backend
+            }));
             setComments((prevComments) => {
                 const updatedComments = { ...prevComments };
                 const updatedPostComments = updatedComments[selectedPostId].map((comment) => {
@@ -268,6 +325,11 @@ const SocialFeed = () => {
             setIsLiked((prev) => ({
                 ...prev,
                 [commentId]: currentLikeStatus,  // Revert the like status
+            }));
+
+            setLikeCount((prev) => ({
+              ...prev,
+              [commentId]: currentLikeStatus ? prev[commentId] + 1 : prev[commentId] - 1, // Revert like count
             }));
     
             setComments((prevComments) => {
@@ -524,7 +586,7 @@ const SocialFeed = () => {
                                 >
                                     {isLiked[comment.comment_id] ? <FaHeart /> : <FaRegHeart />}
                                 </Button>
-                                <span className={styles.likeCount}>{comment.like_count || 0}</span> {/* Display the number of likes */}
+                                <span className={styles.likeCount}>{likeCount[comment.comment_id] || 0}</span> {/* Display the number of likes */}
                             </div>
                         </div>
 

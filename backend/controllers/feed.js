@@ -279,12 +279,7 @@ export const createFeedPost = async (req, res) => {
       RETURNING post_id;
     `;
 
-    let postListingId = null;
-
-    if(req.body.listingId != null)
-    {
-      postListingId = req.body.listingId;
-    }
+    let postListingId = req.body.listingId && req.body.listingId !== "" ? listingId : null;
 
     //will need to replace the placeholder with profile image, will get to that later 
     const postResult = await pool.query(postQuery, [title, content, 'https://via.placeholder.com/300x200', userId, postListingId]);
@@ -650,5 +645,21 @@ export const getLikesForComment = async (req, res) => {
   } catch (error) {
     console.error("Error fetching comment likes:", error);
     res.status(500).json({ error: "Failed to fetch comment likes" });
+  }
+};
+
+export const getPostCommentCount = async (req, res) => {
+  const { postId } = req.params;
+
+  try {
+    const result = await pool.query(
+      `SELECT COUNT(*) AS comment_count FROM post_comments WHERE post_id = $1`,
+      [postId]
+    );
+
+    res.json({ comment_count: result.rows[0].comment_count });
+  } catch (error) {
+    console.error("Error fetching comment count:", error);
+    res.status(500).json({ error: "Failed to fetch comment count" });
   }
 };
