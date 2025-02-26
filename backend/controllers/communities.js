@@ -78,7 +78,8 @@ export const getUserCommunities = async (req, res) => {
     const query = `
     SELECT comms.community_id, comms.name, comms.description, comm_img.file_key
     FROM public.communities AS comms
-    JOIN public.community_members AS mems ON comms.community_id = mems.community_id
+    JOIN public.community_members AS mems 
+    ON comms.community_id = mems.community_id
     LEFT JOIN public.community_images AS comm_img ON comms.community_id = comm_img.community_id
     WHERE mems.user_id = $1;`;
 
@@ -119,8 +120,8 @@ export const getUserCommunities = async (req, res) => {
     }
 };
 
-//get all communities
-export const getAllCommunities = async (req, res) => {
+//get communities user is not in
+export const getOtherCommunities = async (req, res) => {
     const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
     let user_id;
     try {
@@ -136,9 +137,10 @@ export const getAllCommunities = async (req, res) => {
         FROM public.communities AS comms
         LEFT OUTER JOIN public.community_members AS mems 
         ON comms.community_id = mems.community_id
+        AND mems.user_id = $1
         LEFT OUTER JOIN public.community_images AS comm_img
         ON comms.community_id = comm_img.community_id
-        WHERE mems.user_id != $1 OR mems.user_id IS NULL;`;
+        WHERE mems.user_id IS NULL;`
 
     try {
         const result = await pool.query(query, [user_id]); //user_id
@@ -425,4 +427,4 @@ export const leaveCommunity = async (req, res) => {
     }
 };
 
-export default {getAllCommunities, joinCommunity, leaveCommunity, uploadCommunityImage };
+export default {getOtherCommunities, joinCommunity, leaveCommunity, uploadCommunityImage };

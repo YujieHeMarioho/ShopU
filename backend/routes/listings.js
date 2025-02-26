@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAllListings, createListing, getFavoritedListings, uploadImages, getAllCategories, getListingCount, getAllUserListings, getUserListingsCount } from '../controllers/listingsController.js';
+import { getAllListings, createListing, getFavoritedListings, getCommunityListings, uploadImages, getAllCategories, getListingCount, getAllUserListings, getUserListingsCount } from '../controllers/listingsController.js';
 import upload from '../middleware/multer.js';
 
 const router = express.Router();
@@ -17,6 +17,8 @@ router.get('/listings/user/count', getUserListingsCount);
 
 
 router.get('/listings/favorites', getFavoritedListings);  // get all favorited listings for a specific user
+
+router.get('/listings/communities/:community_id', getCommunityListings)
 
 router.get('/marketplace/categories', getAllCategories);
 

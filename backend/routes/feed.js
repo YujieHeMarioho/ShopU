@@ -2,6 +2,7 @@ import express from 'express';
 import { 
     getAllFeedPosts, 
     getFeedPostCount,
+    getCommunityFeedPosts,
     getUserFeedPosts, 
     getUserFeedPostsCount,
     createFeedPost, 
@@ -23,6 +24,8 @@ router.get('/feed/count', getFeedPostCount);
 
 // Get feed posts for a specific user
 router.get('/feed/user', getUserFeedPosts);
+
+router.get('/feed/communities/:community_id', getCommunityFeedPosts);
 
 // Get all feed posts count
 router.get('/feed/user/count', getUserFeedPostsCount);
