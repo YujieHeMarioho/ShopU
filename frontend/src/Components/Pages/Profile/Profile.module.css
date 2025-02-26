@@ -111,6 +111,25 @@
   cursor: not-allowed;
 }
 
+.profilePictureGroup {
+  display: flex;
+  align-items: center;
+}
+
+.profilePictureLabel {
+  flex: 0 0 auto;
+  margin-right: 15px;
+}
+
+.profilePictureInputWrapper {
+  flex: 1;
+  display: flex;
+}
+
+.profilePictureInput {
+  width: auto;
+}
+
 /* Ensure comment text and username are black */
 .commentText {
   color: black;
