@@ -35,8 +35,21 @@ p {
 	height: auto; /* Allow dynamic height */
 }
 
+.modalFooter {
+    display: flex;
+    flex-direction: row; /* Match .modalBody */
+    gap: 20px; /* Match spacing */
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px;
+    flex: 0 0 auto; /* Prevent it from being larger than needed */
+    min-height: 10%;
+    max-height: 15%; /* Ensure it never gets too big */
+}
+
 /* Image container takes 60% of the modal */
-.carouselContainer {
+.carouselContainerImages {
 	flex: 60%;
 	display: flex;
 	align-items: center;
@@ -100,4 +113,33 @@ p {
 .button {
 	padding: 10px 20px;
 	font-size: 1rem;
+}
+
+
+.listingCardGrid {
+    display: flex;
+    justify-content: left;
+    align-items: flex-start;
+    gap: 8px;
+    width: 100%;
+    max-width: 100%;
+    height: auto; /* Ensure it only takes as much space as needed */
+    max-height: 100px; /* Adjust this to prevent it from getting too tall */
+    padding: 10px;
+    overflow-x: auto; /* Allow scrolling if too many items */
+    overflow-y: hidden;
+    white-space: nowrap; /* Prevents items from wrapping */
+}
+
+.listingCard {
+    width: 120px; /* Adjust width to make cards smaller */
+    height: 150px; /* Adjust height to keep them compact */
+    font-size: 0.85rem; /* Make text smaller */
+    padding: 5px; /* Reduce padding for a compact look */
+}
+
+.listingCard img {
+    max-width: 100%;
+    max-height: 80px; /* Adjust image height inside the card */
+    object-fit: cover; /* Ensures image scales well */
 }

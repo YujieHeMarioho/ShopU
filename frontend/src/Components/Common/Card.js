@@ -1,4 +1,4 @@
-import React, { act, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Button, Alert, Carousel } from 'react-bootstrap';
 import styles from './Card.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
