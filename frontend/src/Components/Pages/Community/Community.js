@@ -41,7 +41,7 @@ const Communities = () => {
                   }
                 //other communities
                 );
-                const otherCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/all`,
+                const otherCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/other`,
                   {
                     headers: {
                       'Authorization': `Bearer ${token}`,

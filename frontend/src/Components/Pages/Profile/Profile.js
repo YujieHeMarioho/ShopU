@@ -6,6 +6,7 @@ import {FaEnvelope, FaUser, FaEdit, FaRegHeart, FaHeart, FaTrash} from 'react-ic
 import './Profile.module.css'; // Optional: Custom CSS
 import UserPreferences from './UserPreferences';
 import styles from './Profile.module.css';
+import communityStyles from '../Community/Community.module.css'
 import {SocialCard} from '../../Common';
 import {CardGrid} from '../../Common';
 import leaveCommunity from '../Community/Community';
@@ -644,21 +645,21 @@ const Profile = () => {
                             <p>You haven't created any communities.</p>
                         ) : (
                             createdCommunities.map((community) => (
-                                <div key={community.community_id} className="your-community-card">
+                                <div key={community.community_id} className={communityStyles.yourCommunityCard} onClick={(e) => handleCardClick(community.community_id, e)}>
                                     <img
                                         src={community.imageUrl}
                                         alt={community.community_id}
-                                        className="community-image"
+                                        className={communityStyles.communityImage}
                                     />
-                                    <div className="community-info">
+                                    <div className={communityStyles.communityInfo}>
                                         <h3>{community.name || `Community ${community.community_id}`}</h3>
-                                        <p>Created At: {new Date(community.created_at).toLocaleString()}</p>
+                                        <p>{community.description}</p>
                                         {/*<p>Joined At: {new Date(community.joined_at).toLocaleString()}</p>*/}
                                     </div>
-                                    <button className="leave-button"
-                                            onClick={() => leaveCommunity(community.community_id)}>
+                                    {isOwnProfile &&(<button className={communityStyles.leaveButton} onClick={() => leaveCommunity(community.community_id)}>
                                         Leave {/*FIXME: add delete community ability*/}
-                                    </button>
+                                    </button>)}
+                                    
                                 </div>
                             ))
                         )}

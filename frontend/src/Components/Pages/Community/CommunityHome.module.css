@@ -61,6 +61,11 @@ background-color: #059669; /* Darker green */
 .cardText {
 	font-size: 1.5rem;
 	text-align: center;
+	color: white;
+}
+
+.defaultFiller {
+	color: white
 }
 
 .sectionTitle {
@@ -68,6 +73,7 @@ background-color: #059669; /* Darker green */
 	text-align: center;
 	margin-bottom: .25rem;
 	margin-top: 1rem;
+	color: white;
 }
 
 /*member list stuff*/

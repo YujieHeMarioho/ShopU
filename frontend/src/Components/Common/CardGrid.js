@@ -5,7 +5,7 @@ import {SocialCard} from '../Common';
 
 export const CardGrid = ({ listings = [], variant = 'marketplace', openListingDetails, onUnfavorite }) => {
   return (
-    <Container>
+    <Container style={{margin: 0}}>
       <Row>
         {listings.length === 0 ? (
           <Col xs={12}>
