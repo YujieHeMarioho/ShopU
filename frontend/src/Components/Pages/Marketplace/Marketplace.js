@@ -16,12 +16,11 @@ export const Marketplace = () => {
   const [isDropdownVisible, setDropdownVisible] = useState(false); // Control visibility of suggestions
   const [showModal, setShowModal] = useState(false);
   const navigate = useNavigate();
-  const { getAccessTokenSilently } = useAuth0();  
+  const { getAccessTokenSilently } = useAuth0();
   const location = useLocation();
 
   const [showListingModal, setShowListingModal] = useState(false);
   const [selectedListing, setSelectedListing] = useState(null);
-
   // Fuse.js setup for fuzzy search
   const fuse = useMemo(() => {
     const options = {
@@ -110,10 +109,17 @@ export const Marketplace = () => {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const category = params.get('category');
+    const listingId = params.get('listingId');
     if (category) {
       setActiveFilters(prevFilters => ({
         ...prevFilters,
-        categories: [category]
+        categories: [category],
+      }));
+    }
+    if (listingId) {
+      setActiveFilters(prevFilters => ({
+        ...prevFilters,
+        listingId: [listingId],
       }));
     }
   }, [location]);
@@ -123,7 +129,7 @@ export const Marketplace = () => {
     const fetchListings = async () => {
       try {
         const token = await getAccessTokenSilently();
-  
+
         const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings`, {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -145,16 +151,23 @@ export const Marketplace = () => {
           image: item.file_keys,  // or item.file_keys[0] if you only want one image
           
         }));
-  
+
         setListings(formattedData);
+        // If there's a listingId in the URL, open the modal for that listing
+        if (activeFilters.listingId) {
+          const selectedListing = formattedData.find(listing => listing.id.toString() === activeFilters.listingId.toString());
+          if (selectedListing) {
+            setSelectedListing(selectedListing);
+            setShowListingModal(true);
+          }
+        }
       } catch (error) {
         console.error('Error fetching listings:', error);
       }
     };
   
     fetchListings();
-  }, []);
-  
+  }, [activeFilters]);
 
   // Filter change handler (when filter options are selected or modified)
   const handleFilterChange = (filter) => {
@@ -255,9 +268,9 @@ export const Marketplace = () => {
       <div className={styles.layoutContainer}>
         {/* Filter Sidebar */}
         <div className={styles.filterSidebarContainer}>
-          <FilterSidebar 
-            onFilterChange={handleFilterChange} 
-            initialFilters={activeFilters} 
+          <FilterSidebar
+            onFilterChange={handleFilterChange}
+            initialFilters={activeFilters}
             className={styles.filterSidebar}
           />
         </div>

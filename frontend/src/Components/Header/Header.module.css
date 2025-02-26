@@ -3,6 +3,7 @@
     position: sticky;
     top: 0;
     z-index: 1000;
+    background-color: var(--background-color-light);
 }
 
 /* Main Header Layout */
@@ -10,7 +11,6 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: var(--background-color-light); /* Keeping background light */
     padding: var(--padding-medium);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
@@ -19,6 +19,7 @@
 .logoContainer {
     display: flex;
     align-items: center;
+    cursor: pointer;
 }
 
 .logo {
@@ -28,10 +29,10 @@
 
 .brandName {
     font-size: 1.5rem;
-    color: var(--primary-color); /* Primary brand color */
+    color: var(--primary-color);
 }
 
-/* Search Bar Styling */
+/* Search Bar */
 .searchContainer {
     flex: 1;
     display: flex;
@@ -286,43 +287,6 @@
     display: block;
 }
 
-/* Sidebar Styles */
-.sidebar {
-    position: fixed;
-    top: 0;
-    right: -300px;
-    width: 300px;
-    height: 100%;
-    background-color: white;
-    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
-    transition: right 0.3s ease;
-    z-index: 1000;
-}
-
-.sidebar.open {
-    right: 0;
-}
-
-.sidebarContent {
-    padding: var(--padding-medium);
-    color: black;
-}
-
-.sidebarHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 1.5rem;
-    margin-bottom: var(--padding-medium);
-}
-
-.closeButton {
-    cursor: pointer;
-    font-size: 1.5rem;
-    background: none;
-    border: none;
-}
-
 /* User Profile Image */
 .profileImage {
     width: 100px;
@@ -330,4 +294,134 @@
     border-radius: 50%;
     object-fit: cover;
     margin-bottom: var(--padding-medium);
+}
+
+.fullScreenSidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 1);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    color: white;
+    transition: transform 0.3s ease-in-out;
+}
+
+.closeButton {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: white;
+    cursor: pointer;
+}
+
+.sidebarContent {
+    width: 80%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.sidebarItem {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    width: 100%;
+    padding: 15px;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    transition: background 0.2s ease-in-out;
+}
+
+.sidebarItem:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.sidebarIcon {
+    font-size: 28px;
+}
+
+.unreadDot {
+    background: red;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    position: absolute;
+    right: 25px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+
+/* MOBILE: Collapsible Links */
+@media (max-width: 768px) {
+    .secondLayer {
+        flex-direction: column;
+        align-items: center;
+        padding: var(--padding-small);
+    }
+
+    /* Hide links by default on mobile */
+    .linksContainer {
+        display: none;
+        flex-direction: column;
+        width: 100%;
+        background: var(--background-color-light);
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Show links when menu is active */
+    .linksContainer.active {
+        display: flex;
+    }
+
+    .linksContainer a {
+        font-size: 1.1rem;
+        padding: 15px;
+        display: block;
+        text-align: center;
+        width: 100%;
+        border-bottom: 1px solid var(--border-color);
+        transition: background 0.2s ease-in-out;
+    }
+
+    .linksContainer a:hover {
+        background-color: var(--primary-color);
+        color: white;
+    }
+}
+
+/* Mobile Dropdown Toggle Button */
+.mobileLinksToggle {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 10px;
+}
+
+@media (max-width: 768px) {
+    .mobileLinksToggle {
+        display: block;
+        width: 100%;
+        text-align: center;
+        background-color: var(--primary-color);
+        color: white;
+        padding: 12px;
+        font-size: 1.2rem;
+        cursor: pointer;
+    }
 }

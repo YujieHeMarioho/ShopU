@@ -105,3 +105,51 @@
   border: none;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
+.readOnlyInput {
+  background-color: #d5d6da;
+  cursor: not-allowed;
+}
+
+.profilePictureGroup {
+  display: flex;
+  align-items: center;
+}
+
+.profilePictureLabel {
+  flex: 0 0 auto;
+  margin-right: 15px;
+}
+
+.profilePictureInputWrapper {
+  flex: 1;
+  display: flex;
+}
+
+.profilePictureInput {
+  width: auto;
+}
+
+/* Ensure comment text and username are black */
+.commentText {
+  color: black;
+  display: flex;
+  align-items: center;  /* Align the text and like button */
+  justify-content: space-between;  /* Ensure the heart button is aligned to the right */
+}
+
+/* Optional: Adjust padding for the comment container */
+.commentContainer {
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+/* Adjust spacing between comment text and like button */
+.commentText strong {
+  margin-right: 5px;
+}
+
+/* Modal Body Styling */
+.modalBody {
+  padding: 20px;
+}

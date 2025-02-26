@@ -179,15 +179,7 @@ export const getOtherCommunities = async (req, res) => {
 
 //get created communities for user
 export const getCreatedCommunities = async (req, res) => {
-    const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
-    let user_id;
-    try {
-        const decodedToken = jwtDecode(token); // Decode the token
-        user_id = decodedToken.sub;
-    } catch (err) {
-        console.error('Error decoding token:', err);
-        return res.status(401).json({ message: 'Invalid token' });
-    }
+    const { user_id } = req.params;
 
     const query = `
     SELECT comms.community_id, comms.name, comms.description, comm_img.file_key
@@ -427,4 +419,4 @@ export const leaveCommunity = async (req, res) => {
     }
 };
 
-export default {getOtherCommunities, joinCommunity, leaveCommunity, uploadCommunityImage };
+export default {joinCommunity, leaveCommunity, uploadCommunityImage };

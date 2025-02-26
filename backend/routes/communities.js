@@ -7,8 +7,8 @@ const router = express.Router();
 // Define routes
 router.get('/community/:community_id', getCommunityDetails)
 router.get('/communities', getUserCommunities)
-router.get('/communities/all', getOtherCommunities)
-router.get('/communities/created', getCreatedCommunities)
+router.get('/communities/other', getOtherCommunities)
+router.get('/communities/created/:user_id', getCreatedCommunities)
 router.get('/communities/members/:community_id', getCommunityMembers)
 router.post('/communities', joinCommunity)
 router.post('/communities/add', addCommunity)

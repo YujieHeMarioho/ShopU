@@ -3,10 +3,12 @@ import { useParams } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
 import axios from 'axios';
 import {CardGrid, SocialCard} from '../../Common'
+import Masonry from 'react-masonry-css';
 import ListingModal from '../Marketplace/Listings';
 import { Modal } from 'react-bootstrap';
 import styles from "./CommunityHome.module.css";
 import feedStyles from '../Feed/SocialFeed.module.css';
+import listingStyles from '../../Common/CardGrid.module.css'
 
 const CommunityHome = () => {
   const { community_id } = useParams(); // Get community id from URL
@@ -67,7 +69,7 @@ const CommunityHome = () => {
               console.log(`Member ${member.user_id} Details:`, memberResponse.data);
               return { 
                 ...member, 
-                username: memberResponse.data.username, 
+                name: memberResponse.data.name, 
                 email: memberResponse.data.email, // Include email
                 profile_picture: memberResponse.data.picture 
               };
@@ -75,7 +77,7 @@ const CommunityHome = () => {
               console.error(`Error fetching data for member id ${member.user_id}:`, error.response ? error.response.data : error.message);
               return { 
                 ...member, 
-                username: 'Unknown User', 
+                name: 'Unknown User', 
                 email: 'No Email Provided', // Fallback for email
                 profile_picture: 'https://via.placeholder.com/100' 
               };
@@ -242,11 +244,11 @@ const shareFeedPost = async (postId) => {
           <div key={member.user_id} className={styles.memberCard}>
             <img
               src={member.profile_picture || 'https://via.placeholder.com/100'}
-              alt={member.username || `User ${member.user_id}`}
+              alt={member.name || `User ${member.user_id}`}
               className={styles.memberAvatar}
             />
             <div className={styles.memberInfo}>
-              <h3>{member.username || `User ${member.user_id}`}</h3>
+              <h3>{member.name || `User ${member.user_id}`}</h3>
             </div>
             <div className={styles.memberActions}>
                <button
@@ -267,15 +269,20 @@ const shareFeedPost = async (postId) => {
       </div>
       <p className={styles.sectionTitle}>Listings</p>
       <div>
-        <CardGrid listings={listings} openListingDetails={handleCardClick} />
+        <CardGrid className={listingStyles.cardGrid} styles="padding: 0" listings={listings} openListingDetails={handleCardClick} />
       </div>
       <p className={styles.sectionTitle}>Social Posts</p>
       <div>
         {feed.length === 0 ? (
-          <p>No posts available.</p>
+          <p className={styles.defaultFiller}>No posts available.</p>
         ) : (
-          feed.map((post) => (
-            <div key={post.post_id} className={feedStyles.gridView} onClick={() => handleFeedCardClick(post)}> 
+          <Masonry
+            breakpointCols={{ default: 8, 2560: 6, 1920:5, 1280: 3, 1024: 2, 768: 1 }}
+            className={feedStyles.masonryGrid}
+            columnClassName={feedStyles.masonryColumn}
+          >
+          {feed.map((post) => (
+            <div key={post.post_id} className={feedStyles.gridItem} onClick={() => handleFeedCardClick(post)}> 
               <SocialCard
                 post_id={post.post_id}                // Directly passing post_id
                 image={post.image}                 // Passing image URL
@@ -291,7 +298,8 @@ const shareFeedPost = async (postId) => {
                 onShare={() => shareFeedPost(post.post_id)}  // Handling share action
               />
             </div>
-          ))
+          ))}
+          </Masonry>
         )
         }
       </div>

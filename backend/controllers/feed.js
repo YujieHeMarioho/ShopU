@@ -40,9 +40,11 @@ export const getAllFeedPosts = async (req, res) => {
         f.image_url as profile,
         fi.file_key as image,
         f.date_created,
-        u.user_id AS author,
+        u.NAME AS author,
+        u.user_id AS author_id,
         f.likes_count,
-        ARRAY_AGG(t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL) AS tags, -- Aggregate tags into an array
+        f.listing_id,
+        COALESCE(ARRAY_AGG(t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL), ARRAY[]::TEXT[]) AS tags,
         EXISTS (
             SELECT 1
             FROM post_likes pl
@@ -232,9 +234,9 @@ export const getCommunityFeedPosts = async (req, res) => {
 };
 
 export const getUserFeedPosts = async (req, res) => {
-  try {
-    const userId = extractUserIdFromToken(req); // Extract user ID from token
+  const { user_id } = req.params;
 
+  try {
 
     const query = `
        SELECT
@@ -244,9 +246,11 @@ export const getUserFeedPosts = async (req, res) => {
         f.image_url as profile,
         fi.file_key as image,
         f.date_created,
-        u.user_id AS author,
+        u.NAME AS author,
+        u.user_id AS author_id,
         f.likes_count,
-        ARRAY_AGG(t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL) AS tags, -- Aggregate tags into an array
+        f.listing_id,
+        COALESCE(ARRAY_AGG(t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL), ARRAY[]::TEXT[]) AS tags,
         EXISTS (
             SELECT 1
             FROM post_likes pl
@@ -271,7 +275,7 @@ export const getUserFeedPosts = async (req, res) => {
     `;
 
     // Execute the query
-    const result = await pool.query(query, [userId]);
+    const result = await pool.query(query, [user_id]);
 
     const feedWithUrls = await Promise.all(
       result.rows.map(async (feed) => {
@@ -305,7 +309,7 @@ export const getUserFeedPosts = async (req, res) => {
 
 export const getUserFeedPostsCount = async (req, res) => {
   try {
-    const userId = extractUserIdFromToken(req); // Extract user ID from token
+    const { user_id } = req.params;
 
     const query = `
       SELECT COUNT(*) AS post_count
@@ -314,7 +318,7 @@ export const getUserFeedPostsCount = async (req, res) => {
     `;
 
     // Execute the query
-    const result = await pool.query(query, [userId]);
+    const result = await pool.query(query, [user_id]);
 
     const postCount = result.rows[0].post_count;
 
@@ -340,13 +344,15 @@ export const createFeedPost = async (req, res) => {
 
     // Insert the post into the feed_posts table
     const postQuery = `
-      INSERT INTO feed_posts (title, content, image_url, user_id, date_created)
-      VALUES ($1, $2, $3, $4, NOW())
+      INSERT INTO feed_posts (title, content, image_url, user_id, date_created, listing_id)
+      VALUES ($1, $2, $3, $4, NOW(), $5)
       RETURNING post_id;
     `;
 
+    let postListingId = req.body.listingId && req.body.listingId !== "" ? listingId : null;
+
     //will need to replace the placeholder with profile image, will get to that later 
-    const postResult = await pool.query(postQuery, [title, content, 'https://via.placeholder.com/300x200', userId]);
+    const postResult = await pool.query(postQuery, [title, content, 'https://via.placeholder.com/300x200', userId, postListingId]);
     const postId = postResult.rows[0].post_id;
 
     // Inserts image into the post_image table
@@ -574,5 +580,156 @@ export const uploadImage = async (req, res) => {
   } catch (err) {
     console.error("Error uploading images:", err);
     res.status(500).json({ message: "Error uploading files", error: err });
+  }
+};
+
+// Get all comments for a post
+export const getPostComments = async (req, res) => {
+  const { postId } = req.params;
+  const userId = extractUserIdFromToken(req); // Get userId from the token
+
+  try {
+    const result = await pool.query(
+      `SELECT c.comment_id, c.post_id, c.user_id, c.text, c.created_at, u.name,
+              COUNT(pcl.comment_id) AS like_count,
+              EXISTS (
+                SELECT 1
+                FROM post_comment_likes pcl
+                WHERE pcl.comment_id = c.comment_id AND pcl.user_id = $2
+              ) AS isLiked
+       FROM post_comments c 
+       JOIN users u ON c.user_id = u.user_id 
+       LEFT JOIN post_comment_likes pcl ON c.comment_id = pcl.comment_id
+       WHERE c.post_id = $1 
+       GROUP BY c.comment_id, c.post_id, c.user_id, c.text, c.created_at, u.name
+       ORDER BY c.created_at ASC`,
+      [postId, userId]
+    );
+
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error fetching comments:", error);
+    res.status(500).json({ error: "Failed to fetch comments" });
+  }
+};
+
+// Add a comment to a post
+export const addComment = async (req, res) => {
+  const { postId, text } = req.body;
+  const userId = extractUserIdFromToken(req); // Get userId from the token
+
+  if (!text.trim()) {
+    return res.status(400).json({ error: "Comment cannot be empty" });
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO post_comments (post_id, user_id, text) 
+       VALUES ($1, $2, $3) 
+       RETURNING *`,
+      [postId, userId, text]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error("Error adding comment:", error);
+    res.status(500).json({ error: "Failed to add comment" });
+  }
+};
+
+// Delete comment
+export const deleteComment = async (req, res) => {
+  const { commentId } = req.params;
+  const userId = extractUserIdFromToken(req); // Get userId from the token
+
+  try {
+    const result = await pool.query(
+      `DELETE FROM post_comments WHERE comment_id = $1 AND user_id = $2 RETURNING *`,
+      [commentId, userId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(403).json({ error: "Unauthorized or comment not found" });
+    }
+
+    res.json({ success: true, message: "Comment deleted" });
+  } catch (error) {
+    console.error("Error deleting comment:", error);
+    res.status(500).json({ error: "Failed to delete comment" });
+  }
+};
+
+// Like comment
+export const likeComment = async (req, res) => {
+  const { commentId } = req.params;
+  const userId = extractUserIdFromToken(req); // Get userId from the token
+  try {
+    await pool.query(
+      `INSERT INTO post_comment_likes (comment_id, user_id) 
+       VALUES ($1, $2) 
+       ON CONFLICT DO NOTHING`,
+      [commentId, userId]
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Error liking comment:", error);
+    res.status(500).json({ error: "Failed to like comment" });
+  }
+};
+
+// Unlike comment
+export const unlikeComment = async (req, res) => {
+  const { commentId } = req.params;
+  const userId = extractUserIdFromToken(req); // Get userId from the token
+  try {
+    const result = await pool.query(
+      `DELETE FROM post_comment_likes WHERE comment_id = $1 AND user_id = $2 RETURNING *`,
+      [commentId, userId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: "Like not found" });
+    }
+
+    res.json({ success: true, message: "Comment unliked" });
+  } catch (error) {
+    console.error("Error unliking comment:", error);
+    res.status(500).json({ error: "Failed to unlike comment" });
+  }
+};
+
+// Get likes for a comment
+export const getLikesForComment = async (req, res) => {
+  const { commentId } = req.params;
+
+  try {
+    const result = await pool.query(
+      `SELECT u.username FROM post_comment_likes l 
+       JOIN users u ON l.user_id = u.user_id 
+       WHERE l.comment_id = $1`,
+      [commentId]
+    );
+
+    res.json({ likes: result.rows });
+  } catch (error) {
+    console.error("Error fetching comment likes:", error);
+    res.status(500).json({ error: "Failed to fetch comment likes" });
+  }
+};
+
+export const getPostCommentCount = async (req, res) => {
+  const { postId } = req.params;
+
+  try {
+    const result = await pool.query(
+      `SELECT COUNT(*) AS comment_count FROM post_comments WHERE post_id = $1`,
+      [postId]
+    );
+
+    res.json({ comment_count: result.rows[0].comment_count });
+  } catch (error) {
+    console.error("Error fetching comment count:", error);
+    res.status(500).json({ error: "Failed to fetch comment count" });
   }
 };

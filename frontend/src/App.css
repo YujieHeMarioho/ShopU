@@ -308,7 +308,7 @@ nav.navbar .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon {
 /************ Banner Css ************/
 .banner {
   margin-top: 0;
-  padding: 260px 0 100px 0;
+  padding: 200px 0 100px 0;
   background-position: top center;
   background-size: cover;
   background-repeat: no-repeat;
@@ -350,4 +350,31 @@ nav.navbar .navbar-toggler[aria-expanded="true"] .navbar-toggler-icon {
 
 .banner button:hover svg {
   margin-left: 25px;
+}
+
+/* Page container styles */
+.page-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.content-wrapper {
+  flex: 1 0 auto;
+}
+
+/* Ensure the body takes up full height */
+html, body, #root {
+  height: 100%;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+}
+
+.App {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
 }
