@@ -30,7 +30,6 @@ const extractUserIdFromToken = (req) => {
 
 //Endpoint for fetching rows
 export const getAllListings = async (req, res) => {
-  console.log("Inside getAllListings endpoint"); // Debug: Check if endpoint is hit
   const query = `
         SELECT
           l.listing_id,

@@ -29,7 +29,6 @@ export const getFriends = async (req, res) => {
       friended_at: row.friended_at,
     }));
 
-    console.log('Friends List:', friends);
     res.status(200).json(friends);
   } catch (error) {
     console.error('Error getting friends:', error);
