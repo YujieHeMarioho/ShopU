@@ -45,7 +45,7 @@ export const SocialCard = ({
   const [editedVideo, setEditedVideo] = useState(video);
   const [loading, setLoading] = useState(false);
   const [communities, setCommunities] = useState(['Tech Group', 'Gaming Hub']);
-  const [numComments, setNumComments] = useState(0); // Changed initial value to 0 to match dynamic updates
+  const [numComments, setNumComments] = useState(0);
 
   const fetchNumComments = async (postId) => {
     try {
@@ -67,13 +67,14 @@ export const SocialCard = ({
     }
   }, [post_id]);
 
+  // Reverted to Old Version's Like Logic
   const handleLikeClick = async (e) => {
     e.stopPropagation();
     const newLikeStatus = !isLiked;
     setIsLiked(newLikeStatus);
     try {
       const token = await getAccessTokenSilently();
-      const response = await likeAPICall(post_id, newLikeStatus, token, user?.sub);
+      const response = await likeAPICall(post_id, newLikeStatus, token, user.sub); // Old version used user.sub
       if (response.success) {
         setLikes(response.likeCount);
       }
@@ -208,9 +209,7 @@ export const SocialCard = ({
       {tags.length > 0 && (
         <div className={styles.tagsContainer}>
           {tags.map((tag, i) => (
-            <span key={i} className={styles.tag}>
-              {tag}
-            </span>
+            <span key={i} className={styles.tag}>{tag}</span>
           ))}
         </div>
       )}
@@ -225,21 +224,15 @@ export const SocialCard = ({
           <FaThumbsUp style={{ marginRight: '5px' }} />
           {likes}
         </Button>
-
-        {/* Fixed Comment Button to Show Count */}
         <Button
           variant="light"
-          onClick={(e) => {
-            e.stopPropagation();
-            onShowComments(post_id);
-          }}
+          onClick={(e) => { e.stopPropagation(); onShowComments(post_id); }}
           className={styles.button}
           style={{ color: isCommentMode ? 'blue' : 'gray' }}
         >
           <FaComment style={{ marginRight: '5px' }} />
-          {numComments} {/* Added numComments here */}
+          {numComments}
         </Button>
-
         {user?.sub !== authorId && (
           <Button
             variant="light"
@@ -250,7 +243,6 @@ export const SocialCard = ({
             {isFavorited ? <FaHeart /> : <FaRegHeart />}
           </Button>
         )}
-
         <Button
           variant="light"
           onClick={handleShareClick}
@@ -260,15 +252,11 @@ export const SocialCard = ({
           <FaShare style={{ marginRight: '5px' }} />
           {shares}
         </Button>
-
         {user?.sub === authorId && (
           <Button
             variant="outline-warning"
             size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsEditing(true);
-            }}
+            onClick={(e) => { e.stopPropagation(); setIsEditing(true); }}
           >
             ✏️ Edit
           </Button>
@@ -297,7 +285,6 @@ export const SocialCard = ({
             >
               Community Share
             </Button>
-
             {selectedOption === 'friend' && (
               <>
                 {friendsLoading ? (
@@ -325,7 +312,6 @@ export const SocialCard = ({
                 )}
               </>
             )}
-
             {selectedOption === 'community' && (
               <Form.Group controlId="communitySelect" className="mt-3">
                 <Form.Label>Select a Community</Form.Label>
@@ -370,7 +356,6 @@ export const SocialCard = ({
                 onChange={(e) => setEditedTitle(e.target.value)}
               />
             </Form.Group>
-
             <Form.Group controlId="editDescription" className="mt-3">
               <Form.Label>Description</Form.Label>
               <Form.Control
@@ -380,7 +365,6 @@ export const SocialCard = ({
                 onChange={(e) => setEditedDescription(e.target.value)}
               />
             </Form.Group>
-
             <Form.Group controlId="editTags" className="mt-3">
               <Form.Label>Tags (comma-separated)</Form.Label>
               <Form.Control
@@ -389,7 +373,6 @@ export const SocialCard = ({
                 onChange={(e) => setEditedTags(e.target.value)}
               />
             </Form.Group>
-
             <Form.Group controlId="editImage" className="mt-3">
               <Form.Label>Image URL</Form.Label>
               <Form.Control
@@ -398,7 +381,6 @@ export const SocialCard = ({
                 onChange={(e) => setEditedImage(e.target.value)}
               />
             </Form.Group>
-
             <Form.Group controlId="editVideo" className="mt-3">
               <Form.Label>Video URL</Form.Label>
               <Form.Control
@@ -425,15 +407,16 @@ export const SocialCard = ({
   );
 };
 
+// Reverted to Old Version's Like API Call
 const likeAPICall = async (post_id, isLiked, token, userId) => {
   try {
-    const method = isLiked ? 'POST' : 'DELETE';
     const URL = `${process.env.REACT_APP_BACKEND_URL}/api/feed/${post_id}/like`;
+    const method = isLiked ? 'POST' : 'POST'; // Old version bug: always POST
     const response = await fetch(URL, {
       method,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${token}`
       },
     });
     if (!response.ok) {
