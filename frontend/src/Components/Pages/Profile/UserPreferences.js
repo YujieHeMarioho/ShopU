@@ -1,12 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import styles from './UserPreferences.module.css';
 
 const UserPreferences = () => {
   const { getAccessTokenSilently } = useAuth0();
 
+  // Load theme from localStorage or default to 'light'
+  const [isDarkMode, setIsDarkMode] = useState(
+    localStorage.getItem("theme") === "dark"
+  );
+
   const [preferences, setPreferences] = useState({
-    theme: 'light',
+    theme: isDarkMode ? "dark" : "light",
     language: 'English',
     timezone: 'UTC',
     dateFormat: 'MM/DD/YYYY',
@@ -23,10 +28,21 @@ const UserPreferences = () => {
 
   const [message, setMessage] = useState('');
 
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  // Apply the theme on initial load
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", isDarkMode ? "dark" : "light");
+  }, [isDarkMode]);
 
   const handleThemeToggle = () => {
+    const newTheme = isDarkMode ? "light" : "dark";
     setIsDarkMode(!isDarkMode);
+    localStorage.setItem("theme", newTheme);
+    document.documentElement.setAttribute("data-theme", newTheme);
+
+    setPreferences((prev) => ({
+      ...prev,
+      theme: newTheme
+    }));
   };
 
   const handleChange = (e) => {

@@ -1,9 +1,9 @@
 // src/Components/Common/Banner.js
 import { Container, Row, Col } from 'react-bootstrap';
 
-export const Banner = ({ title, description, showConnectButton }) => {
+export const Banner = ({ title, description, showConnectButton, className }) => {
   return (
-    <section className="banner" id="home">
+    <section className={className} id="home">
       <Container>
         <Row className="align-items-center">
           <Col xs={12} md={6} xl={7}>

@@ -6,12 +6,13 @@
     min-height: 100vh;
     padding: 20px;
     font-family: 'Arial', sans-serif;
+    background-color: var(--background-color);
 }
 
 /* Enhanced Banner Section */
 .home-container .banner {
     width: 100%;
-    background-color: #ff7f50;
+    background-color: var(--primary-color);
     padding: 50px 20px;
     color: white;
     text-align: center;
@@ -52,7 +53,7 @@
 }
 
 .feature {
-    background-color: #fff;
+    background-color: var(--card-color);
     padding: 20px;
     width: 250px;
     border-radius: 8px;
@@ -74,14 +75,14 @@
 
 .feature p {
     font-size: 16px;
-    color: #666666;
+    color: var(--text-dark);
 }
 
 /* Call-to-Action Section */
 .call-to-action {
     width: 100%;
     text-align: center;
-    background-color: #f1f1f1;
+    background-color: var(--primary-color);
     padding: 40px 20px;
     border-radius: 8px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
@@ -91,18 +92,18 @@
 .call-to-action h2 {
     font-size: 32px;
     margin-bottom: 20px;
-    color: #333;
+    color: #252525;
 }
 
 .call-to-action p {
     font-size: 18px;
-    color: #666;
+    color: #252525;
     margin-bottom: 30px;
 }
 
 .cta-button {
-    background-color: var(--primary-color);
-    color: white;
+    background-color: var(--secondary-color);
+    color: #252525;
     padding: 15px 30px;
     font-size: 18px;
     font-weight: bold;
@@ -118,10 +119,11 @@
 
 /* Dynamic Statistics Section */
 .statistics-section {
-    background-color: #e5e7eb;
+    background-color: var(--primary-color);
     padding: 50px 20px;
     width: 100%;
     display: flex;
+    border-radius: 8px;
     justify-content: center; /* Centers the section */
 }
 
@@ -136,7 +138,7 @@
 }
 
 .stat {
-    background-color: white;
+    background-color: var(--background-color);
     padding: 30px;
     border-radius: 8px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
@@ -153,10 +155,15 @@
 
 .stat p {
     font-size: 18px;
-    color: #666;
+    color: var(--text-color);
 }
 
 /* Hover Section */
+
+.hover-section{
+    color:var(--text-color);
+}
+
 .hover-categories {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -182,6 +189,9 @@
 .testimonials {
     padding: 50px 0;
     text-align: center;
+    width: 100%;
+    border-radius: 8px;
+    color:var(--text-color)
 }
 
 .testimonial-cards {
