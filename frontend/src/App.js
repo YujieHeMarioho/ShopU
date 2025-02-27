@@ -80,6 +80,7 @@ function App() {
             <Route path="/messages" element={<AuthenticationGuard component={MessagesPage} />} />
             <Route path="/community/:community_id" element={<AuthenticationGuard component={CommunityHome} />} />
             <Route path="/chat/:conversation_id" element={<AuthenticationGuard component={ChatContent} />} />
+            <Route path="/feed/:post_id" element={<AuthenticationGuard component={SocialFeed} />} />
 
           </Routes>
 

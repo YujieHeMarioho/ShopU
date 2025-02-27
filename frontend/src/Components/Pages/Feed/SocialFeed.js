@@ -9,6 +9,8 @@ import { FaHeart, FaRegHeart, FaTrash } from 'react-icons/fa';
 import Masonry from 'react-masonry-css';
 import { useInView } from 'react-intersection-observer';
 import axios from 'axios';
+import { useLocation } from 'react-router-dom';
+
 
 const SocialFeed = () => {
   const [feed, setFeed] = useState([]);
@@ -26,6 +28,7 @@ const SocialFeed = () => {
   const [hasMore, setHasMore] = useState(true);
   const { ref, inView } = useInView({ threshold: 0.5 });
   const navigate = useNavigate();
+  
 
   const [comments, setComments] = useState({});
   const [newComment, setNewComment] = useState('');
@@ -37,6 +40,20 @@ const SocialFeed = () => {
 
   const userId = isAuthenticated ? user?.sub : null;
   const username = user?.name || 'Anonymous';
+
+  const location = useLocation();
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const postId = searchParams.get('post_id');
+
+    if (postId && feed.length > 0) {
+      const post = feed.find((p) => p.post_id.toString() === postId);
+      if (post) {
+        setSelectedCard(post);
+      }
+    }
+  }, [location, feed]);
 
   useEffect(() => {
     if (!user) return;
