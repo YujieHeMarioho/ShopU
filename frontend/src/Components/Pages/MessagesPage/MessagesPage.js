@@ -15,6 +15,9 @@ const MessagesPage = () => {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isUserNearBottom, setIsUserNearBottom] = useState(true);
 
+  // Store the initial order of conversations
+  const conversationOrderRef = useRef(new Map());
+
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
   // Cache for user details
@@ -65,8 +68,12 @@ const MessagesPage = () => {
           pictureFromAPI && pictureFromAPI.trim() !== ''
             ? pictureFromAPI
             : 'https://via.placeholder.com/40';
+        // Use the 'name' field from the users table, fallback to userId if not available
+        const name = response.data.name && response.data.name.trim() !== ''
+          ? response.data.name
+          : userId;
         const userData = {
-          username: response.data.username || userId,
+          username: name, // Still using 'username' key for consistency in the app
           picture: validPicture,
         };
         userCache.current[userId] = userData;
@@ -74,8 +81,9 @@ const MessagesPage = () => {
         return userData;
       })
       .catch((error) => {
+        console.error(`Failed to fetch details for user ${userId}:`, error);
         const fallback = {
-          username: userId,
+          username: userId, // Fallback to Auth0 ID if API fails
           picture: 'https://via.placeholder.com/40',
         };
         userCache.current[userId] = fallback;
@@ -118,23 +126,40 @@ const MessagesPage = () => {
       uniqueIds.forEach((id, idx) => {
         userIdToDetailsMap[id] = userDetailsList[idx];
       });
-      
-      // Step 6: Enhance conversations with the other participant's username and profile picture
-      const enhancedConvs = data.map((conv) => {
-        const isUser1 = conv.user1_id === user.sub;
 
+      const enhancedConvs = data.map((conv) => {
+        const otherId =
+          conv.user1_id.toLowerCase() === user.sub.toLowerCase() ? conv.user2_id : conv.user1_id;
+        const { username, picture } = userIdToDetailsMap[otherId] || {
+          username: 'Unknown User',
+          picture: 'https://via.placeholder.com/40',
+        };
         return {
           ...conv,
-          otherUserId: isUser1 ? conv.user2_id : conv.user1_id,
-          otherUsername: isUser1 ? conv.user2_name : conv.user1_name,
-          otherProfilePicture: isUser1 ? conv.user2_profile_image : conv.user1_profile_image,
-          // If this conversation is currently selected, force unread_count to 0
+          otherUsername: username,
+          otherProfilePicture: picture,
           unread_count:
             selectedConversation && conv.conversation_id === selectedConversation.conversation_id
               ? 0
               : conv.unread_count || 0,
         };
       });
+
+      // Sort conversations: unread first, then by stored order
+      const hasUnread = enhancedConvs.some((conv) => conv.unread_count > 0);
+      if (hasUnread || conversationOrderRef.current.size === 0) {
+        enhancedConvs.sort((a, b) => b.unread_count - a.unread_count);
+        conversationOrderRef.current.clear();
+        enhancedConvs.forEach((conv, index) => {
+          conversationOrderRef.current.set(conv.conversation_id, index);
+        });
+      } else {
+        enhancedConvs.sort((a, b) => {
+          const orderA = conversationOrderRef.current.get(a.conversation_id) ?? Infinity;
+          const orderB = conversationOrderRef.current.get(b.conversation_id) ?? Infinity;
+          return orderA - orderB;
+        });
+      }
 
       setConversations(enhancedConvs);
       setError(null);
@@ -211,21 +236,15 @@ const MessagesPage = () => {
   // Handle conversation selection
   // -----------------------------
   const handleSelectConversation = (conv) => {
-    // Immediately clear messages so the old conversation's messages vanish.
     setMessages([]);
-    // Immediately update local state to clear the unread badge for the selected conversation.
     setConversations((prev) =>
       prev.map((c) =>
         c.conversation_id === conv.conversation_id ? { ...c, unread_count: 0 } : c
       )
     );
-    // Set the selected conversation immediately.
     setSelectedConversation(conv);
-    // Clear any existing messages polling interval.
     if (messagesIntervalRef.current) clearInterval(messagesIntervalRef.current);
-    // Immediately fetch messages for the new conversation.
     fetchMessagesForConversation(conv.conversation_id, false);
-    // Start a new polling interval for the new conversation (without flashing spinner).
     messagesIntervalRef.current = setInterval(() => {
       fetchMessagesForConversation(conv.conversation_id, true);
       markConversationAsRead(conv.conversation_id);
