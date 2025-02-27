@@ -231,7 +231,7 @@ const SocialFeed = () => {
     }
   };
 
-  // Fixed Comment Like Logic
+  // Fixed Comment Like Logic to be correct
   const handleCommentLike = async (commentId, currentLikeStatus) => {
     try {
       // Optimistically update UI
