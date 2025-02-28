@@ -5,7 +5,7 @@ export const Banner = ({ title, description, showConnectButton, className }) => 
   return (
     <section className={className} id="home">
       <Container>
-        <Row className="align-items-center">
+        <Row className="d-flex justify-content-center align-items-center">
           <Col xs={12} md={6} xl={7}>
             <div>
               <h1>{title}</h1>

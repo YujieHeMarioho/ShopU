@@ -3,7 +3,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-height: 100vh;
+    min-height: 100vh; /* Takes up at least the full height of the viewport */
     padding: 20px;
     font-family: 'Arial', sans-serif;
     background-color: var(--background-color);
@@ -123,17 +123,28 @@
     padding: 50px 20px;
     width: 100%;
     display: flex;
+    flex-direction: column; /* Stack title and stats vertically */
+    align-items: center; /* Center the content horizontally */
     border-radius: 8px;
-    justify-content: center; /* Centers the section */
+    justify-content: center; /* Center the content vertically */
+    max-width: 1200px; /* Set the max-width for the entire stats section */
+    margin: 0 auto;
+}
+
+.statistics-section h2 {
+    font-size: 32px; /* Adjust size of section title */
+    color: white; /* Adjust color for the title */
+    margin-bottom: 30px; /* Space between title and stats */
+    text-align: center; /* Center the title text */
 }
 
 .statistics {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* Create responsive grid */
     gap: 20px;
-    justify-content: center; /* Centers the grid */
+    justify-content: center; /* Center the grid */
     align-items: center;
-    max-width: 900px; /* Limits max width to keep it balanced */
+    max-width: 900px; /* Limit max width for balance */
     width: 100%;
 }
 
@@ -144,7 +155,7 @@
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     text-align: center;
     width: 100%;
-    max-width: 250px; /* Ensures uniform size */
+    max-width: 250px; /* Ensure uniform size */
 }
 
 .stat h3 {

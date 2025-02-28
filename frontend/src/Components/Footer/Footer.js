@@ -46,7 +46,7 @@ const Footer = () => {
                         <ul className={`${styles.linkList} list-unstyled`}>
                             {categories.map((category) => (
                                 <li key={category}>
-                                    <Link to={`/marketplace?category=${encodeURIComponent(category)}`}>{category}</Link>
+                                    <Link to={`/marketplace?category=${encodeURIComponent(category)}`} className={styles.link}>{category}</Link>
                                 </li>
                             ))}
                         </ul>
@@ -54,9 +54,9 @@ const Footer = () => {
                     <Col md={4}>
                         <h3>Support</h3>
                         <ul className={`${styles.linkList} list-unstyled`}>
-                            <li><Link to="/help">Help & Support</Link></li>
-                            <li><Link to="/terms">Terms & Conditions</Link></li>
-                            <li><Link to="/privacy">Privacy Policy</Link></li>
+                            <li><Link to="/help" className={styles.link}>Help & Support</Link></li>
+                            <li><Link to="/terms" className={styles.link}>Terms & Conditions</Link></li>
+                            <li><Link to="/privacy" className={styles.link}>Privacy Policy</Link></li>
                         </ul>
                     </Col>
                 </Row>
@@ -71,8 +71,8 @@ const Footer = () => {
                     </Col>
                 </Row>
             </Container>
-
         </footer>
+
     );
 }
 export default Footer;

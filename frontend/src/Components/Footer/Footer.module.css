@@ -1,46 +1,59 @@
 /* frontend/src/Components/Footer/Footer.module.css */
+
+/* Footer Container */
 .footer {
-    background-color: var(--background-color);
-    color: var(--text-color);
+    background-color: var(--background-color); /* Background from global variable */
+    color: var(--text-color); /* Apply global text color */
     border-top: 2px solid var(--primary-color);
     flex-shrink: 0;
+    padding: var(--padding-medium);
 }
 
-/* Footer styles */
-footer {
-    flex-shrink: 0;
-  }
-  
+/* Logo styling */
 .logo {
     font-size: 1.5rem;
-    color: var(--primary-color);
+    color: var(--primary-color); /* Primary color for logo */
     margin-bottom: 0.5rem;
 }
 
+/* Links and paragraph text */
 .linkList a {
-    color: var(--text-color);
+    color: var(--text-color); /* Ensure links inherit global text color */
     text-decoration: none;
     transition: color 0.3s ease;
 }
 
 .linkList a:hover {
-    color: var(--primary-color);
+    color: var(--primary-color); /* Hover color on links */
 }
 
+/* Ensuring text in paragraphs is the correct color */
+footer p {
+    color: var(--text-color); /* Apply text color to paragraph inside footer */
+}
+
+footer h3 {
+    color: var(--text-color); /* Apply text color to h3 inside footer */
+}
+
+/* Footer Bottom area */
 .footerBottom {
-    color: var(--text-color-light);
+    color: var(--text-color-light); /* Light text color for footer bottom */
 }
 
+/* Footer Logo styling */
 .footerLogo {
     font-weight: bold;
-    color: var(--primary-color);
+    color: var(--primary-color); /* Primary color for footer logo */
 }
 
+/* Payment Logos styling */
 .paymentLogos img {
     max-height: 24px;
     width: auto;
 }
 
+/* Responsive for Payment Logos (on smaller screens) */
 @media (max-width: 767px) {
     .paymentLogos {
         margin-top: 1rem;
