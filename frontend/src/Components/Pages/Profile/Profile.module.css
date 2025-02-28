@@ -153,3 +153,7 @@
 .modalBody {
   padding: 20px;
 }
+
+.saveChangesTextModal {
+  color: black; 
+}

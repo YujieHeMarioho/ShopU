@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
-import { useNavigate } from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 import { Typeahead } from 'react-bootstrap-typeahead';
 import 'react-bootstrap-typeahead/css/Typeahead.css';
 import axios from 'axios';
@@ -224,7 +224,9 @@ const Friends = () => {
           <div className={styles.friendsGrid}>
             {friends.map((friend) => (
               <div key={friend.friend_id} className={styles.friendCard}>
-                <img src={friend.profile_picture} alt={friend.name} className={styles.friendAvatar} />
+                <Link to={`/profile/${friend.friend_id}`}>
+                  <img src={friend.profile_picture} alt={friend.name} className={styles.friendAvatar}/>
+                </Link>
                 <div className={styles.friendInfo}>
                   <h3>{friend.name}</h3>
                   <p>

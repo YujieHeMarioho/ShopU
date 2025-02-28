@@ -4,6 +4,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { FaThumbsUp, FaShare, FaHeart, FaRegHeart, FaComment } from 'react-icons/fa';
 import styles from './SocialCard.module.css';
 import axios from 'axios';
+import {Link} from "react-router-dom";
 
 export const SocialCard = ({
   post_id,
@@ -229,11 +230,14 @@ export const SocialCard = ({
   return (
     <div className={styles.socialCard}>
       <div className={styles.header}>
-        <img src={profilePic} alt="Profile" className={styles.profilePic} />
-        <span className={styles.author}>{author}</span>
-      </div>
+      <Link to={`/profile/${authorId}`}>
+        <img src={profilePic} alt={'Profile'} className={styles.profilePic} />
+      </Link>
+      <span className={styles.author}>{author}</span>
+    </div>
 
-      {video ? (
+
+  {video ? (
         <video className={styles.media} controls>
           <source src={video} type="video/mp4" />
           Your browser does not support the video tag.
@@ -242,11 +246,13 @@ export const SocialCard = ({
         image && <img src={image} alt="Post content" className={styles.media} />
       )}
 
-      <div className={styles.viewItemBar} onClick={(e) => e.stopPropagation()}>
-        <Button variant="primary" onClick={handleViewItem} className={styles.viewItemButton}>
-          View Item
-        </Button>
-      </div>
+      {listingId && (
+        <div className={styles.viewItemBar} onClick={(e) => e.stopPropagation()}>
+          <Button variant="primary" onClick={handleViewItem} className={styles.viewItemButton}>
+            View Item
+          </Button>
+        </div>
+      )}
 
       <div className={styles.body}>
         <h5 className={styles.title}>{title}</h5>
