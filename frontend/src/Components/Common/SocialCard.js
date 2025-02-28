@@ -22,7 +22,7 @@ export const SocialCard = ({
   reloadFeed,
   onShowComments,
   allFriends = [],
-  friendsLoading = true
+  friendsLoading = true,
 }) => {
   const { user, getAccessTokenSilently } = useAuth0();
 
@@ -67,14 +67,13 @@ export const SocialCard = ({
     }
   }, [post_id]);
 
-  // Reverted to Old Version's Like Logic
   const handleLikeClick = async (e) => {
     e.stopPropagation();
     const newLikeStatus = !isLiked;
     setIsLiked(newLikeStatus);
     try {
       const token = await getAccessTokenSilently();
-      const response = await likeAPICall(post_id, newLikeStatus, token, user.sub); // Old version used user.sub
+      const response = await likeAPICall(post_id, newLikeStatus, token, user.sub);
       if (response.success) {
         setLikes(response.likeCount);
       }
@@ -90,9 +89,57 @@ export const SocialCard = ({
   };
 
   const handleConfirmShare = async () => {
-    setShowShareModal(false);
-    setAlertMessage('Post shared successfully!');
-    setTimeout(() => setAlertMessage(null), 3000);
+    try {
+      setIsShared(true);
+      setShares(prev => prev + 1);
+      setShowShareModal(false);
+  
+      const token = await getAccessTokenSilently();
+      const postPath = `/feed?post_id=${post_id}`;
+  
+      if (selectedOption === 'friend' && selectedFriend) {
+        const friend = allFriends.find(f => f.friend_id === selectedFriend);
+        if (!friend) throw new Error('Friend not found');
+  
+        const conversationsResponse = await axios.get(
+          `${process.env.REACT_APP_BACKEND_URL}/api/conversations/${user.sub}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+  
+        let conversation = conversationsResponse.data.find(
+          convo => convo.user1_id === selectedFriend || convo.user2_id === selectedFriend
+        );
+  
+        if (!conversation) {
+          const newConversationResponse = await axios.post(
+            `${process.env.REACT_APP_BACKEND_URL}/api/conversations`,
+            { user1_id: user.sub, user2_id: selectedFriend },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          conversation = newConversationResponse.data;
+        }
+  
+        const conversationId = conversation.conversation_id;
+        const messageContent = `Check out this post: ${postPath}`;
+        await axios.post(
+          `${process.env.REACT_APP_BACKEND_URL}/api/messages/${conversationId}/messages`,
+          { senderId: user.sub, content: messageContent },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+  
+        setAlertMessage('Post shared successfully!');
+        setTimeout(() => setAlertMessage(null), 3000);
+      } else if (selectedOption === 'community' && selectedCommunity) {
+        setAlertMessage('Post shared to community successfully!');
+        setTimeout(() => setAlertMessage(null), 3000);
+      }
+    } catch (error) {
+      console.error('Error sharing post:', error);
+      setIsShared(false);
+      setShares(prev => prev - 1);
+      setAlertMessage('Failed to share post. Please try again.');
+      setTimeout(() => setAlertMessage(null), 3000);
+    }
   };
 
   const handleFavoriteClick = async (e) => {
@@ -206,13 +253,11 @@ export const SocialCard = ({
         <p className={styles.description}>{description}</p>
       </div>
 
-      {tags.filter(tag => tag.trim() !== "").length > 0 && (
+      {tags.length > 0 && (
         <div className={styles.tagsContainer}>
-          {tags
-            .filter(tag => tag.trim() !== "") // Remove empty tags
-            .map((tag, i) => (
-              <span key={i} className={styles.tag}>{tag}</span>
-            ))}
+          {tags.map((tag, i) => (
+            <span key={i} className={styles.tag}>{tag}</span>
+          ))}
         </div>
       )}
 
@@ -409,11 +454,10 @@ export const SocialCard = ({
   );
 };
 
-// Reverted to Old Version's Like API Call
 const likeAPICall = async (post_id, isLiked, token, userId) => {
   try {
     const URL = `${process.env.REACT_APP_BACKEND_URL}/api/feed/${post_id}/like`;
-    const method = isLiked ? 'POST' : 'POST'; // Old version bug: always POST
+    const method = isLiked ? 'POST' : 'POST';
     const response = await fetch(URL, {
       method,
       headers: {
@@ -451,3 +495,5 @@ const favoriteAPICall = async (listingId, action, token) => {
     throw error;
   }
 };
+
+export default SocialCard;
