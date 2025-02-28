@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
-import { useNavigate } from 'react-router-dom'; // Add this import
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { debounce } from 'lodash'; // Import debounce from lodash
 import './MessagesPage.css';
 
 const MessagesPage = () => {
   const { user, getAccessTokenSilently, isLoading: authLoading } = useAuth0();
-  const navigate = useNavigate(); // Add navigate hook
+  const navigate = useNavigate();
 
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
@@ -53,9 +54,10 @@ const MessagesPage = () => {
           pictureFromAPI && pictureFromAPI.trim() !== ''
             ? pictureFromAPI
             : 'https://via.placeholder.com/40';
-        const name = response.data.name && response.data.name.trim() !== ''
-          ? response.data.name
-          : userId;
+        const name =
+          response.data.name && response.data.name.trim() !== ''
+            ? response.data.name
+            : userId;
         const userData = {
           username: name,
           picture: validPicture,
@@ -84,79 +86,84 @@ const MessagesPage = () => {
     return await Promise.all(promises);
   };
 
-  const fetchConversations = async (isPolling = false) => {
-    if (!isPolling) setIsLoadingConversations(true);
-    try {
-      const token = await getAccessTokenSilently();
-      const response = await axios.get(
-        `${BACKEND_URL}/api/messages/conversations/${encodeURIComponent(user.sub)}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      const data = response.data;
-      console.log('Conversations fetched:', data);
+  const fetchConversationsDebounced = useRef(
+    debounce(async (isPolling = false) => {
+      if (!isPolling) setIsLoadingConversations(true);
+      try {
+        const token = await getAccessTokenSilently();
+        const response = await axios.get(
+          `${BACKEND_URL}/api/messages/conversations/${encodeURIComponent(user.sub)}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const data = response.data;
+        console.log('Conversations fetched:', data);
 
-      const otherUserIds = data.map((conv) =>
-        conv.user1_id.toLowerCase() === user.sub.toLowerCase() ? conv.user2_id : conv.user1_id
-      );
-      const userDetailsList = await fetchAllUserDetails(otherUserIds, token);
-      const uniqueIds = [...new Set(otherUserIds)];
-      const userIdToDetailsMap = {};
-      uniqueIds.forEach((id, idx) => {
-        userIdToDetailsMap[id] = userDetailsList[idx];
-      });
-
-      const enhancedConvs = data.map((conv) => {
-        const otherId =
-          conv.user1_id.toLowerCase() === user.sub.toLowerCase() ? conv.user2_id : conv.user1_id;
-        const { username, picture } = userIdToDetailsMap[otherId] || {
-          username: 'Unknown User',
-          picture: 'https://via.placeholder.com/40',
-        };
-        return {
-          ...conv,
-          otherUsername: username,
-          otherProfilePicture: picture,
-          unread_count:
-            selectedConversation && conv.conversation_id === selectedConversation.conversation_id
-              ? 0
-              : conv.unread_count || 0,
-        };
-      });
-
-      if (enhancedConvs.some((conv) => conv.unread_count > 0) || conversationOrderRef.current.size === 0) {
-        enhancedConvs.sort((a, b) => b.unread_count - a.unread_count);
-        conversationOrderRef.current.clear();
-        enhancedConvs.forEach((conv, index) => {
-          conversationOrderRef.current.set(conv.conversation_id, index);
+        const otherUserIds = data.map((conv) =>
+          conv.user1_id.toLowerCase() === user.sub.toLowerCase() ? conv.user2_id : conv.user1_id
+        );
+        const userDetailsList = await fetchAllUserDetails(otherUserIds, token);
+        const uniqueIds = [...new Set(otherUserIds)];
+        const userIdToDetailsMap = {};
+        uniqueIds.forEach((id, idx) => {
+          userIdToDetailsMap[id] = userDetailsList[idx];
         });
-      } else {
-        enhancedConvs.sort((a, b) => {
-          const orderA = conversationOrderRef.current.get(a.conversation_id) ?? Infinity;
-          const orderB = conversationOrderRef.current.get(b.conversation_id) ?? Infinity;
-          return orderA - orderB;
+
+        const enhancedConvs = data.map((conv) => {
+          const otherId =
+            conv.user1_id.toLowerCase() === user.sub.toLowerCase() ? conv.user2_id : conv.user1_id;
+          const { username, picture } = userIdToDetailsMap[otherId] || {
+            username: 'Unknown User',
+            picture: 'https://via.placeholder.com/40',
+          };
+          return {
+            ...conv,
+            otherUsername: username,
+            otherProfilePicture: picture,
+            unread_count:
+              selectedConversation && conv.conversation_id === selectedConversation.conversation_id
+                ? 0
+                : conv.unread_count || 0,
+          };
         });
+
+        if (
+          enhancedConvs.some((conv) => conv.unread_count > 0) ||
+          conversationOrderRef.current.size === 0
+        ) {
+          enhancedConvs.sort((a, b) => b.unread_count - a.unread_count);
+          conversationOrderRef.current.clear();
+          enhancedConvs.forEach((conv, index) => {
+            conversationOrderRef.current.set(conv.conversation_id, index);
+          });
+        } else {
+          enhancedConvs.sort((a, b) => {
+            const orderA = conversationOrderRef.current.get(a.conversation_id) ?? Infinity;
+            const orderB = conversationOrderRef.current.get(b.conversation_id) ?? Infinity;
+            return orderA - orderB;
+          });
+        }
+
+        setConversations(enhancedConvs);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching conversations:', err);
+        setError('Failed to load conversations. Please try again later.');
+      } finally {
+        if (!isPolling) setIsLoadingConversations(false);
       }
-
-      setConversations(enhancedConvs);
-      setError(null);
-    } catch (err) {
-      console.error('Error fetching conversations:', err);
-      setError('Failed to load conversations. Please try again later.');
-    } finally {
-      if (!isPolling) setIsLoadingConversations(false);
-    }
-  };
+    }, 500) // Debounce with 500ms delay
+  ).current;
 
   useEffect(() => {
     if (!authLoading && user && user.sub) {
-      fetchConversations();
+      fetchConversationsDebounced();
     }
   }, [authLoading, user, getAccessTokenSilently, BACKEND_URL]);
 
   useEffect(() => {
     if (!authLoading && user && user.sub) {
       const intervalId = setInterval(() => {
-        fetchConversations(true);
+        fetchConversationsDebounced(true);
       }, 2000);
       return () => clearInterval(intervalId);
     }
@@ -184,15 +191,15 @@ const MessagesPage = () => {
     try {
       const token = await getAccessTokenSilently();
       const url = `${BACKEND_URL}/api/messages/${conversationId}/mark-read`;
-      console.log("Marking conversation as read at:", url, "for user", user.sub);
+      console.log('Marking conversation as read at:', url, 'for user', user.sub);
       const response = await axios.post(
         url,
         { userId: user.sub },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      console.log("Mark conversation as read response:", response.data);
+      console.log('Mark conversation as read response:', response.data);
     } catch (err) {
-      console.error("Error marking messages as read:", err);
+      console.error('Error marking messages as read:', err);
     }
   };
 
@@ -246,12 +253,11 @@ const MessagesPage = () => {
     }
   };
 
-  // Render message content with clickable links
   const renderMessageContent = (content) => {
-    console.log('Rendering content:', content); // Debug log
+    console.log('Rendering content:', content);
     const pathRegex = /(\/feed\?post_id=\d+)/g;
     const parts = content.split(pathRegex);
-    console.log('Split parts:', parts); // Debug log
+    console.log('Split parts:', parts);
     return parts.map((part, index) => {
       if (pathRegex.test(part)) {
         return (
@@ -259,7 +265,7 @@ const MessagesPage = () => {
             key={index}
             style={{ color: 'blue', textDecoration: 'underline', cursor: 'pointer' }}
             onClick={() => {
-              console.log('Navigating to:', part); // Debug log
+              console.log('Navigating to:', part);
               navigate(part);
             }}
           >
@@ -273,7 +279,6 @@ const MessagesPage = () => {
 
   return (
     <div className="messages-page">
-      {/* LEFT: Conversation List */}
       <div className="history">
         <h3>Conversations</h3>
         {error && <p className="error-message">{error}</p>}
@@ -288,9 +293,7 @@ const MessagesPage = () => {
                 key={conv.conversation_id}
                 onClick={() => handleSelectConversation(conv)}
                 className={
-                  selectedConversation?.conversation_id === conv.conversation_id
-                    ? 'active'
-                    : ''
+                  selectedConversation?.conversation_id === conv.conversation_id ? 'active' : ''
                 }
               >
                 <div className="conversation-info">
@@ -315,7 +318,6 @@ const MessagesPage = () => {
         )}
       </div>
 
-      {/* RIGHT: Selected Conversation */}
       <div className="main-content">
         {selectedConversation ? (
           <>
