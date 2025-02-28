@@ -21,7 +21,7 @@ const extractUserIdFromToken = (req) => {
     const decodedToken = jwtDecode(token);
     user_id = decodedToken.sub; // Assuming 'sub' is the user_id
   } catch (err) {
-    console.error('Error decoding token:', err); // Log the error for debugging
+    console.error('Error decoding token:', err);
     throw new Error('Invalid token');
   }
 
@@ -31,9 +31,9 @@ const extractUserIdFromToken = (req) => {
 // Fetch all feed posts
 export const getAllFeedPosts = async (req, res) => {
   try {
-    const userId = extractUserIdFromToken(req); // Extract user ID from token
+    const userId = extractUserIdFromToken(req);
 
-      const query = `
+    const query = `
       SELECT
         f.post_id,
         f.title,
@@ -44,13 +44,14 @@ export const getAllFeedPosts = async (req, res) => {
         u.NAME AS author,
         u.user_id AS author_id,
         f.likes_count,
+        f.shares_count AS shares, -- Updated to shares_count
         f.listing_id,
         COALESCE(ARRAY_AGG(t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL), ARRAY[]::TEXT[]) AS tags,
         EXISTS (
             SELECT 1
             FROM post_likes pl
             WHERE pl.post_id = f.post_id AND pl.user_id = $1
-        ) AS isLiked -- Check if the current user liked the post
+        ) AS isLiked
       FROM
           feed_posts f
       JOIN
@@ -58,60 +59,49 @@ export const getAllFeedPosts = async (req, res) => {
       JOIN
           post_images fi ON f.post_id = fi.post_id
       LEFT JOIN
-          post_tags pt ON f.post_id = pt.post_id -- Join with post_tags
+          post_tags pt ON f.post_id = pt.post_id
       LEFT JOIN
-          tags t ON pt.tag_id = t.tag_id -- Join with tags
+          tags t ON pt.tag_id = t.tag_id
       GROUP BY
-          f.post_id, u.user_id, fi.file_key -- Group by post and user to aggregate tags
+          f.post_id, u.user_id, fi.file_key
       ORDER BY
           f.date_created DESC;
     `;
 
-
-    // Execute the query
     const result = await pool.query(query, [userId]);
 
     const feedWithUrls = await Promise.all(
       result.rows.map(async (feed) => {
-          // Generate a pre-signed URL for the image file_key (if it exists)
-          if (feed.image) {
-              const command = new GetObjectCommand({
-                  Bucket: bucketName,
-                  Key: feed.image,
-              });
-  
-              // Generate the signed URL
-              feed.image = await getSignedUrl(s3, command, { expiresIn: 86400 });
-          }
-
-          if (feed.profile) {
-            const command = new GetObjectCommand({
-                Bucket: profileBucketName,
-                Key: feed.profile,
-            });
-
-            // Generate the signed URL
-            feed.profile = await getSignedUrl(s3, command, { expiresIn: 86400 });
+        if (feed.image) {
+          const command = new GetObjectCommand({
+            Bucket: bucketName,
+            Key: feed.image,
+          });
+          feed.image = await getSignedUrl(s3, command, { expiresIn: 86400 });
         }
-  
-          // Return the modified row
-          return feed;
-       })
+        if (feed.profile) {
+          const command = new GetObjectCommand({
+            Bucket: profileBucketName,
+            Key: feed.profile,
+          });
+          feed.profile = await getSignedUrl(s3, command, { expiresIn: 86400 });
+        }
+        return feed;
+      })
     );
 
     if (feedWithUrls.rowCount === 0) {
       console.log('No feed posts found.');
     }
 
-    // Respond with the results
     res.status(200).json(feedWithUrls);
   } catch (err) {
-    console.error('Error fetching feed posts:', err.message); // Log specific error message
+    console.error('Error fetching feed posts:', err.message);
     res.status(500).json({ error: err.message || 'Database error' });
   }
 };
 
-//Endpoint to get the total number of active posts in the feed
+// Endpoint to get the total number of active posts in the feed
 export const getFeedPostCount = async (req, res) => {
   const query = `SELECT COUNT(*) AS total_feed_posts FROM feed_posts;`;
 
@@ -124,20 +114,16 @@ export const getFeedPostCount = async (req, res) => {
   }
 };
 
-
-
 export const likeFeedPost = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const userId = extractUserIdFromToken(req); // Extract user ID from token
+    const userId = extractUserIdFromToken(req);
 
-    // Check if the post is already liked by the user
     const likeCheckQuery = 'SELECT * FROM post_likes WHERE user_id = $1 AND post_id = $2';
     const likeCheckResult = await pool.query(likeCheckQuery, [userId, id]);
 
     if (likeCheckResult.rowCount > 0) {
-      // User has liked the post, so we remove the like (unlike)
       const removeLikeQuery = 'DELETE FROM post_likes WHERE user_id = $1 AND post_id = $2';
       await pool.query(removeLikeQuery, [userId, id]);
 
@@ -152,7 +138,6 @@ export const likeFeedPost = async (req, res) => {
 
       return res.status(200).json({ success: true, likeCount: newLikeCount, isLiked: false });
     } else {
-      // User hasn't liked the post, so we add a like
       const addLikeQuery = 'INSERT INTO post_likes (user_id, post_id) VALUES ($1, $2)';
       await pool.query(addLikeQuery, [userId, id]);
 
@@ -173,12 +158,11 @@ export const likeFeedPost = async (req, res) => {
   }
 };
 
-//get all feed posts for the community
+// Get all feed posts for the community
 export const getCommunityFeedPosts = async (req, res) => {
   try {
     const community_id = req.params.community_id;
-    const userId = extractUserIdFromToken(req); // Extract user ID from token
-
+    const userId = extractUserIdFromToken(req);
 
     const query = `
        SELECT
@@ -190,7 +174,8 @@ export const getCommunityFeedPosts = async (req, res) => {
         f.date_created,
         u.user_id AS author,
         f.likes_count,
-        ARRAY_AGG(t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL) AS tags -- Aggregate tags into an array
+        f.shares_count AS shares, -- Updated to shares_count
+        ARRAY_AGG(t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL) AS tags
       FROM
           feed_posts f
       JOIN
@@ -198,57 +183,50 @@ export const getCommunityFeedPosts = async (req, res) => {
       JOIN
           post_images fi ON f.post_id = fi.post_id
       LEFT JOIN
-          post_tags pt ON f.post_id = pt.post_id -- Join with post_tags
+          post_tags pt ON f.post_id = pt.post_id
       LEFT JOIN
-          tags t ON pt.tag_id = t.tag_id -- Join with tags
+          tags t ON pt.tag_id = t.tag_id
       INNER JOIN
           communities_posts cp ON cp.post_id = f.post_id
       WHERE
         cp.community_id = $1
       GROUP BY
-          f.post_id, u.user_id, fi.file_key -- Group by post and user to aggregate tags
+          f.post_id, u.user_id, fi.file_key
       ORDER BY
           f.date_created DESC;
     `;
 
-    // Execute the query
     const result = await pool.query(query, [community_id]);
 
     const feedWithUrls = await Promise.all(
       result.rows.map(async (feed) => {
-          // Generate a pre-signed URL for the image file_key (if it exists)
-          if (feed.image) {
-              const command = new GetObjectCommand({
-                  Bucket: bucketName,
-                  Key: feed.image,
-              });
-  
-              // Generate the signed URL
-              feed.image = await getSignedUrl(s3, command, { expiresIn: 86400 });
-          }
-  
-          // Return the modified row
-          return feed;
-       })
+        if (feed.image) {
+          const command = new GetObjectCommand({
+            Bucket: bucketName,
+            Key: feed.image,
+          });
+          feed.image = await getSignedUrl(s3, command, { expiresIn: 86400 });
+        }
+        return feed;
+      })
     );
 
     if (feedWithUrls.length === 0) {
       console.log('No posts found for this community.');
     }
 
-    // Respond with the results
     res.status(200).json(feedWithUrls);
   } catch (err) {
-    console.error('Error fetching user feed posts:', err.message); // Log specific error message
+    console.error('Error fetching community feed posts:', err.message);
     res.status(500).json({ error: err.message || 'Database error' });
   }
 };
 
+// Get all feed posts for a user
 export const getUserFeedPosts = async (req, res) => {
   const { user_id } = req.params;
 
   try {
-
     const query = `
        SELECT
         f.post_id,
@@ -260,13 +238,14 @@ export const getUserFeedPosts = async (req, res) => {
         u.NAME AS author,
         u.user_id AS author_id,
         f.likes_count,
+        f.shares_count AS shares, -- Updated to shares_count
         f.listing_id,
         COALESCE(ARRAY_AGG(t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL), ARRAY[]::TEXT[]) AS tags,
         EXISTS (
             SELECT 1
             FROM post_likes pl
             WHERE pl.post_id = f.post_id AND pl.user_id = $1
-        ) AS isLiked -- Check if the current user liked the post
+        ) AS isLiked
       FROM
           feed_posts f
       JOIN
@@ -274,61 +253,51 @@ export const getUserFeedPosts = async (req, res) => {
       JOIN
           post_images fi ON f.post_id = fi.post_id
       LEFT JOIN
-          post_tags pt ON f.post_id = pt.post_id -- Join with post_tags
+          post_tags pt ON f.post_id = pt.post_id
       LEFT JOIN
-          tags t ON pt.tag_id = t.tag_id -- Join with tags
+          tags t ON pt.tag_id = t.tag_id
       WHERE
         f.user_id = $1
       GROUP BY
-          f.post_id, u.user_id, fi.file_key -- Group by post and user to aggregate tags
+          f.post_id, u.user_id, fi.file_key
       ORDER BY
           f.date_created DESC;
     `;
 
-    // Execute the query
     const result = await pool.query(query, [user_id]);
 
     const feedWithUrls = await Promise.all(
       result.rows.map(async (feed) => {
-          // Generate a pre-signed URL for the image file_key (if it exists)
-          if (feed.image) {
-              const command = new GetObjectCommand({
-                  Bucket: bucketName,
-                  Key: feed.image,
-              });
-  
-              // Generate the signed URL
-              feed.image = await getSignedUrl(s3, command, { expiresIn: 86400 });
-          }
-
-          
-          if (feed.profile) {
-            const command = new GetObjectCommand({
-                Bucket: profileBucketName,
-                Key: feed.profile,
-            });
-
-            // Generate the signed URL
-            feed.profile = await getSignedUrl(s3, command, { expiresIn: 86400 });
+        if (feed.image) {
+          const command = new GetObjectCommand({
+            Bucket: bucketName,
+            Key: feed.image,
+          });
+          feed.image = await getSignedUrl(s3, command, { expiresIn: 86400 });
         }
-  
-          // Return the modified row
-          return feed;
-       })
+        if (feed.profile) {
+          const command = new GetObjectCommand({
+            Bucket: profileBucketName,
+            Key: feed.profile,
+          });
+          feed.profile = await getSignedUrl(s3, command, { expiresIn: 86400 });
+        }
+        return feed;
+      })
     );
 
     if (feedWithUrls.length === 0) {
       console.log('No posts found for this user.');
     }
 
-    // Respond with the results
     res.status(200).json(feedWithUrls);
   } catch (err) {
-    console.error('Error fetching user feed posts:', err.message); // Log specific error message
+    console.error('Error fetching user feed posts:', err.message);
     res.status(500).json({ error: err.message || 'Database error' });
   }
 };
 
+// Get user feed posts count
 export const getUserFeedPostsCount = async (req, res) => {
   try {
     const { user_id } = req.params;
@@ -339,56 +308,42 @@ export const getUserFeedPostsCount = async (req, res) => {
       WHERE f.user_id = $1;
     `;
 
-    // Execute the query
     const result = await pool.query(query, [user_id]);
-
-    const postCount = result.rows[0].post_count;
-
-    // Respond with the count
-    res.status(200).json({ count: postCount });
+    res.status(200).json({ count: result.rows[0].post_count });
   } catch (err) {
-    console.error('Error fetching user feed posts count:', err.message); // Log specific error message
+    console.error('Error fetching user feed posts count:', err.message);
     res.status(500).json({ error: err.message || 'Database error' });
   }
 };
 
-
-// Create a new feed post  (TODO Need to handle linking to items)
+// Create a new feed post
 export const createFeedPost = async (req, res) => {
   const { title, content, tags, image } = req.body;
-  //Image is the actual image uploaded no the profile picture 
-  
-  try {
-    const userId = extractUserIdFromToken(req); // Extract user_id from token
 
-    // Begin a transaction
+  try {
+    const userId = extractUserIdFromToken(req);
+
     await pool.query("BEGIN");
 
-    // Insert the post into the feed_posts table
     const postQuery = `
       INSERT INTO feed_posts (title, content, image_url, user_id, date_created, listing_id)
       VALUES ($1, $2, $3, $4, NOW(), $5)
       RETURNING post_id;
     `;
 
-    let postListingId = req.body.listingId && req.body.listingId !== "" ? listingId : null;
+    let postListingId = req.body.listingId && req.body.listingId !== "" ? req.body.listingId : null;
 
-    //will need to replace the placeholder with profile image, will get to that later 
     const postResult = await pool.query(postQuery, [title, content, 'https://via.placeholder.com/300x200', userId, postListingId]);
     const postId = postResult.rows[0].post_id;
 
-    // Inserts image into the post_image table
     const imgQuery = `
     INSERT INTO post_images (post_id, file_key)
     VALUES ($1, $2)
     `;
-
     await pool.query(imgQuery, [postId, image]);
 
-    // Split tags and handle each tag
-    const tagList = tags.split(",").map(tag => tag.trim()); // Split and trim tags
+    const tagList = tags.split(",").map(tag => tag.trim());
     for (const tag of tagList) {
-      // Insert the tag into the tags table if it doesn't already exist
       const tagQuery = `
         INSERT INTO tags (tag_name)
         VALUES ($1)
@@ -397,7 +352,6 @@ export const createFeedPost = async (req, res) => {
       `;
       const tagResult = await pool.query(tagQuery, [tag]);
 
-      // Get the tag_id (either from the insert or by querying the existing tag)
       let tagId;
       if (tagResult.rows.length > 0) {
         tagId = tagResult.rows[0].tag_id;
@@ -407,7 +361,6 @@ export const createFeedPost = async (req, res) => {
         tagId = existingTagResult.rows[0].tag_id;
       }
 
-      // Associate the tag with the post in post_tags
       const postTagQuery = `
         INSERT INTO post_tags (post_id, tag_id)
         VALUES ($1, $2);
@@ -415,18 +368,15 @@ export const createFeedPost = async (req, res) => {
       await pool.query(postTagQuery, [postId, tagId]);
     }
 
-    // Commit the transaction
     await pool.query("COMMIT");
 
     res.status(201).json({ post_id: postId, message: "Post created successfully!" });
   } catch (err) {
-    // Rollback the transaction in case of an error
     await pool.query("ROLLBACK");
     console.error("Error creating feed post:", err);
     res.status(500).json({ error: "Database error" });
   }
 };
-
 
 // Delete a feed post by ID
 export const deleteFeedPost = async (req, res) => {
@@ -454,145 +404,104 @@ export const deleteFeedPost = async (req, res) => {
 // Update a feed post by ID
 export const updateFeedPost = async (req, res) => {
   const { postId } = req.params;
-const { title, description, tags, image } = req.body;
+  const { title, description, tags, image } = req.body;
 
-const client = await pool.connect(); // Use a client for transaction
+  const client = await pool.connect();
 
-try {
-    // Start a transaction
+  try {
     await client.query('BEGIN');
 
-    // Step 1: Process tags
     const tagIds = [];
     for (const tag of tags) {
-        // Step 1.1: Check if the tag exists in the 'tags' table
-        const tagResult = await client.query(
-            'SELECT tag_id FROM tags WHERE tag_name = $1', [tag]
+      const tagResult = await client.query(
+        'SELECT tag_id FROM tags WHERE tag_name = $1', [tag]
+      );
+
+      let tagId;
+      if (tagResult.rowCount === 0) {
+        const insertTagResult = await client.query(
+          'INSERT INTO tags (tag_name) VALUES ($1) RETURNING tag_id', [tag]
         );
-
-        let tagId;
-        if (tagResult.rowCount === 0) {
-            // Step 1.2: If the tag does not exist, create it
-            const insertTagResult = await client.query(
-                'INSERT INTO tags (tag_name) VALUES ($1) RETURNING tag_id', [tag]
-            );
-            tagId = insertTagResult.rows[0].tag_id;
-        } else {
-            // If the tag exists, use its id
-            tagId = tagResult.rows[0].tag_id;
-        }
-
-        // Collect all tag_ids to be inserted into the post_tags table
-        tagIds.push(tagId);
+        tagId = insertTagResult.rows[0].tag_id;
+      } else {
+        tagId = tagResult.rows[0].tag_id;
+      }
+      tagIds.push(tagId);
     }
 
-    // Step 2: Insert tags into the post_tags table if they don't already exist for the post
     for (const tagId of tagIds) {
-        await client.query(
-            'INSERT INTO post_tags (post_id, tag_id) SELECT $1, $2 WHERE NOT EXISTS (SELECT 1 FROM post_tags WHERE post_id = $1 AND tag_id = $2)',
-            [postId, tagId]
-        );
+      await client.query(
+        'INSERT INTO post_tags (post_id, tag_id) SELECT $1, $2 WHERE NOT EXISTS (SELECT 1 FROM post_tags WHERE post_id = $1 AND tag_id = $2)',
+        [postId, tagId]
+      );
     }
 
-    // Step 3: Update the feed_posts table with the new information
     const query = `
-        UPDATE feed_posts
-        SET title = $1, content = $2, image_url = $3, date_created = NOW()
-        WHERE post_id = $4
-        RETURNING *;
+      UPDATE feed_posts
+      SET title = $1, content = $2, image_url = $3, date_created = NOW()
+      WHERE post_id = $4
+      RETURNING *;
     `;
     const result = await client.query(query, [title, description, image, postId]);
 
     if (result.rowCount === 0) {
-        res.status(404).json({ error: 'Post not found' });
+      res.status(404).json({ error: 'Post not found' });
     } else {
-        // Commit the transaction
-        await client.query('COMMIT');
-        res.status(200).json(result.rows[0]);
+      await client.query('COMMIT');
+      res.status(200).json(result.rows[0]);
     }
-} catch (err) {
-    // Rollback the transaction if an error occurs
+  } catch (err) {
     await client.query('ROLLBACK');
     console.error('Error updating feed post:', err);
     res.status(500).json({ error: 'Database error' });
-} finally {
-    client.release(); // Release the client back to the pool
-}
-
-
-};
-
-
-export const shareFeedPost = async (req, res) => {
-  const { postId } = req.params; // ID of the post being shared
-  const { receiverId } = req.body; // ID of the user to receive the shared post
-
-  try {
-    // Extract the sender's user ID from the token
-    const senderId = extractUserIdFromToken(req);
-
-    // Transaction to ensure atomicity
-    await pool.query('BEGIN');
-
-    // Step 1: Insert into the messages or notifications table
-    const insertMessageQuery = `
-      INSERT INTO messages (sender_id, receiver_id, content, message_type, created_at)
-      VALUES ($1, $2, $3, 'post_share', NOW())
-      RETURNING *;
-    `;
-
-    const postLink = `/posts/${postId}`; // Link to the shared post
-    const messageResult = await pool.query(insertMessageQuery, [senderId, receiverId, postLink]);
-
-    // Step 2: Update the share count of the post
-    const updateShareCountQuery = `
-      UPDATE feed_posts
-      SET share_count = share_count + 1
-      WHERE post_id = $1
-      RETURNING *;
-    `;
-
-    const postResult = await pool.query(updateShareCountQuery, [postId]);
-
-    if (postResult.rowCount === 0) {
-      throw new Error('Post not found');
-    }
-
-    // Commit the transaction
-    await pool.query('COMMIT');
-
-    // Return success response
-    res.status(201).json({
-      message: 'Post shared successfully',
-      sharedPost: postResult.rows[0],
-      notification: messageResult.rows[0],
-    });
-  } catch (err) {
-    // Rollback transaction in case of error
-    await pool.query('ROLLBACK');
-    console.error('Error sharing feed post:', err);
-    res.status(500).json({ error: 'An error occurred while sharing the post' });
+  } finally {
+    client.release();
   }
 };
 
-export const uploadImage = async (req, res) => {
+// Share a feed post
+export const shareFeedPost = async (req, res) => {
+  const { post_id } = req.params; // Match frontend :post_id
+  const { userId } = req.body;
+
   try {
-    if (!req.file){
-        return res.status(400).json({ message: "No files uploaded" });
+    const result = await pool.query(
+      `
+      UPDATE feed_posts
+      SET shares_count = shares_count + 1
+      WHERE post_id = $1
+      RETURNING shares_count AS shares
+      `,
+      [post_id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Post not found' });
     }
 
-    //Create unique image names so no collusion within the bucket
-    const fileName = `${uuidv4()}-${req.file.originalname}`;
+    const updatedShares = result.rows[0].shares;
+    res.status(200).json({ shares: updatedShares });
+  } catch (error) {
+    console.error('Error incrementing share count:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
 
-    //upload params 
+// Upload image (unchanged)
+export const uploadImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No files uploaded" });
+    }
+
+    const fileName = `${uuidv4()}-${req.file.originalname}`;
     const params = {
-    Bucket: bucketName,
-    Key: fileName,
-    Body: req.file.buffer,
-    ContentType: req.file.mimetype,
+      Bucket: bucketName,
+      Key: fileName,
+      Body: req.file.buffer,
+      ContentType: req.file.mimetype,
     };
 
-    // Upload to S3
     await s3.send(new PutObjectCommand(params));
 
     res.status(200).json({
@@ -605,10 +514,10 @@ export const uploadImage = async (req, res) => {
   }
 };
 
-// Get all comments for a post
+// Get all comments for a post (unchanged)
 export const getPostComments = async (req, res) => {
   const { postId } = req.params;
-  const userId = extractUserIdFromToken(req); // Get userId from the token
+  const userId = extractUserIdFromToken(req);
 
   try {
     const result = await pool.query(
@@ -635,10 +544,10 @@ export const getPostComments = async (req, res) => {
   }
 };
 
-// Add a comment to a post
+// Add a comment to a post (unchanged)
 export const addComment = async (req, res) => {
   const { postId, text } = req.body;
-  const userId = extractUserIdFromToken(req); // Get userId from the token
+  const userId = extractUserIdFromToken(req);
 
   if (!text.trim()) {
     return res.status(400).json({ error: "Comment cannot be empty" });
@@ -659,10 +568,10 @@ export const addComment = async (req, res) => {
   }
 };
 
-// Delete comment
+// Delete comment (unchanged)
 export const deleteComment = async (req, res) => {
   const { commentId } = req.params;
-  const userId = extractUserIdFromToken(req); // Get userId from the token
+  const userId = extractUserIdFromToken(req);
 
   try {
     const result = await pool.query(
@@ -681,10 +590,10 @@ export const deleteComment = async (req, res) => {
   }
 };
 
-// Like comment
+// Like comment (unchanged)
 export const likeComment = async (req, res) => {
   const { commentId } = req.params;
-  const userId = extractUserIdFromToken(req); // Get userId from the token
+  const userId = extractUserIdFromToken(req);
   try {
     await pool.query(
       `INSERT INTO post_comment_likes (comment_id, user_id) 
@@ -700,10 +609,10 @@ export const likeComment = async (req, res) => {
   }
 };
 
-// Unlike comment
+// Unlike comment (unchanged)
 export const unlikeComment = async (req, res) => {
   const { commentId } = req.params;
-  const userId = extractUserIdFromToken(req); // Get userId from the token
+  const userId = extractUserIdFromToken(req);
   try {
     const result = await pool.query(
       `DELETE FROM post_comment_likes WHERE comment_id = $1 AND user_id = $2 RETURNING *`,
@@ -721,7 +630,7 @@ export const unlikeComment = async (req, res) => {
   }
 };
 
-// Get likes for a comment
+// Get likes for a comment (unchanged)
 export const getLikesForComment = async (req, res) => {
   const { commentId } = req.params;
 
@@ -740,6 +649,7 @@ export const getLikesForComment = async (req, res) => {
   }
 };
 
+// Get post comment count (unchanged)
 export const getPostCommentCount = async (req, res) => {
   const { postId } = req.params;
 

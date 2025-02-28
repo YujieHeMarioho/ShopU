@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
+import { useNavigate } from 'react-router-dom'; // Add this import
 import axios from 'axios';
 import './MessagesPage.css';
 
 const MessagesPage = () => {
   const { user, getAccessTokenSilently, isLoading: authLoading } = useAuth0();
+  const navigate = useNavigate(); // Add navigate hook
 
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
@@ -15,24 +17,13 @@ const MessagesPage = () => {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isUserNearBottom, setIsUserNearBottom] = useState(true);
 
-  // Store the initial order of conversations
   const conversationOrderRef = useRef(new Map());
-
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-
-  // Cache for user details
   const userCache = useRef({});
   const userCachePromise = useRef({});
-
-  // Ref for messages polling interval
   const messagesIntervalRef = useRef(null);
-
-  // Container for scrolling messages
   const messagesContainerRef = useRef(null);
 
-  // -----------------------------
-  // Force Scroll to Bottom
-  // -----------------------------
   const forceScrollToBottom = () => {
     const container = messagesContainerRef.current;
     if (container) {
@@ -40,9 +31,6 @@ const MessagesPage = () => {
     }
   };
 
-  // -----------------------------
-  // Handle scroll event
-  // -----------------------------
   const handleScroll = () => {
     const container = messagesContainerRef.current;
     if (!container) return;
@@ -51,9 +39,6 @@ const MessagesPage = () => {
     setIsUserNearBottom(scrollHeight - (scrollTop + clientHeight) < threshold);
   };
 
-  // -----------------------------
-  // Fetch user details with caching
-  // -----------------------------
   const fetchUserDetails = async (userId, token) => {
     if (userCache.current[userId]) return userCache.current[userId];
     if (userCachePromise.current[userId]) return userCachePromise.current[userId];
@@ -68,12 +53,11 @@ const MessagesPage = () => {
           pictureFromAPI && pictureFromAPI.trim() !== ''
             ? pictureFromAPI
             : 'https://via.placeholder.com/40';
-        // Use the 'name' field from the users table, fallback to userId if not available
         const name = response.data.name && response.data.name.trim() !== ''
           ? response.data.name
           : userId;
         const userData = {
-          username: name, // Still using 'username' key for consistency in the app
+          username: name,
           picture: validPicture,
         };
         userCache.current[userId] = userData;
@@ -83,7 +67,7 @@ const MessagesPage = () => {
       .catch((error) => {
         console.error(`Failed to fetch details for user ${userId}:`, error);
         const fallback = {
-          username: userId, // Fallback to Auth0 ID if API fails
+          username: userId,
           picture: 'https://via.placeholder.com/40',
         };
         userCache.current[userId] = fallback;
@@ -94,18 +78,12 @@ const MessagesPage = () => {
     return promise;
   };
 
-  // -----------------------------
-  // Batch fetch user details for multiple IDs
-  // -----------------------------
   const fetchAllUserDetails = async (userIds, token) => {
     const uniqueIds = [...new Set(userIds)];
     const promises = uniqueIds.map((id) => fetchUserDetails(id, token));
     return await Promise.all(promises);
   };
 
-  // -----------------------------
-  // Fetch conversation list
-  // -----------------------------
   const fetchConversations = async (isPolling = false) => {
     if (!isPolling) setIsLoadingConversations(true);
     try {
@@ -145,9 +123,7 @@ const MessagesPage = () => {
         };
       });
 
-      // Sort conversations: unread first, then by stored order
-      const hasUnread = enhancedConvs.some((conv) => conv.unread_count > 0);
-      if (hasUnread || conversationOrderRef.current.size === 0) {
+      if (enhancedConvs.some((conv) => conv.unread_count > 0) || conversationOrderRef.current.size === 0) {
         enhancedConvs.sort((a, b) => b.unread_count - a.unread_count);
         conversationOrderRef.current.clear();
         enhancedConvs.forEach((conv, index) => {
@@ -171,18 +147,12 @@ const MessagesPage = () => {
     }
   };
 
-  // -----------------------------
-  // Initial conversation fetch on mount
-  // -----------------------------
   useEffect(() => {
     if (!authLoading && user && user.sub) {
       fetchConversations();
     }
   }, [authLoading, user, getAccessTokenSilently, BACKEND_URL]);
 
-  // -----------------------------
-  // Poll for updated conversations (for unread counts)
-  // -----------------------------
   useEffect(() => {
     if (!authLoading && user && user.sub) {
       const intervalId = setInterval(() => {
@@ -192,9 +162,6 @@ const MessagesPage = () => {
     }
   }, [authLoading, user, getAccessTokenSilently, BACKEND_URL, selectedConversation]);
 
-  // -----------------------------
-  // Fetch messages for a given conversation ID
-  // -----------------------------
   const fetchMessagesForConversation = async (conversationId, isPolling = false) => {
     if (!isPolling) setIsLoadingMessages(true);
     try {
@@ -207,15 +174,12 @@ const MessagesPage = () => {
       setError(null);
     } catch (err) {
       console.error('Error fetching messages:', err);
-      setError('Failed to load messages. Please try again later.');
+      setError('Failed to load messages. Please try again.');
     } finally {
       if (!isPolling) setIsLoadingMessages(false);
     }
   };
 
-  // -----------------------------
-  // Mark conversation as read (API call)
-  // -----------------------------
   const markConversationAsRead = async (conversationId) => {
     try {
       const token = await getAccessTokenSilently();
@@ -232,9 +196,6 @@ const MessagesPage = () => {
     }
   };
 
-  // -----------------------------
-  // Handle conversation selection
-  // -----------------------------
   const handleSelectConversation = (conv) => {
     setMessages([]);
     setConversations((prev) =>
@@ -251,18 +212,12 @@ const MessagesPage = () => {
     }, 2000);
   };
 
-  // -----------------------------
-  // Scroll behavior after messages update
-  // -----------------------------
   useEffect(() => {
     if (messages.length > 0 && isUserNearBottom) {
       forceScrollToBottom();
     }
   }, [messages, isUserNearBottom]);
 
-  // -----------------------------
-  // Send a message
-  // -----------------------------
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return;
     try {
@@ -284,9 +239,6 @@ const MessagesPage = () => {
     }
   };
 
-  // -----------------------------
-  // Send message on Enter key (without Shift)
-  // -----------------------------
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -294,9 +246,31 @@ const MessagesPage = () => {
     }
   };
 
-  // -----------------------------
-  // Render
-  // -----------------------------
+  // Render message content with clickable links
+  const renderMessageContent = (content) => {
+    console.log('Rendering content:', content); // Debug log
+    const pathRegex = /(\/feed\?post_id=\d+)/g;
+    const parts = content.split(pathRegex);
+    console.log('Split parts:', parts); // Debug log
+    return parts.map((part, index) => {
+      if (pathRegex.test(part)) {
+        return (
+          <span
+            key={index}
+            style={{ color: 'blue', textDecoration: 'underline', cursor: 'pointer' }}
+            onClick={() => {
+              console.log('Navigating to:', part); // Debug log
+              navigate(part);
+            }}
+          >
+            {part}
+          </span>
+        );
+      }
+      return <span key={index}>{part}</span>;
+    });
+  };
+
   return (
     <div className="messages-page">
       {/* LEFT: Conversation List */}
@@ -365,7 +339,7 @@ const MessagesPage = () => {
                   return (
                     <div key={message.message_id} className={isSent ? 'sent' : 'received'}>
                       <div className="message-bubble">
-                        <p>{message.content}</p>
+                        <p>{renderMessageContent(message.content)}</p>
                         <span className="message-time">
                           {new Date(message.created_at).toLocaleTimeString([], {
                             hour: '2-digit',
