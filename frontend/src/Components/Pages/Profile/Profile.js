@@ -48,6 +48,7 @@ const Profile = () => {
     const [isLiked, setIsLiked] = useState({});
     const username = user.name;
     const [selectedPostId, setSelectedPostId] = useState(null);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
 
 
     const handleShowComments = (post_id) => {
@@ -252,43 +253,24 @@ const Profile = () => {
     };
 
     const handleListingCardClick = (listing) => {
-        navigate(`/marketplace?listingId=${listing.id}`);
+        if (listing.id) {
+            const fullLink = `${window.location.origin}/marketplace?listingId=${listing.id}`;
+            window.open(fullLink, '_blank');
+        }
     };
 
     useEffect(() => {
-        fetchUserInfo(userId || user.sub);
-        fetchUserPosts(userId || user.sub);
+        fetchUserInfo();
 
         // Fetch user posts, listings, and statistics here
         fetchUserPosts();
         fetchUserListings();
         fetchUserStatistics();
         fetchUserCommunities();
-        fetchUserProfilePicture();
     }, [userId]);
 
     const reloadFeed = () => {
         fetchUserPosts();  // Call the fetchFeed function to reload posts
-    };
-
-    const fetchUserProfilePicture = async () => {
-        const userID = user?.sub;
-
-        try {
-            const token = await getAccessTokenSilently();
-
-            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/${userID}/profile-picture`, {
-                method: "GET",
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
-            });
-
-            const data = await response.json();
-            formData.picture = data;
-        } catch (error) {
-            console.error("Error deleting listing:", error);
-        }
     };
 
 
@@ -315,17 +297,15 @@ const Profile = () => {
     };
 
 
-    const fetchUserInfo = async (id) => {
+    const fetchUserInfo = async () => {
         try {
             const token = await getAccessTokenSilently();
-            const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/user/${id}`,
+            const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/user/${targetUserId}`,
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                     }
                 });
-
-            const userData = response.data;
 
             // Map the data to match the desired format
             const formattedData = {
@@ -333,15 +313,11 @@ const Profile = () => {
                 create_date: response.data.create_date,
                 email: response.data.email,
                 name: response.data.name,
-                profile_image: response.data.profile_image
+                picture: response.data.picture
             };
             setUserData(formattedData);
 
-            setFormData({
-                name: userData.name || '',
-                email: userData.email || '',
-                picture: userData.picture || ''
-            });
+            setFormData(formattedData);
 
 
         } catch (error) {
@@ -374,6 +350,7 @@ const Profile = () => {
             }));
 
             setUserListings(formattedData);
+
         } catch (error) {
             console.error('Error fetching listings:', error);
         }
@@ -516,6 +493,15 @@ const Profile = () => {
         }
     };
 
+    const handleSaveClick = () => {
+        setShowConfirmModal(true);
+    };
+
+    const handleConfirmSave = () => {
+        setShowConfirmModal(false);
+        handleSaveChanges();
+    };
+
 
     return (
         <Container className="my-5">
@@ -583,10 +569,29 @@ const Profile = () => {
                                 </InputGroup>
                             )}
                             {isOwnProfile && (
-                                <Button variant="outline-primary" className="mt-3" onClick={handleSaveChanges}>
-                                    <FaEdit className="me-2" />
-                                    Save Changes
-                                </Button>
+                                <>
+                                    <Button variant="outline-primary" className="mt-3" onClick={handleSaveClick}>
+                                        <FaEdit className="me-2" />
+                                        Save Changes
+                                    </Button>
+
+                                    <Modal show={showConfirmModal} onHide={() => setShowConfirmModal(false)}>
+                                        <Modal.Header closeButton>
+                                            <Modal.Title className={styles.saveChangesTextModal}>Confirm Save Changes</Modal.Title>
+                                        </Modal.Header>
+                                        <Modal.Body className={styles.saveChangesTextModal}>
+                                            Saving changes will log you out. You'll need to log back in after the changes are saved. Do you want to continue?
+                                        </Modal.Body>
+                                        <Modal.Footer>
+                                            <Button variant="secondary" onClick={() => setShowConfirmModal(false)}>
+                                                Cancel
+                                            </Button>
+                                            <Button variant="primary" onClick={handleConfirmSave}>
+                                                Save and Log Out
+                                            </Button>
+                                        </Modal.Footer>
+                                    </Modal>
+                                </>
                             )}
 
                             {/* Feedback Message */}
