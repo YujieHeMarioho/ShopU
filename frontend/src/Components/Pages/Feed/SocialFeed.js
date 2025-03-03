@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styles from './SocialFeed.module.css';
 import { Button } from 'react-bootstrap';
-import { SocialCard } from '../../Common';
+import { SocialCard, CommentSection } from '../../Common';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
 import { Modal } from 'react-bootstrap';
@@ -153,207 +153,11 @@ const SocialFeed = () => {
   const handleShowComments = (post_id) => {
     setSelectedPostId(post_id);
     setShowComments(true);
-    fetchComments(post_id);
   };
 
   const handleCloseComments = () => {
     setShowComments(false);
     setSelectedPostId(null);
-  };
-
-  const fetchComments = async (postId) => {
-    try {
-      const token = await getAccessTokenSilently();
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/comments/${postId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error('Failed to fetch comments');
-      const data = await response.json();
-      const initialLikesState = data.reduce((acc, comment) => {
-        acc[comment.comment_id] = comment.isliked;
-        return acc;
-      }, {});
-      const initialLikeCounts = data.reduce((acc, comment) => {
-        acc[comment.comment_id] = comment.like_count;
-        return acc;
-      }, {});
-      setComments((prev) => ({ ...prev, [postId]: data }));
-      setIsLiked(initialLikesState);
-      setLikeCount(initialLikeCounts);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const addComment = async () => {
-    if (!newComment.trim()) return;
-    const tempId = Date.now();
-    const newCommentData = {
-      id: tempId,
-      user_id: user.sub,
-      name: username,
-      text: newComment,
-      like_count: 0,
-      isliked: false,
-    };
-    setComments((prev) => ({
-      ...prev,
-      [selectedPostId]: [...(prev[selectedPostId] || []), newCommentData],
-    }));
-    setLikeCount((prev) => ({ ...prev, [tempId]: 0 }));
-    setIsLiked((prev) => ({ ...prev, [tempId]: false }));
-    setNewComment('');
-    try {
-      const token = await getAccessTokenSilently();
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/comments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ postId: selectedPostId, userId: user.sub, text: newComment }),
-      });
-      if (!response.ok) throw new Error('Failed to post comment');
-      const postedCommentData = await response.json();
-      setComments((prev) => ({
-        ...prev,
-        [selectedPostId]: prev[selectedPostId].map((comment) =>
-          comment.id === tempId ? { ...comment, ...postedCommentData } : comment
-        ),
-      }));
-      setLikeCount((prev) => ({
-        ...prev,
-        [postedCommentData.comment_id]: postedCommentData.like_count ?? 0,
-      }));
-      setIsLiked((prev) => ({
-        ...prev,
-        [postedCommentData.comment_id]: postedCommentData.isliked ?? false,
-      }));
-    } catch (error) {
-      console.error('Error posting comment:', error);
-      setComments((prev) => ({
-        ...prev,
-        [selectedPostId]: (prev[selectedPostId] || []).filter((c) => c.id !== tempId),
-      }));
-      setLikeCount((prev) => {
-        const updated = { ...prev };
-        delete updated[tempId];
-        return updated;
-      });
-      setIsLiked((prev) => {
-        const updated = { ...prev };
-        delete updated[tempId];
-        return updated;
-      });
-    }
-  };
-
-  // Fixed Comment Like Logic to be correct
-  const handleCommentLike = async (commentId, currentLikeStatus) => {
-    try {
-      // Optimistically update UI
-      setIsLiked((prev) => ({
-        ...prev,
-        [commentId]: !currentLikeStatus,
-      }));
-
-      setLikeCount((prev) => ({
-        ...prev,
-        [commentId]: currentLikeStatus ? (+prev[commentId] || 0) - 1 : (+prev[commentId] || 0) + 1,
-      }));
-
-      setComments((prevComments) => {
-        const updatedComments = { ...prevComments };
-        const updatedPostComments = updatedComments[selectedPostId].map((comment) => {
-          if (comment.comment_id === commentId) {
-            return {
-              ...comment,
-              like_count: currentLikeStatus ? (+comment.like_count || 0) - 1 : (+comment.like_count || 0) + 1,
-            };
-          }
-          return comment;
-        });
-        updatedComments[selectedPostId] = updatedPostComments;
-        return updatedComments;
-      });
-
-      const token = await getAccessTokenSilently();
-      const method = currentLikeStatus ? 'DELETE' : 'POST';
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/comments/${commentId}/like`, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) throw new Error('Failed to update like status');
-
-      const updatedCommentData = await response.json();
-      setLikeCount((prev) => ({
-        ...prev,
-        [commentId]: updatedCommentData.like_count ?? prev[commentId],
-      }));
-      setComments((prevComments) => {
-        const updatedComments = { ...prevComments };
-        const updatedPostComments = updatedComments[selectedPostId].map((comment) => {
-          if (comment.comment_id === commentId) {
-            return {
-              ...comment,
-              like_count: updatedCommentData.like_count || comment.like_count,
-            };
-          }
-          return comment;
-        });
-        updatedComments[selectedPostId] = updatedPostComments;
-        return updatedComments;
-      });
-    } catch (error) {
-      console.error("Error updating like status:", error);
-      setIsLiked((prev) => ({
-        ...prev,
-        [commentId]: currentLikeStatus,
-      }));
-      setLikeCount((prev) => ({
-        ...prev,
-        [commentId]: currentLikeStatus ? (+prev[commentId] || 0) + 1 : (+prev[commentId] || 0) - 1,
-      }));
-      setComments((prevComments) => {
-        const updatedComments = { ...prevComments };
-        const updatedPostComments = updatedComments[selectedPostId].map((comment) => {
-          if (comment.comment_id === commentId) {
-            return {
-              ...comment,
-              like_count: currentLikeStatus ? (+comment.like_count || 0) + 1 : (+comment.like_count || 0) - 1,
-            };
-          }
-          return comment;
-        });
-        updatedComments[selectedPostId] = updatedPostComments;
-        return updatedComments;
-      });
-    }
-  };
-
-  const handleDeleteComment = async (commentId) => {
-    try {
-      const token = await getAccessTokenSilently();
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/comments/${commentId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      if (!response.ok) throw new Error('Failed to delete comment');
-      setComments((prev) => {
-        const updated = { ...prev };
-        updated[selectedPostId] = updated[selectedPostId].filter((c) => c.comment_id !== commentId);
-        return updated;
-      });
-    } catch (error) {
-      console.error('Error deleting comment:', error);
-    }
   };
 
   const createFeedPost = async () => {
@@ -544,57 +348,17 @@ const SocialFeed = () => {
         </Modal.Footer>
       </Modal>
 
-      <Modal
-        show={showComments}
+      {/* Comments Modal */}
+      <Modal  show={showComments}
         onHide={handleCloseComments}
         animation={true}
         className="bottom-modal"
-        dialogClassName="modal-dialog-bottom"
-      >
+        dialogClassName="modal-dialog-bottom">
         <Modal.Header closeButton>
           <Modal.Title style={{ color: 'black' }}>Comments</Modal.Title>
         </Modal.Header>
-        <Modal.Body className={styles.modalBody}>
-          <div className="space-y-2">
-            {(comments[selectedPostId] || []).map((comment) => (
-              <div key={comment.comment_id} className={styles.commentContainer}>
-                <div className={styles.commentText}>
-                  <strong>{comment.name}:</strong> {comment.text}
-                  <div className={styles.likeContainer}>
-                    <Button
-                      variant="link"
-                      onClick={() => handleCommentLike(comment.comment_id, isLiked[comment.comment_id])}
-                      style={{ color: isLiked[comment.comment_id] ? 'red' : 'gray' }}
-                    >
-                      {isLiked[comment.comment_id] ? <FaHeart /> : <FaRegHeart />}
-                    </Button>
-                    <span className={styles.likeCount}>{likeCount[comment.comment_id] || 0}</span>
-                  </div>
-                </div>
-                {comment.user_id === userId && (
-                  <Button
-                    variant="link"
-                    onClick={() => handleDeleteComment(comment.comment_id)}
-                    className={styles.deleteButton}
-                  >
-                    <FaTrash />
-                  </Button>
-                )}
-              </div>
-            ))}
-          </div>
-          <div className="mt-4 d-flex">
-            <input
-              type="text"
-              className="form-control"
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Add a comment..."
-            />
-            <Button className="ml-2" onClick={addComment} variant="primary">
-              Post
-            </Button>
-          </div>
+        <Modal.Body>
+          <CommentSection selectedPostId={selectedPostId} userId={userId} />
         </Modal.Body>
       </Modal>
     </div>

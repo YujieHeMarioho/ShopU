@@ -8,7 +8,7 @@ import './Profile.module.css'; // Optional: Custom CSS
 import UserPreferences from './UserPreferences';
 import styles from './Profile.module.css';
 import communityStyles from '../Community/Community.module.css'
-import {SocialCard} from '../../Common';
+import {SocialCard, CommentSection} from '../../Common';
 import {CardGrid} from '../../Common';
 import leaveCommunity from '../Community/Community';
 import { useParams } from 'react-router-dom';
@@ -717,60 +717,17 @@ const Profile = () => {
         </Card>
         */}
             {/* Comments Modal */}
-            <Modal show={showComments} onHide={handleCloseComments} animation={true} className="bottom-modal"
-                dialogClassName="modal-dialog-bottom">
-                <Modal.Header closeButton>
-                    <Modal.Title style={{ color: 'black' }}>Comments</Modal.Title>
-                </Modal.Header>
-                <Modal.Body className={styles.modalBody}>
-                    <div className="space-y-2">
-                        {(comments[selectedPostId] || []).map((comment) => (
-                            <div key={comment.comment_id} className={styles.commentContainer}>
-                                {/* Comment text container */}
-                                <div className={styles.commentText}>
-                                    <strong>{comment.name}:</strong> {comment.text}
-
-                                    {/* Like button and count */}
-                                    <div className={styles.likeContainer}>
-                                        <Button
-                                            variant="link"
-                                            onClick={() => handleCommentLike(comment.comment_id, isLiked[comment.comment_id])}
-                                            style={{ color: isLiked[comment.comment_id] ? 'red' : 'gray' }}
-                                        >
-                                            {isLiked[comment.comment_id] ? <FaHeart /> : <FaRegHeart />}
-                                        </Button>
-                                        <span
-                                            className={styles.likeCount}>{comment.like_count || 0}</span> {/* Display the number of likes */}
-                                    </div>
-                                </div>
-
-                                {/* Delete button for the comment */}
-                                {(comment.user_id === currUserId) && (
-                                    <Button
-                                        variant="link"
-                                        onClick={() => handleDeleteComment(comment.comment_id)}
-                                        className={styles.deleteButton}
-                                    >
-                                        <FaTrash />
-                                    </Button>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-
-
-                    {/* New comment input */}
-                    <div className="mt-4 d-flex">
-                        <input
-                            type="text"
-                            className="form-control"
-                            value={newComment}
-                            onChange={(e) => setNewComment(e.target.value)}
-                            placeholder="Add a comment..."
-                        />
-                        <Button className="ml-2" onClick={addComment} variant="primary">Post</Button>
-                    </div>
-                </Modal.Body>
+            <Modal  show={showComments}
+              onHide={handleCloseComments}
+              animation={true}
+              className="bottom-modal"
+              dialogClassName="modal-dialog-bottom">
+              <Modal.Header closeButton>
+                <Modal.Title style={{ color: 'black' }}>Comments</Modal.Title>
+              </Modal.Header>
+              <Modal.Body>
+                <CommentSection selectedPostId={selectedPostId} userId={userId} />
+              </Modal.Body>
             </Modal>
         </Container>
 

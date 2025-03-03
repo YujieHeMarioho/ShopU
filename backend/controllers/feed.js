@@ -181,7 +181,7 @@ export const getCommunityFeedPosts = async (req, res) => {
 
 
     const query = `
-       SELECT
+      SELECT
         f.post_id,
         f.title,
         f.content,
@@ -190,7 +190,8 @@ export const getCommunityFeedPosts = async (req, res) => {
         f.date_created,
         u.user_id AS author,
         f.likes_count,
-        ARRAY_AGG(t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL) AS tags -- Aggregate tags into an array
+        ARRAY_AGG(t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL) AS tags, -- Aggregate tags into an array
+        COUNT(cp.post_id) AS sharedBy  -- Count the number of shared by for the post in the community
       FROM
           feed_posts f
       JOIN

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
 import axios from 'axios';
-import {CardGrid, SocialCard} from '../../Common'
+import {CardGrid, SocialCard, CommentSection} from '../../Common'
 import Masonry from 'react-masonry-css';
 import ListingModal from '../Marketplace/Listings';
 import { Modal } from 'react-bootstrap';
@@ -21,7 +21,11 @@ const CommunityHome = () => {
   const [selectedListing, setSelectedListing] = useState(null);
   const [selectedCard, setSelectedCard] = useState(null);
   const [showModal, setShowModal] = useState(false); // State to toggle the modal
-  const { getAccessTokenSilently } = useAuth0();
+  const [selectedPostId, setSelectedPostId] = useState(null);
+  const [showComments, setShowComments] = useState(false);
+  const { user, isAuthenticated, getAccessTokenSilently, isLoading: authLoading } = useAuth0();
+
+  const userId = isAuthenticated ? user?.sub : null;
 
   useEffect(() => {
     if (!isLoading) return;
@@ -156,6 +160,16 @@ const CommunityHome = () => {
     setIsLoading(false);
   });
 
+  const handleShowComments = (post_id) => {
+    setSelectedPostId(post_id);
+    setShowComments(true);
+  };
+
+  const handleCloseComments = () => {
+    setShowComments(false);
+    setSelectedPostId(null);
+  };
+
   // Handler when user clicks a listing
   const handleCardClick = (listing) => {
     setSelectedListing(listing);
@@ -284,18 +298,19 @@ const shareFeedPost = async (postId) => {
           {feed.map((post) => (
             <div key={post.post_id} className={feedStyles.gridItem} onClick={() => handleFeedCardClick(post)}> 
               <SocialCard
-                post_id={post.post_id}                // Directly passing post_id
-                image={post.image}                 // Passing image URL
-                title={post.title}                     // Passing title
-                description={post.content}             // Passing content as description
-                profilePic={post.profile_pic_url}      // Passing profile picture URL
-                author={post.author}                   // Passing author name
-                initialLikes={post.likes_count}        // Mapping likes_count to initialLikes
-                initialShares={post.shares}            // Mapping shares to initialShares
-                isLikedAlready={post.isliked}                 // Check if post already liked by user
-                tags={post.tags}                       // Passing tags
-                onLike={() => handleLike(post.post_id, post.likes_count, post.is_liked)} // Handling like action
-                onShare={() => shareFeedPost(post.post_id)}  // Handling share action
+                post_id={post.post_id}
+                image={post.image}
+                title={post.title}
+                description={post.content}
+                profilePic={post.profile}
+                author={post.author}
+                authorId={post.author_id}
+                initialLikes={post.likes_count}
+                initialShares={post.shares}
+                isLikedAlready={post.isliked}
+                tags={post.tags}
+                listingId={post.listing_id}
+                onShowComments={() => handleShowComments(post.post_id)}
               />
             </div>
           ))}
@@ -334,6 +349,20 @@ const shareFeedPost = async (postId) => {
                     onShare={() => shareFeedPost(selectedCard.post_id)}
                 />
             )}
+        </Modal.Body>
+      </Modal>
+
+      {/* Comments Modal */}
+      <Modal  show={showComments}
+        onHide={handleCloseComments}
+        animation={true}
+        className="bottom-modal"
+        dialogClassName="modal-dialog-bottom">
+        <Modal.Header closeButton>
+          <Modal.Title style={{ color: 'black' }}>Comments</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <CommentSection selectedPostId={selectedPostId} userId={userId} />
         </Modal.Body>
       </Modal>
     </div>
