@@ -39,7 +39,6 @@ export const getAllListings = async (req, res) => {
       l.description,
       c.name AS category,  -- Get the category name
       l.item_type,
-      l.star_rating,
       l.price,
       ARRAY_AGG(li.file_key) AS file_keys,
       u.name AS author,     
@@ -59,7 +58,6 @@ export const getAllListings = async (req, res) => {
       l.description, 
       c.name, 
       l.item_type, 
-      l.star_rating, 
       l.price,
       u.name,               
       u.profile_image;      
@@ -149,7 +147,6 @@ const getUserListings = async (userId) => {
       l.description,
       c.name AS category,
       l.item_type,
-      l.star_rating,
       l.price,
       l.user_id,
       ARRAY_AGG(li.file_key) AS file_keys 
@@ -167,7 +164,6 @@ const getUserListings = async (userId) => {
       l.description, 
       c.name, 
       l.item_type, 
-      l.star_rating, 
       l.price, 
       l.user_id;
   `;
@@ -242,7 +238,6 @@ export const getCommunityListings = async (req, res) => {
         l.description,
         c.name AS category,  -- Get the category name
         l.item_type,
-        l.star_rating,
         l.price,
         ARRAY_AGG(li.file_key) AS file_keys 
       FROM
@@ -261,8 +256,7 @@ export const getCommunityListings = async (req, res) => {
         l.title, 
         l.description, 
         c.name, 
-        l.item_type, 
-        l.star_rating, 
+        l.item_type,  
         l.price;
         
 `;
@@ -322,7 +316,6 @@ export const getFavoritedListings = async (req, res) => {
     l.description,
     c.name AS category,  -- Get the category name
     l.item_type,
-    l.star_rating,
     l.price,
     ARRAY_AGG(li.file_key) AS file_keys 
   FROM
@@ -340,8 +333,7 @@ export const getFavoritedListings = async (req, res) => {
     l.title, 
     l.description, 
     c.name, 
-    l.item_type, 
-    l.star_rating, 
+    l.item_type,  
     l.price;
 `;
 
@@ -600,7 +592,6 @@ export const getSimilarListings = async ( req, res ) => {
             l.description,
             c.name AS category,  -- Get the category name
             l.item_type,
-            l.star_rating,
             l.price,
             ARRAY_AGG(li.file_key) AS file_keys 
         FROM listings l
@@ -614,8 +605,7 @@ export const getSimilarListings = async ( req, res ) => {
             l.title, 
             l.description, 
             c.name, 
-            l.item_type, 
-            l.star_rating, 
+            l.item_type,  
             l.price;
       `;
 

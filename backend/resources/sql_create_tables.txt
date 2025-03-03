@@ -192,3 +192,13 @@ ADD CONSTRAINT fk_listing_id FOREIGN KEY (listing_id) REFERENCES listings(listin
 
 alter table users
 ADD profile_image VARCHAR(255);
+
+# Listing Service table
+
+CREATE TABLE listing_services(
+    service_id SERIAL PRIMARY KEY,
+    listing_id INTEGER,
+    service_name VARCHAR(255),
+    service_price NUMERIC(10, 2),
+    CONSTRAINT fk_listing_id FOREIGN KEY (listing_id) REFERENCES listings(listing_id) ON DELETE CASCADE
+);
