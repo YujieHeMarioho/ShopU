@@ -136,7 +136,7 @@ const Communities = () => {
         }
       );
       //other communities
-      const otherCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/all`,
+      const otherCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/other`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -144,7 +144,7 @@ const Communities = () => {
         }
       );
       //created communities
-      const createdCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/created`,
+      const createdCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/created/${user.sub}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -195,7 +195,7 @@ const Communities = () => {
           }
         }
       );
-      const otherCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/all`,
+      const otherCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/other`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -232,7 +232,7 @@ const Communities = () => {
           }
         }
       );
-      const otherCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/all`,
+      const otherCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/other`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -244,6 +244,51 @@ const Communities = () => {
     } catch (error) {
       console.error('Error removing community:', error);
       alert('Error removing community.');
+    }
+  };
+
+  // Delete a community permanently
+  const deleteCommunity = async (communityId) => {
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/communities/delete/${communityId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        }
+      );
+      alert(response.data.message);
+  
+      // Fetch the updated communities list with details
+      const communityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        }
+      );
+      const otherCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/other`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        }
+      );
+      //created communities
+      const createdCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/created/${user.sub}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        }
+      );
+      setOtherCommunities(otherCommunityResponse.data);
+      setCommunities(communityResponse.data); // Update state with full details
+      setCreatedCommunities(createdCommunityResponse.data);
+    } catch (error) {
+      console.error('Error removing community:', error);
+      alert('Error deleting community.');
     }
   };
 
@@ -372,8 +417,8 @@ const Communities = () => {
                       <p>{community.description}</p>
                       {/*<p>Joined At: {new Date(community.joined_at).toLocaleString()}</p>*/}
                   </div>
-                  <button className={styles.leaveButton} onClick={() => leaveCommunity(community.community_id)}>
-                      Leave {/*FIXME: add delete community ability*/}
+                  <button className={styles.leaveButton} onClick={() => deleteCommunity(community.community_id)}>
+                      Delete Permanently {/*FIXME: add delete community ability*/}
                   </button>
               </div>
           ))

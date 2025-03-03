@@ -454,6 +454,33 @@ const Profile = () => {
         }
     };
 
+    // Delete a community permanently
+    const deleteCommunity = async (communityId) => {
+        try {
+        const token = await getAccessTokenSilently();
+        const response = await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/communities/delete/${communityId}`,
+            {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            }
+            }
+        );
+        alert(response.data.message);
+    
+        //get created communities
+        const createdCommunityResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/communities/created/${user.sub}`,
+            {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            }
+            }
+        );
+        setCreatedCommunities(createdCommunityResponse.data);
+        } catch (error) {
+        console.error('Error removing community:', error);
+        alert('Error deleting community.');
+        }
+    };
 
     const handleInputChange = (e) => {
         const { name, type, files, value } = e.target;
@@ -662,8 +689,8 @@ const Profile = () => {
                                         <p>{community.description}</p>
                                         {/*<p>Joined At: {new Date(community.joined_at).toLocaleString()}</p>*/}
                                     </div>
-                                    {isOwnProfile &&(<button className={communityStyles.leaveButton} onClick={() => leaveCommunity(community.community_id)}>
-                                        Leave {/*FIXME: add delete community ability*/}
+                                    {isOwnProfile &&(<button className={communityStyles.leaveButton} onClick={() => deleteCommunity(community.community_id)}>
+                                        Delete Permanently
                                     </button>)}
                                     
                                 </div>
