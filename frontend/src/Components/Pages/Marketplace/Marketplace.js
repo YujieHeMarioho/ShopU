@@ -149,7 +149,8 @@ export const Marketplace = () => {
           rating: item.star_rating,
           price: item.price,
           image: item.file_keys,  // or item.file_keys[0] if you only want one image
-          
+          author: item.author,
+          profile: item.profile
         }));
 
         setListings(formattedData);

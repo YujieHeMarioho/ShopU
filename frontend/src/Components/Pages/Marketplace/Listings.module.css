@@ -143,3 +143,25 @@ p {
     max-height: 80px; /* Adjust image height inside the card */
     object-fit: cover; /* Ensures image scales well */
 }
+
+.profilePic {
+	width: 60px;
+	height: 60px;
+	border-radius: 50%;
+	border: 2px solid #ddd;
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .author {
+	font-weight: bold;
+	font-size: 18px;
+	color: #333;
+	padding: 5px;
+  }
+
+  .contentHeader {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	width: 100%;
+  }

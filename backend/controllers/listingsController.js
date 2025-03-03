@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import sharp from 'sharp';
 
 const bucketName = buckets.listings;
+const profileBucket = buckets.profile;
 
 // Helper function to extract user_id from the token
 const extractUserIdFromToken = (req) => {
@@ -31,31 +32,37 @@ const extractUserIdFromToken = (req) => {
 //Endpoint for fetching rows
 export const getAllListings = async (req, res) => {
   const query = `
-        SELECT
-          l.listing_id,
-          l.user_id,
-          l.title,
-          l.description,
-          c.name AS category,  -- Get the category name
-          l.item_type,
-          l.star_rating,
-          l.price,
-          ARRAY_AGG(li.file_key) AS file_keys 
-        FROM
-          listings l
-        JOIN
-          categories c ON l.category_id = c.category_id
-        INNER JOIN
-          listing_images li ON l.listing_id = li.listing_id
-        GROUP BY
-          l.listing_id, 
-          l.user_id,          -- Group by seller's ID
-          l.title, 
-          l.description, 
-          c.name, 
-          l.item_type, 
-          l.star_rating, 
-          l.price;
+    SELECT
+      l.listing_id,
+      l.user_id,
+      l.title,
+      l.description,
+      c.name AS category,  -- Get the category name
+      l.item_type,
+      l.star_rating,
+      l.price,
+      ARRAY_AGG(li.file_key) AS file_keys,
+      u.name AS author,     
+      u.profile_image AS profile   
+    FROM
+      listings l
+    JOIN
+      categories c ON l.category_id = c.category_id
+    JOIN
+      users u ON l.user_id = u.user_id
+    INNER JOIN
+      listing_images li ON l.listing_id = li.listing_id
+    GROUP BY
+      l.listing_id, 
+      l.user_id,          -- Group by seller's ID
+      l.title, 
+      l.description, 
+      c.name, 
+      l.item_type, 
+      l.star_rating, 
+      l.price,
+      u.name,               
+      u.profile_image;      
       `;
 
   try {
@@ -73,6 +80,17 @@ export const getAllListings = async (req, res) => {
             return getSignedUrl(s3, command, { expiresIn: 86400 }); // URL expires in 1 day
           })
         );
+
+          if (listing.profile) {
+            const command = new GetObjectCommand({
+                Bucket: profileBucket,
+                Key: listing.profile,
+            });
+
+            // Generate the signed URL
+            listing.profile = await getSignedUrl(s3, command, { expiresIn: 86400 });
+        }
+
         return {
           ...listing,
           file_keys: signedUrls,
