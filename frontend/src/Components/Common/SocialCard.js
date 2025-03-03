@@ -37,6 +37,7 @@ export const SocialCard = ({
   const [showShareModal, setShowShareModal] = useState(false);
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [selectedCommunity, setSelectedCommunity] = useState(null);
+  const [selectedCommunityId, setSelectedCommunityId] = useState(null);
   const [selectedOption, setSelectedOption] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(title);
@@ -45,7 +46,7 @@ export const SocialCard = ({
   const [editedImage, setEditedImage] = useState(image);
   const [editedVideo, setEditedVideo] = useState(video);
   const [loading, setLoading] = useState(false);
-  const [communities, setCommunities] = useState(['Tech Group', 'Gaming Hub']);
+  const [communities, setCommunities] = useState([]);
   const [numComments, setNumComments] = useState(0);
 
   const fetchNumComments = async (postId) => {
@@ -62,10 +63,39 @@ export const SocialCard = ({
     }
   };
 
+  const fetchCommunities = async () => {
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/communities`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+  
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Assuming response.data is an array of community objects with `id` and `name` properties
+        setCommunities(data.map(community => ({
+          id: community.community_id,
+          name: community.name
+        })));
+      } else {
+        throw new Error('Failed to fetch communities');
+      }
+    } catch (error) {
+      console.error("Error fetching communities:", error);
+    }
+  };
+  
+  
+  
   useEffect(() => {
     if (post_id) {
       fetchNumComments(post_id);
     }
+    fetchCommunities();
   }, [post_id]);
 
   const handleLikeClick = async (e) => {
@@ -131,6 +161,26 @@ export const SocialCard = ({
         setAlertMessage('Post shared successfully!');
         setTimeout(() => setAlertMessage(null), 3000);
       } else if (selectedOption === 'community' && selectedCommunity) {
+        // Find the associated community_id based on the community name
+        const token = await getAccessTokenSilently();
+        const postPath = `/feed?post_id=${post_id}`;
+  
+        // Now send the community_id along with the post_id and user_id to the backend
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/communities/share`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            post_id,
+            community_id: selectedCommunity,  // Use the found community_id
+            user_id: user.sub,
+          }),
+        });
+  
+        if (!response.ok) throw new Error('Failed to share post to community');
+  
         setAlertMessage('Post shared to community successfully!');
         setTimeout(() => setAlertMessage(null), 3000);
       }
@@ -259,13 +309,16 @@ export const SocialCard = ({
         <p className={styles.description}>{description}</p>
       </div>
 
-      {tags.length > 0 && (
+      {tags?.length > 0 && (
         <div className={styles.tagsContainer}>
-          {tags.map((tag, i) => (
-            <span key={i} className={styles.tag}>{tag}</span>
+          {tags.filter(tag => tag).map((tag, index) => ( // Exclude NULL or empty values
+            <span key={index} className={styles.tag}>
+              {tag}
+            </span>
           ))}
         </div>
       )}
+
 
       <div className={styles.footer}>
         <Button
@@ -367,17 +420,24 @@ export const SocialCard = ({
             )}
             {selectedOption === 'community' && (
               <Form.Group controlId="communitySelect" className="mt-3">
-                <Form.Label>Select a Community</Form.Label>
-                <Form.Control
-                  as="select"
-                  value={selectedCommunity || ''}
-                  onChange={(e) => setSelectedCommunity(e.target.value)}
-                >
-                  <option value="">Choose...</option>
-                  <option value="Tech Group">Tech Group</option>
-                  <option value="Gaming Hub">Gaming Hub</option>
-                </Form.Control>
-              </Form.Group>
+              <Form.Label>Select a Community</Form.Label>
+              <Form.Control
+                as="select"
+                value={selectedCommunity || ''}
+                onChange={(e) => {setSelectedCommunity(e.target.value);}}
+              >
+                <option value="">Choose...</option>
+                {communities.length > 0 ? (
+                  communities.map((community) => (
+                    <option key={community.id} value={community.id}>
+                      {community.name}
+                    </option>
+                  ))
+                ) : (
+                  <option disabled>Loading communities...</option>
+                )}
+              </Form.Control>
+            </Form.Group>       
             )}
           </Form>
         </Modal.Body>
