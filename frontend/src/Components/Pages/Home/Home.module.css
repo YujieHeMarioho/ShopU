@@ -114,7 +114,7 @@
 }
 
 .cta-button:hover {
-    background-color: #006e13;
+    background-color: var(--secondary-color-hover);
 }
 
 /* Dynamic Statistics Section */

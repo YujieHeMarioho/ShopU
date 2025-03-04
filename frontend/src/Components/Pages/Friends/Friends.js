@@ -193,6 +193,7 @@ const Friends = () => {
   }
 
   return (
+    <div className={styles.bg}>
     <div className={styles.friendsContainer}>
       {/* Add Friend Section */}
       <div className={styles.addFriendSection}>
@@ -246,6 +247,7 @@ const Friends = () => {
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 };

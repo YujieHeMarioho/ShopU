@@ -1,8 +1,12 @@
 /* Friends.module.css */
+  .bg{
+    background-color: var(--background-color);
+    padding-bottom: 20px;
+  }
 
 .friendsContainer {
   max-width: 1200px;
-  margin: 2rem auto;
+  margin: 0 auto;
   padding: 2rem;
   background-color: #f3f4f6;
   border-radius: 12px;

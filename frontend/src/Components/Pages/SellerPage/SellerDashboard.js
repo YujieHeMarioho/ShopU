@@ -78,6 +78,7 @@ function SellerDashboard() {
   };
 
   return (
+    <div className={styles.bg}>
     <Container className={styles.container}>
       <h1 className={styles.title}>Seller Dashboard</h1>
 
@@ -150,6 +151,7 @@ function SellerDashboard() {
     </section>
 
     </Container>
+    </div>
   );
 }
 

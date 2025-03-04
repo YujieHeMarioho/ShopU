@@ -3,6 +3,7 @@
     --primary-color: #02AE5E;
     --primary-color-dark: #067742;
     --secondary-color: #ffa600;
+    --secondary-color-hover:#d18904;
     --background-color: #ffffff;
     --text-color: #252525;
     --text-dark:#252525;
@@ -29,6 +30,7 @@
     --primary-color: #03C26E; /* Slightly brighter green */
     --primary-color-dark: #045C39;
     --secondary-color: #ffa600;
+    --secondary-color-hover:#d18904;
     --background-color: #121212;
     --text-dark:#252525;
     --card-color:#ffffff;
