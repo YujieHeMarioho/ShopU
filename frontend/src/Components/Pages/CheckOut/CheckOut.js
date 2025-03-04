@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { PayPalButtons } from "@paypal/react-paypal-js";
-import "./CheckOut.css";
+import styles from "./CheckOut.module.css";
 
 const CheckOut = () => {
   const [cartItems, setCartItems] = useState([
@@ -33,7 +33,6 @@ const CheckOut = () => {
   const [paid, setPaid] = useState(false);
   const [error, setError] = useState(null);
 
-  // Calculate total price dynamically
   const totalAmount = cartItems.reduce(
     (total, item) => total + item.price * item.quantity,
     0
@@ -69,69 +68,78 @@ const CheckOut = () => {
   };
 
   return (
-    <div className="checkout-container">
-      <h1>Checkout</h1>
+    <div className={styles.bg}>
+      <div className={styles.checkoutContainer}>
+        <h1>Checkout</h1>
 
-      {paid ? (
-        <div>
-          <h2>Payment Successful!</h2>
-          <p>Thank you for your purchase.</p>
-        </div>
-      ) : (
-        <div className="checkout-grid">
-          {/* Left Section: Cart Items */}
-          <div className="cart-items">
-            {cartItems.map((item) => (
-              <div className="cart-item" key={item.id}>
-                <img src={item.image} alt={item.name} className="cart-item-image" />
-                <div className="cart-item-info">
-                  <h3>{item.name}</h3>
-                  <p>{item.description}</p>
-                  <p>Price: ${item.price.toFixed(2)}</p>
-                  <div className="cart-item-controls">
-                    <button onClick={() => updateQuantity(item.id, -1)}>-</button>
-                    <span>{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item.id, 1)}>+</button>
+        {paid ? (
+          <div>
+            <h2>Payment Successful!</h2>
+            <p>Thank you for your purchase.</p>
+          </div>
+        ) : (
+          <div className={styles.checkoutGrid}>
+            {/* Left Section: Cart Items */}
+            <div className={styles.cartItems}>
+              {cartItems.map((item) => (
+                <div className={styles.cartItem} key={item.id}>
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className={styles.cartItemImage}
+                  />
+                  <div className={styles.cartItemInfo}>
+                    <h3>{item.name}</h3>
+                    <p>{item.description}</p>
+                    <p>Price: ${item.price.toFixed(2)}</p>
+                    <div className={styles.cartItemControls}>
+                      <button onClick={() => updateQuantity(item.id, -1)}>-</button>
+                      <span>{item.quantity}</span>
+                      <button onClick={() => updateQuantity(item.id, 1)}>+</button>
+                    </div>
+                    <button
+                      className={styles.removeButton}
+                      onClick={() => removeItem(item.id)}
+                    >
+                      Remove
+                    </button>
                   </div>
-                  <button
-                    className="remove-button"
-                    onClick={() => removeItem(item.id)}
-                  >
-                    Remove
-                  </button>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
 
-          {/* Right Section: Summary and Payment */}
-          <div className="cart-summary">
-            <h2>Order Summary</h2>
-            <p>Total Items: {cartItems.reduce((sum, item) => sum + item.quantity, 0)}</p>
-            <p>Total Price: ${totalAmount.toFixed(2)}</p>
-            <PayPalButtons
-              style={{ layout: "vertical" }}
-              createOrder={(data, actions) => {
-                return actions.order.create({
-                  purchase_units: [
-                    {
-                      amount: {
-                        value: totalAmount.toFixed(2),
+            {/* Right Section: Summary and Payment */}
+            <div className={styles.cartSummary}>
+              <h2>Order Summary</h2>
+              <p>
+                Total Items:{" "}
+                {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
+              </p>
+              <p>Total Price: ${totalAmount.toFixed(2)}</p>
+              <PayPalButtons
+                style={{ layout: "vertical" }}
+                createOrder={(data, actions) => {
+                  return actions.order.create({
+                    purchase_units: [
+                      {
+                        amount: {
+                          value: totalAmount.toFixed(2),
+                        },
                       },
-                    },
-                  ],
-                });
-              }}
-              onApprove={(data, actions) => {
-                return actions.order.capture().then(handlePaymentSuccess);
-              }}
-              onError={handlePaymentError}
-            />
+                    ],
+                  });
+                }}
+                onApprove={(data, actions) => {
+                  return actions.order.capture().then(handlePaymentSuccess);
+                }}
+                onError={handlePaymentError}
+              />
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {error && <p className="error-message">Error: {error.message}</p>}
+        {error && <p className={styles.errorMessage}>Error: {error.message}</p>}
+      </div>
     </div>
   );
 };

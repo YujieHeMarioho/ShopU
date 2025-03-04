@@ -5,6 +5,7 @@
   padding: 20px;
   box-sizing: border-box;
   align-items: center; /* Center everything horizontally */
+  background-color: var(--background-color);
 }
 
 .my-4 {
@@ -63,12 +64,9 @@
 }
 
 .cardGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Responsive grid with wider cards */
   gap: 20px;
   width: 100%;
-  margin: 0;
-  padding: 0;
+  padding-top: 20px;
 }
 
 .cardGridItem {

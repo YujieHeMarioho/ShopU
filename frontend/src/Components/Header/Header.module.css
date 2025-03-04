@@ -185,7 +185,7 @@
     justify-content: center;
     padding: 10px 20px;
     background-color: var(--primary-color);
-    color: var(--text-color);
+    color: white;
     border-radius: 20px;
     border: none;
     cursor: pointer;
@@ -246,7 +246,7 @@
     padding: var(--padding-small) var(--padding-medium);
     border: none;
     background-color: var(--primary-color);
-    color: var(--text-color);
+    color: white;
     border-radius: 20px;
     cursor: pointer;
 }
