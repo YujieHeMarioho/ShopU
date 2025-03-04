@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="3" failures="0" errors="0" time="0.906">
+  <testsuite name="Filters API" errors="0" failures="0" skipped="0" timestamp="2025-03-04T04:35:57" time="0.606" tests="2">
+    <testcase classname="Filters API GET /api/filters should return categories" name="Filters API GET /api/filters should return categories" time="0.025">
+    </testcase>
+    <testcase classname="Filters API GET /api/filters should handle database errors" name="Filters API GET /api/filters should handle database errors" time="0.007">
+    </testcase>
+  </testsuite>
+  <testsuite name="Express App" errors="0" failures="0" skipped="0" timestamp="2025-03-04T04:35:58" time="0.253" tests="1">
+    <testcase classname="Express App GET / responds with hello message" name="Express App GET / responds with hello message" time="0.006">
+    </testcase>
+  </testsuite>
+</testsuites>
