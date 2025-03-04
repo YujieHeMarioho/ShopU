@@ -198,9 +198,9 @@ const CreateListingPage = () => {
       formDataToSubmit.append('description', formData.description);
       formDataToSubmit.append('category', formData.category); 
       formDataToSubmit.append('type', formData.type || 'service'); // Default type
-      formDataToSubmit.append('rating', formData.rating || 0); // Default rating
       formDataToSubmit.append('price', formData.services[1].price);
       formDataToSubmit.append('condition', formData.condition || 'New'); // Needs to be added to the form defualting to new for now
+      formDataToSubmit.append('location', formData.location);
     }
     else {
       formDataToSubmit.append('title', formData.title);
@@ -209,7 +209,8 @@ const CreateListingPage = () => {
       formDataToSubmit.append('type', formData.type || 'item'); // Default type
       formDataToSubmit.append('rating', formData.rating || 0); // Default rating
       formDataToSubmit.append('price', formData.price);
-      formDataToSubmit.append('condition', formData.condition) 
+      formDataToSubmit.append('condition', formData.condition); 
+      formDataToSubmit.append('location', formData.location);
     }
 
     const jsonString = JSON.stringify(Object.fromEntries(formDataToSubmit.entries()));

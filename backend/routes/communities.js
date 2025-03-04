@@ -1,6 +1,17 @@
 import express from 'express';
-import { getCommunityDetails, getUserCommunities, getOtherCommunities, getCreatedCommunities, getCommunityMembers, joinCommunity, leaveCommunity, addCommunity, uploadCommunityImage, addSharedPost } from '../controllers/communities.js';  
 import upload from '../middleware/multer.js';
+import { getCommunityDetails, 
+    getUserCommunities, 
+    getOtherCommunities, 
+    getCreatedCommunities, 
+    getCommunityMembers, 
+    joinCommunity, 
+    leaveCommunity, 
+    deleteCommunity,
+    addCommunity, 
+    uploadCommunityImage,
+    addSharedPost } from '../controllers/communities.js';  
+
 
 const router = express.Router();
 
@@ -14,9 +25,9 @@ router.post('/communities', joinCommunity)
 router.post('/communities/add', addCommunity)
 router.post('/communities/upload', upload.single('communityImage'), uploadCommunityImage)
 router.delete('/communities/:community_id', leaveCommunity)
-
 router.post('/communities/share', addSharedPost)
 
 //router.get('/community/:community_id', );  
+router.delete('/communities/delete/:community_id', deleteCommunity)
 
 export default router;

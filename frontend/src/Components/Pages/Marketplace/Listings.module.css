@@ -44,8 +44,7 @@ p {
     width: 100%;
     padding: 10px;
     flex: 0 0 auto; /* Prevent it from being larger than needed */
-    min-height: 10%;
-    max-height: 15%; /* Ensure it never gets too big */
+    max-height: 20%; /* Ensure it never gets too big */
 }
 
 /* Image container takes 60% of the modal */
@@ -123,23 +122,43 @@ p {
     gap: 8px;
     width: 100%;
     max-width: 100%;
-    height: auto; /* Ensure it only takes as much space as needed */
     max-height: 100px; /* Adjust this to prevent it from getting too tall */
     padding: 10px;
-    overflow-x: auto; /* Allow scrolling if too many items */
-    overflow-y: hidden;
+    overflow-y: auto;
     white-space: nowrap; /* Prevents items from wrapping */
 }
 
-.listingCard {
-    width: 120px; /* Adjust width to make cards smaller */
-    height: 150px; /* Adjust height to keep them compact */
-    font-size: 0.85rem; /* Make text smaller */
-    padding: 5px; /* Reduce padding for a compact look */
-}
+.profilePic {
+	width: 60px;
+	height: 60px;
+	border-radius: 50%;
+	border: 2px solid #ddd;
+	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .author {
+	font-weight: bold;
+	font-size: 18px;
+	color: #333;
+	padding: 5px;
+  }
 
-.listingCard img {
-    max-width: 100%;
-    max-height: 80px; /* Adjust image height inside the card */
-    object-fit: cover; /* Ensures image scales well */
-}
+  .contentHeader {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	width: 100%;
+  }
+
+  .location {
+	margin-left: auto; /* Pushes the location to the right */
+	font-size: 1;
+	color: #666;
+	margin-right: 20px; 
+  }
+
+  /* Icon Styling */
+.locationIcon {
+	margin-right: 5px;   /* Add some space to the right of the icon */
+	margin-bottom: 4px;
+ }

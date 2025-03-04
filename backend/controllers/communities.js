@@ -468,4 +468,40 @@ export const addSharedPost = async (req, res) => {
     }
 };
 
+// Endpoint to delete a community
+export const deleteCommunity = async (req, res) => {
+    const { community_id } = req.params;  
+
+    const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+    let user_id;
+
+    try {
+        const decodedToken = jwtDecode(token); // Decode the token
+        user_id = decodedToken.sub;
+    } catch (err) {
+        console.error('Error decoding token:', err);
+        return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    try {
+        // delete all the other stuff
+        const cleanUp = await pool.query('DELETE FROM community_members WHERE community_id = $1', [community_id]);
+        const cleanUp2 = await pool.query('DELETE FROM communities_posts WHERE community_id = $1', [community_id]);
+        const cleanUp3 = await pool.query('DELETE FROM communities_listings WHERE community_id = $1', [community_id]);
+
+        const result = await pool.query(
+            'DELETE FROM communities WHERE community_id = $1 RETURNING *',
+            [community_id]
+        );
+        if (result.rowCount === 0) {
+            return res.status(404).json({ error: 'Community not found' });
+        }
+
+        res.status(200).json({ message: 'Community deleted successfully' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
 export default {joinCommunity, leaveCommunity, uploadCommunityImage };
