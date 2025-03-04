@@ -57,11 +57,6 @@ build:
   # The built React app
     expire_in: 1 hour  # Set expiration to keep artifact around for a short time
 
-test:  
-  stage: test    
-  script:
-
-
 # Deploy to Elastic Beanstalk
 deploy:
   stage: deploy
