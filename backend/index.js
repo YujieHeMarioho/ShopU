@@ -89,6 +89,10 @@ app.use('/api/conversations', (req, res, next) => {
 }, conversationsRoutes);
 
 // Start Server
-app.listen(port, () => {
-  console.log(`Server is running on ${process.env.BACKEND_URL}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(port, () => {
+    console.log(`Server is running on ${process.env.BACKEND_URL}`);
+  });
+}
+
+export { app };

@@ -17,17 +17,33 @@
 # https://gitlab.com/gitlab-org/gitlab/-/blob/master/lib/gitlab/ci/templates/Getting-Started.gitlab-ci.yml
 
 stages:          # List of stages for jobs, and their order of execution
-  - pre-build
-  - build
   - test
+  - build
   - deploy
 
-pre-build:
-  stage: pre-build
-  tags:
-    - docker-runner
+  # Frontend Tests
+frontend_tests:
+  stage: test
+  image: node:20
   script:
-    - echo "This job runs on the medium Linux x86-64 instance"
+    - cd frontend
+    - npm ci
+    - npm test
+  artifacts:
+    reports:
+      junit: frontend/junit.xml
+
+# Backend Tests
+backend_tests:
+  stage: test
+  image: node:20
+  script:
+    - cd backend
+    - npm ci
+    - npm test
+  artifacts:
+    reports:
+      junit: backend/junit.xml
 
 # This job runs in the build stage to install dependencies and build React app
 build:
@@ -40,13 +56,6 @@ build:
       - frontend/build/
   # The built React app
     expire_in: 1 hour  # Set expiration to keep artifact around for a short time
-
-# unit-test-job:   # This job runs in the test stage.
-#   stage: test    # It only starts when the job in the build stage completes successfully.
-#   script:
-#     - echo "Running unit tests... This will take about 60 seconds."
-#     - sleep 60
-#     - echo "Code coverage is 90%"
 
 # Deploy to Elastic Beanstalk
 deploy:
