@@ -2,6 +2,11 @@
 .socialFeedContainer {
   margin: auto;
   padding: 20px;
+  background-color: var(--background-color);
+}
+
+h2{
+  color:var(--text-color);
 }
 
 /* Layout Toggle Button */
@@ -38,6 +43,7 @@
   justify-content: space-between;
   gap: 20px;
   transition: all 0.3s ease;
+  background-color: none;
 }
 
 /* Instagram-style Scroll View (for phone) */
@@ -49,7 +55,7 @@
 }
 
 /* Grid item styling in the scroll view */
-.scrollView .gridItem {
+.scrollView .scrollItem {
   margin-bottom: 20px;
   width: 100%;                 /* Full width of the container */
   max-width: 800px;            /* Limit the maximum width of each grid item */
@@ -58,7 +64,7 @@
 }
 
 /* Disable hover effect in scroll view */
-.scrollView .gridItem:hover {
+.scrollView .scrollItem:hover {
   transform: none;  /* Remove the hover transform */
   box-shadow: none;  /* Remove the hover box-shadow */
 }
@@ -101,7 +107,6 @@
 /* Social Card (for each post) */
 .gridItem {
   border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
@@ -109,7 +114,6 @@
 
 .gridItem:hover {
   transform: translateY(-10px);
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
 }
 
 /* Card Container */
@@ -118,8 +122,6 @@
   border-radius: 16px;
   padding: 20px;
   margin: 5px 0;
-  background: linear-gradient(135deg, #fdfbfb, #ebedee);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -221,7 +223,6 @@
   background: #fff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   color: #666;
-  transition: background 0.3s ease, color 0.3s ease, transform 0.2s ease;
   cursor: pointer;
 }
 
