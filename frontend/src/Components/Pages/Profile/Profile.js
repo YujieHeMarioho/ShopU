@@ -8,7 +8,7 @@ import './Profile.module.css'; // Optional: Custom CSS
 import UserPreferences from './UserPreferences';
 import styles from './Profile.module.css';
 import communityStyles from '../Community/Community.module.css'
-import {SocialCard} from '../../Common';
+import {SocialCard, CommentSection} from '../../Common';
 import {CardGrid} from '../../Common';
 import leaveCommunity from '../Community/Community';
 import { useParams } from 'react-router-dom';
@@ -48,6 +48,7 @@ const Profile = () => {
     const [isLiked, setIsLiked] = useState({});
     const username = user.name;
     const [selectedPostId, setSelectedPostId] = useState(null);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
 
 
     const handleShowComments = (post_id) => {
@@ -252,43 +253,24 @@ const Profile = () => {
     };
 
     const handleListingCardClick = (listing) => {
-        navigate(`/marketplace?listingId=${listing.id}`);
+        if (listing.id) {
+            const fullLink = `${window.location.origin}/marketplace?listingId=${listing.id}`;
+            window.open(fullLink, '_blank');
+        }
     };
 
     useEffect(() => {
-        fetchUserInfo(userId || user.sub);
-        fetchUserPosts(userId || user.sub);
+        fetchUserInfo();
 
         // Fetch user posts, listings, and statistics here
         fetchUserPosts();
         fetchUserListings();
         fetchUserStatistics();
         fetchUserCommunities();
-        fetchUserProfilePicture();
     }, [userId]);
 
     const reloadFeed = () => {
         fetchUserPosts();  // Call the fetchFeed function to reload posts
-    };
-
-    const fetchUserProfilePicture = async () => {
-        const userID = user?.sub;
-
-        try {
-            const token = await getAccessTokenSilently();
-
-            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/${userID}/profile-picture`, {
-                method: "GET",
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
-            });
-
-            const data = await response.json();
-            formData.picture = data;
-        } catch (error) {
-            console.error("Error deleting listing:", error);
-        }
     };
 
 
@@ -315,17 +297,15 @@ const Profile = () => {
     };
 
 
-    const fetchUserInfo = async (id) => {
+    const fetchUserInfo = async () => {
         try {
             const token = await getAccessTokenSilently();
-            const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/user/${id}`,
+            const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/user/${targetUserId}`,
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                     }
                 });
-
-            const userData = response.data;
 
             // Map the data to match the desired format
             const formattedData = {
@@ -333,15 +313,11 @@ const Profile = () => {
                 create_date: response.data.create_date,
                 email: response.data.email,
                 name: response.data.name,
-                profile_image: response.data.profile_image
+                picture: response.data.picture
             };
             setUserData(formattedData);
 
-            setFormData({
-                name: userData.name || '',
-                email: userData.email || '',
-                picture: userData.picture || ''
-            });
+            setFormData(formattedData);
 
 
         } catch (error) {
@@ -374,6 +350,7 @@ const Profile = () => {
             }));
 
             setUserListings(formattedData);
+
         } catch (error) {
             console.error('Error fetching listings:', error);
         }
@@ -543,25 +520,31 @@ const Profile = () => {
         }
     };
 
+    const handleSaveClick = () => {
+        setShowConfirmModal(true);
+    };
+
+    const handleConfirmSave = () => {
+        setShowConfirmModal(false);
+        handleSaveChanges();
+    };
+
 
     return (
-        <Container className="my-5">
-            <Card className="shadow-sm profile-card mb-4">
-                <Card.Header className="profile-header">
-                    {isOwnProfile && (
-                        <h3 className="mb-0">Profile</h3>
-                    )}
-
+        <div className={styles.profileContainer}>
+        <Container>
+            <Card className={`shadow-sm ${styles.profileCard} mb-4`}>
+                <Card.Header className={styles.profileHeader}>
+                    {isOwnProfile && <h3 className="mb-0">Profile</h3>}
                 </Card.Header>
                 <Card.Body>
                     <Row className="align-items-center">
                         {/* Profile Picture */}
-                        <Col md={3} className="text-center mb-4 mb-md-0">
+                        <Col md={3} className={`text-center mb-4 mb-md-0 ${styles.profileImageContainer}`}>
                             <img
                                 src={formData.picture}
                                 alt="Profile"
-                                className="rounded-circle img-fluid profile-picture"
-                                style={{ width: '150px', height: '150px', objectFit: 'cover' }}
+                                className={`rounded-circle img-fluid ${styles.profilePicture}`}
                             />
                         </Col>
 
@@ -570,6 +553,7 @@ const Profile = () => {
                             <InputGroup className="mb-3">
                                 <InputGroup.Text id="name">Name</InputGroup.Text>
                                 <Form.Control
+                                    className={isOwnProfile ? styles.editableInput : styles.readOnlyInput}
                                     placeholder="Name"
                                     aria-label="Name"
                                     aria-describedby="Name"
@@ -577,13 +561,13 @@ const Profile = () => {
                                     value={formData.name}
                                     onChange={handleInputChange}
                                     readOnly={!isOwnProfile}
-                                    className={`${!isOwnProfile ? styles.readOnlyInput : ''}`}
                                 />
                             </InputGroup>
 
                             <InputGroup className="mb-3">
                                 <InputGroup.Text id="email">Email</InputGroup.Text>
                                 <Form.Control
+                                    className={isOwnProfile ? styles.editableInput : styles.readOnlyInput}
                                     placeholder="Email"
                                     aria-label="Email"
                                     aria-describedby="Email"
@@ -591,14 +575,14 @@ const Profile = () => {
                                     value={formData.email}
                                     onChange={handleInputChange}
                                     readOnly={!isOwnProfile}
-                                    className={`${!isOwnProfile ? styles.readOnlyInput : ''}`}
                                 />
                             </InputGroup>
 
                             {isOwnProfile && (
                                 <InputGroup className={`mb-3 ${styles.profilePictureGroup}`}>
-                                    <InputGroup.Text id="picture" className={styles.profilePictureLabel}>Upload Profile
-                                        Picture</InputGroup.Text>
+                                    <InputGroup.Text className={styles.profilePictureLabel}>
+                                        Upload Profile Picture
+                                    </InputGroup.Text>
                                     <div className={styles.profilePictureInputWrapper}>
                                         <input
                                             type="file"
@@ -610,50 +594,74 @@ const Profile = () => {
                                 </InputGroup>
                             )}
                             {isOwnProfile && (
-                                <Button variant="outline-primary" className="mt-3" onClick={handleSaveChanges}>
-                                    <FaEdit className="me-2" />
-                                    Save Changes
-                                </Button>
+                                <>
+                                    <Button
+                                        variant="outline-primary"
+                                        className={`mt-3 ${styles.saveButton}`}
+                                        onClick={handleSaveClick}
+                                    >
+                                        <FaEdit className="me-2" />
+                                        Save Changes
+                                    </Button>
+
+                                    <Modal show={showConfirmModal} onHide={() => setShowConfirmModal(false)}>
+                                        <Modal.Header closeButton>
+                                            <Modal.Title className={styles.saveChangesTextModal}>
+                                                Confirm Save Changes
+                                            </Modal.Title>
+                                        </Modal.Header>
+                                        <Modal.Body className={styles.saveChangesTextModal}>
+                                            Saving changes will log you out. You'll need to log back in after the changes are saved. Do you want to continue?
+                                        </Modal.Body>
+                                        <Modal.Footer>
+                                            <Button variant="secondary" onClick={() => setShowConfirmModal(false)}>
+                                                Cancel
+                                            </Button>
+                                            <Button variant="primary" onClick={handleConfirmSave}>
+                                                Save and Log Out
+                                            </Button>
+                                        </Modal.Footer>
+                                    </Modal>
+                                </>
                             )}
 
                             {/* Feedback Message */}
                             {message && (
-                                <p className={`mt-3 ${message.includes('Error') ? 'text-danger' : 'text-success'}`}>
+                                <p className={`mt-3 ${message.includes('Error') ? styles.errorText : styles.successText}`}>
                                     {message}
                                 </p>
                             )}
                         </Col>
                     </Row>
                 </Card.Body>
-                <Card.Footer className="text-muted text-end">
+                <Card.Footer className={`text-muted text-end ${styles.profileFooter}`}>
                     Member since: {new Date(userData.create_date).toLocaleDateString()}
                 </Card.Footer>
             </Card>
 
             {/* Tabs Section */}
-            <Tabs activeKey={key} onSelect={(k) => setKey(k)} id="profile-tabs" className="mb-3">
+            <Tabs activeKey={key} onSelect={(k) => setKey(k)} id="profile-tabs" className={`mb-3 ${styles.tabsContainer}`}>
                 <Tab eventKey="posts" title="Posts">
                     <div className={`${styles.feedContainer} ${isGridLayout ? styles.gridView : styles.scrollView}`}>
                         {userPosts.length === 0 ? (
-                            <p>No posts available.</p>
+                            <p className={styles.noContentText}>No posts available.</p>
                         ) : (
                             userPosts.map((post) => (
-                                <div key={post.post_id} className={styles.gridItem}
-                                    onClick={() => handleCardClick(post)}>
+                                <div key={post.post_id} className={styles.gridItem} onClick={() => handleCardClick(post)}>
                                     <SocialCard
-                                        post_id={post.post_id}                // Directly passing post_id
-                                        image={post.image}                 // Passing image URL
-                                        title={post.title}                     // Passing title
-                                        description={post.content}             // Passing content as description
-                                        profilePic={post.profile}      // Passing profile picture URL
-                                        author={post.author}                   // Passing author name
-                                        authorId={post.author_id}              // Passing author ID
-                                        initialLikes={post.likes_count}        // Mapping likes_count to initialLikes
-                                        initialShares={post.shares}            // Mapping shares to initialShares
-                                        isLikedAlready={post.isliked}                 // Check if post already liked by user
-                                        tags={post.tags}                       // Passing tags
-                                        listingId={post.listing_id}                       // Passing link
-                                        onShowComments={() => handleShowComments(post.post_id)} // Handling show post comments
+                                        post_id={post.post_id}
+                                        image={post.image}
+                                        title={post.title}
+                                        description={post.content}
+                                        profilePic={post.profile}
+                                        author={post.author}
+                                        authorId={post.author_id}
+                                        initialLikes={post.likes_count}
+                                        initialShares={post.shares}
+                                        isLikedAlready={post.isliked}
+                                        tags={post.tags}
+                                        listingId={post.listing_id}
+                                        onShowComments={() => handleShowComments(post.post_id)}
                                         reloadFeed={reloadFeed}
                                     />
                                 </div>
@@ -665,17 +673,18 @@ const Profile = () => {
                 <Tab eventKey="listings" title="Listings">
                     <div className={styles.cardGridContainer}>
                         <CardGrid
-                            listings={userListings} // Pass the listings here
+                            listings={userListings}
                             className={styles.cardGrid}
-                            openListingDetails={handleListingCardClick} // Pass the card click handler here
+                            openListingDetails={handleListingCardClick}
                         />
                     </div>
                 </Tab>
+                
                 <Tab eventKey="communities" title="Communities">
-                    <p className='section-title'>Your Created Communities</p>
-                    <div className="your-community-grid">
+                    <p className={styles.sectionTitle}>Your Created Communities</p>
+                    <div className={styles.communityGrid}>
                         {createdCommunities.length === 0 ? (
-                            <p>You haven't created any communities.</p>
+                            <p className={styles.noContentText}>You haven't created any communities.</p>
                         ) : (
                             createdCommunities.map((community) => (
                                 <div key={community.community_id} className={communityStyles.yourCommunityCard} onClick={(e) => handleCardClick(community.community_id, e)}>
@@ -687,7 +696,6 @@ const Profile = () => {
                                     <div className={communityStyles.communityInfo}>
                                         <h3>{community.name || `Community ${community.community_id}`}</h3>
                                         <p>{community.description}</p>
-                                        {/*<p>Joined At: {new Date(community.joined_at).toLocaleString()}</p>*/}
                                     </div>
                                     {isOwnProfile &&(<button className={communityStyles.leaveButton} onClick={() => deleteCommunity(community.community_id)}>
                                         Delete Permanently
@@ -698,10 +706,11 @@ const Profile = () => {
                         )}
                     </div>
                 </Tab>
+
                 <Tab eventKey="statistics" title="Statistics">
-                    <Card className="profile-tab-statistics mb-3">
+                    <Card className={styles.statisticsCard}>
                         <Card.Body>
-                            <h5>User Statistics</h5>
+                            <h5 className={styles.statisticsTitle}>User Statistics</h5>
                             <ul>
                                 <li>Posts: {userStatistics.posts}</li>
                                 <li>Listings: {userStatistics.listings}</li>
@@ -710,6 +719,7 @@ const Profile = () => {
                         </Card.Body>
                     </Card>
                 </Tab>
+
                 {isOwnProfile && (
                     <Tab eventKey="preferences" title="User Preferences">
                         <UserPreferences />
@@ -717,86 +727,22 @@ const Profile = () => {
                 )}
             </Tabs>
 
-
-            {/* JSON Section */}
-            {/*<Card className="shadow-sm">
-          <Card.Header className="bg-secondary text-white">
-            <h4 className="mb-0">User Information</h4>
-          </Card.Header>
-          <Card.Body className="bg-light">
-            <pre
-              style={{
-                backgroundColor: '#f8f9fa',
-                padding: '15px',
-                borderRadius: '8px',
-                fontSize: '14px',
-                overflowX: 'auto',
-              }}
-            >
-              {JSON.stringify(user, null, 2)}
-            </pre>
-          </Card.Body>
-        </Card>
-        */}
-            {/* Comments Modal */}
-            <Modal show={showComments} onHide={handleCloseComments} animation={true} className="bottom-modal"
-                dialogClassName="modal-dialog-bottom">
-                <Modal.Header closeButton>
-                    <Modal.Title style={{ color: 'black' }}>Comments</Modal.Title>
-                </Modal.Header>
-                <Modal.Body className={styles.modalBody}>
-                    <div className="space-y-2">
-                        {(comments[selectedPostId] || []).map((comment) => (
-                            <div key={comment.comment_id} className={styles.commentContainer}>
-                                {/* Comment text container */}
-                                <div className={styles.commentText}>
-                                    <strong>{comment.name}:</strong> {comment.text}
-
-                                    {/* Like button and count */}
-                                    <div className={styles.likeContainer}>
-                                        <Button
-                                            variant="link"
-                                            onClick={() => handleCommentLike(comment.comment_id, isLiked[comment.comment_id])}
-                                            style={{ color: isLiked[comment.comment_id] ? 'red' : 'gray' }}
-                                        >
-                                            {isLiked[comment.comment_id] ? <FaHeart /> : <FaRegHeart />}
-                                        </Button>
-                                        <span
-                                            className={styles.likeCount}>{comment.like_count || 0}</span> {/* Display the number of likes */}
-                                    </div>
-                                </div>
-
-                                {/* Delete button for the comment */}
-                                {(comment.user_id === currUserId) && (
-                                    <Button
-                                        variant="link"
-                                        onClick={() => handleDeleteComment(comment.comment_id)}
-                                        className={styles.deleteButton}
-                                    >
-                                        <FaTrash />
-                                    </Button>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-
-
-                    {/* New comment input */}
-                    <div className="mt-4 d-flex">
-                        <input
-                            type="text"
-                            className="form-control"
-                            value={newComment}
-                            onChange={(e) => setNewComment(e.target.value)}
-                            placeholder="Add a comment..."
-                        />
-                        <Button className="ml-2" onClick={addComment} variant="primary">Post</Button>
-                    </div>
-                </Modal.Body>
-            </Modal>
+             {/* Comments Modal */}
+                  <Modal  show={showComments}
+                    onHide={handleCloseComments}
+                    animation={true}
+                    className="bottom-modal"
+                    dialogClassName="modal-dialog-bottom">
+                    <Modal.Header closeButton>
+                      <Modal.Title style={{ color: 'black' }}>Comments</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                      <CommentSection selectedPostId={selectedPostId} userId={userId} />
+                    </Modal.Body>
+                  </Modal>
         </Container>
-
-    );
+    </div>
+);
 };
 
 export default Profile;

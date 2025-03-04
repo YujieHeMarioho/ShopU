@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Modal, Form, Card} from 'react-bootstrap';
-import { useNavigate, Link } from 'react-router-dom';
+import { Button, Modal, Form } from 'react-bootstrap';
+import { useAuth0 } from '@auth0/auth0-react';
 import { FaThumbsUp, FaShare, FaHeart, FaRegHeart, FaComment } from 'react-icons/fa';
 import styles from './SocialCard.module.css';
-import { useAuth0 } from '@auth0/auth0-react';
+import axios from 'axios';
+import {Link} from "react-router-dom";
 
 export const SocialCard = ({
-  post_id,               // Directly passed post_id
+  post_id,
   image,
   video,
   title,
@@ -20,10 +21,12 @@ export const SocialCard = ({
   tags = [],
   listingId,
   reloadFeed,
-  onShowComments
+  onShowComments,
+  allFriends = [],
+  friendsLoading = true,
 }) => {
   const { user, getAccessTokenSilently } = useAuth0();
-  const navigate = useNavigate();
+
   const [likes, setLikes] = useState(initialLikes);
   const [shares, setShares] = useState(initialShares);
   const [isLiked, setIsLiked] = useState(isLikedAlready);
@@ -34,138 +37,76 @@ export const SocialCard = ({
   const [showShareModal, setShowShareModal] = useState(false);
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [selectedCommunity, setSelectedCommunity] = useState(null);
+  const [selectedCommunityId, setSelectedCommunityId] = useState(null);
+  const [selectedOption, setSelectedOption] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(title);
   const [editedDescription, setEditedDescription] = useState(description);
-  const [editedTags, setEditedTags] = useState(tags.join(", "));
+  const [editedTags, setEditedTags] = useState(tags.join(', '));
   const [editedImage, setEditedImage] = useState(image);
   const [editedVideo, setEditedVideo] = useState(video);
-  //const [friends, setFriends] = useState([]);
-  const [communities, setCommunities] = useState(['Tech Group', 'Gaming Hub']);
-  const [selectedOption, setSelectedOption] = useState('');
   const [loading, setLoading] = useState(false);
-  const [numComments, setNumComments] = useState(3);
-  
-
-  const friends = [
-    { id: 1, name: "Alice", profilePic: "https://randomuser.me/api/portraits/women/1.jpg" },
-    { id: 2, name: "Bob", profilePic: "https://randomuser.me/api/portraits/men/2.jpg" },
-    { id: 3, name: "Charlie", profilePic: "https://randomuser.me/api/portraits/men/3.jpg" },
-    { id: 4, name: "Diana", profilePic: "https://randomuser.me/api/portraits/women/4.jpg" },
-    { id: 5, name: "Ethan", profilePic: "https://randomuser.me/api/portraits/men/5.jpg" },
-    { id: 6, name: "Fiona", profilePic: "https://randomuser.me/api/portraits/women/6.jpg" },
-  ];
+  const [communities, setCommunities] = useState([]);
+  const [numComments, setNumComments] = useState(0);
 
   const fetchNumComments = async (postId) => {
     try {
-        const token = await getAccessTokenSilently();
-        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/comments/count/${postId}`, {
-            headers: {
-                "Authorization": `Bearer ${token}`,
-            },
-        });
+      const token = await getAccessTokenSilently();
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/comments/count/${postId}`, {
+        headers: { "Authorization": `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error("Failed to fetch number of comments");
+      const data = await response.json();
+      setNumComments(data.comment_count || 0);
+    } catch (error) {
+      console.error("Error fetching number of comments:", error);
+    }
+  };
 
-        if (!response.ok) throw new Error("Failed to fetch number of comments");
-
+  const fetchCommunities = async () => {
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/communities`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+  
+      if (response.ok) {
         const data = await response.json();
         
-        setNumComments(data.comment_count || 0); // Ensure fallback to 0
-
-    } catch (error) {
-        console.error("Error fetching number of comments:", error);
-    }
-  };
-
-  // Fetch the comment count when the component mounts
-  useEffect(() => {
-      if (post_id) {
-          fetchNumComments(post_id);
-      }
-  }, [post_id]);
-
-
-
-  const handleSave = async () => {
-    setLoading(true);
-    try {
-      const token = await getAccessTokenSilently();
-
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/${post_id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}` // Include authentication token
-        },
-        body: JSON.stringify({
-          title: editedTitle,
-          description: editedDescription,
-          tags: editedTags.split(",").map(tag => tag.trim()), // Convert string to array
-          image: editedImage,
-          video: editedVideo
-        }),
-      });
-
-      if (response.ok) {
-        setIsEditing(false); // Close modal on success
-        reloadFeed();
+        // Assuming response.data is an array of community objects with `id` and `name` properties
+        setCommunities(data.map(community => ({
+          id: community.community_id,
+          name: community.name
+        })));
       } else {
-        console.error("Failed to update post:", await response.text());
+        throw new Error('Failed to fetch communities');
       }
     } catch (error) {
-      console.error("Error updating post:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDelete = async (selectedPostId) => {
-    if (!selectedPostId) return; // Ensure postId exists
-  
-    try {
-      const token = await getAccessTokenSilently();
-      setLoading(true); // Show loading state
-  
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/${selectedPostId}`, {
-        method: "DELETE",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-        },
-      });
-  
-      if (!response.ok) throw new Error("Failed to delete post");
-  
-      // Remove post from UI
-      reloadFeed();
-  
-      setIsEditing(false); // Close modal
-    } catch (error) {
-      console.error("Error deleting post:", error);
-    } finally {
-      setLoading(false); // Reset loading state
+      console.error("Error fetching communities:", error);
     }
   };
   
-
-  const handleClose = () => {
-    // Reset all states to null when closing the modal
-    setSelectedOption(null);
-    setSelectedFriend(null);
-    setSelectedCommunity("");
-    setShowShareModal(false);
-  };
-
+  
+  
+  useEffect(() => {
+    if (post_id) {
+      fetchNumComments(post_id);
+    }
+    fetchCommunities();
+  }, [post_id]);
 
   const handleLikeClick = async (e) => {
     e.stopPropagation();
     const newLikeStatus = !isLiked;
     setIsLiked(newLikeStatus);
-
     try {
       const token = await getAccessTokenSilently();
-      const response = await likeAPICall(post_id, newLikeStatus, token, user.sub); // Pass user.sub
-
+      const response = await likeAPICall(post_id, newLikeStatus, token, user.sub);
       if (response.success) {
-        setLikes(response.likeCount);  // Use the updated like count from the backend
+        setLikes(response.likeCount);
       }
     } catch (error) {
       setAlertMessage('Failed to update like. Please try again later.');
@@ -173,15 +114,83 @@ export const SocialCard = ({
     }
   };
 
-  const handleConfirmShare = async () => {
-    setShowShareModal(false);
-    setAlertMessage('Post shared successfully!');
-    setTimeout(() => setAlertMessage(null), 3000);
-  };
-
   const handleShareClick = async (e) => {
     e.stopPropagation();
     setShowShareModal(true);
+  };
+
+  const handleConfirmShare = async () => {
+    try {
+      setIsShared(true);
+      setShares(prev => prev + 1);
+      setShowShareModal(false);
+  
+      const token = await getAccessTokenSilently();
+      const postPath = `/feed?post_id=${post_id}`;
+  
+      if (selectedOption === 'friend' && selectedFriend) {
+        const friend = allFriends.find(f => f.friend_id === selectedFriend);
+        if (!friend) throw new Error('Friend not found');
+  
+        const conversationsResponse = await axios.get(
+          `${process.env.REACT_APP_BACKEND_URL}/api/conversations/${user.sub}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+  
+        let conversation = conversationsResponse.data.find(
+          convo => convo.user1_id === selectedFriend || convo.user2_id === selectedFriend
+        );
+  
+        if (!conversation) {
+          const newConversationResponse = await axios.post(
+            `${process.env.REACT_APP_BACKEND_URL}/api/conversations`,
+            { user1_id: user.sub, user2_id: selectedFriend },
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          conversation = newConversationResponse.data;
+        }
+  
+        const conversationId = conversation.conversation_id;
+        const messageContent = `Check out this post: ${postPath}`;
+        await axios.post(
+          `${process.env.REACT_APP_BACKEND_URL}/api/messages/${conversationId}/messages`,
+          { senderId: user.sub, content: messageContent },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+  
+        setAlertMessage('Post shared successfully!');
+        setTimeout(() => setAlertMessage(null), 3000);
+      } else if (selectedOption === 'community' && selectedCommunity) {
+        // Find the associated community_id based on the community name
+        const token = await getAccessTokenSilently();
+        const postPath = `/feed?post_id=${post_id}`;
+  
+        // Now send the community_id along with the post_id and user_id to the backend
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/communities/share`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            post_id,
+            community_id: selectedCommunity,  // Use the found community_id
+            user_id: user.sub,
+          }),
+        });
+  
+        if (!response.ok) throw new Error('Failed to share post to community');
+  
+        setAlertMessage('Post shared to community successfully!');
+        setTimeout(() => setAlertMessage(null), 3000);
+      }
+    } catch (error) {
+      console.error('Error sharing post:', error);
+      setIsShared(false);
+      setShares(prev => prev - 1);
+      setAlertMessage('Failed to share post. Please try again.');
+      setTimeout(() => setAlertMessage(null), 3000);
+    }
   };
 
   const handleFavoriteClick = async (e) => {
@@ -189,8 +198,7 @@ export const SocialCard = ({
     try {
       const token = await getAccessTokenSilently();
       const action = isFavorited ? 'remove' : 'add';
-      const success = await favoriteAPICall(post_id, action, token);
-
+      const success = await favoriteAPICall(listingId, action, token);
       if (success) {
         setIsFavorited(!isFavorited);
         setAlertMessage(isFavorited ? 'Removed from favorites' : 'Added to favorites');
@@ -203,22 +211,83 @@ export const SocialCard = ({
     }
   };
 
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/${post_id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: editedTitle,
+          description: editedDescription,
+          tags: editedTags.split(',').map((t) => t.trim()),
+          image: editedImage,
+          video: editedVideo,
+        }),
+      });
+      if (response.ok) {
+        setIsEditing(false);
+        reloadFeed();
+      } else {
+        console.error('Failed to update post:', await response.text());
+      }
+    } catch (error) {
+      console.error('Error updating post:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (selectedPostId) => {
+    if (!selectedPostId) return;
+    try {
+      const token = await getAccessTokenSilently();
+      setLoading(true);
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/${selectedPostId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to delete post');
+      reloadFeed();
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error deleting post:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCloseShareModal = () => {
+    setSelectedOption('');
+    setSelectedFriend(null);
+    setSelectedCommunity(null);
+    setShowShareModal(false);
+  };
+
   const handleViewItem = () => {
     if (listingId) {
       const fullLink = `${window.location.origin}/marketplace?listingId=${listingId}`;
       window.open(fullLink, '_blank');
     }
   };
+
   return (
     <div className={styles.socialCard}>
       <div className={styles.header}>
-        <Link to={`/profile/${authorId}`}>
-          <img src={profilePic} alt={'Profile'} className={styles.profilePic} />
-        </Link>
-        <span className={styles.author}>{author}</span>
-      </div>
+      <Link to={`/profile/${authorId}`}>
+        <img src={profilePic} alt={'Profile'} className={styles.profilePic} />
+      </Link>
+      <span className={styles.author}>{author}</span>
+    </div>
 
-      {video ? (
+
+  {video ? (
         <video className={styles.media} controls>
           <source src={video} type="video/mp4" />
           Your browser does not support the video tag.
@@ -227,16 +296,13 @@ export const SocialCard = ({
         image && <img src={image} alt="Post content" className={styles.media} />
       )}
 
-    <div className={styles.viewItemBar} onClick={(e)=>e.stopPropagation()}>
-      <Button
-        variant="primary"
-        onClick={handleViewItem}
-        className={styles.viewItemButton}
-      >
-        View Item
-      </Button>
-    </div>
-
+      {listingId && (
+        <div className={styles.viewItemBar} onClick={(e) => e.stopPropagation()}>
+          <Button variant="primary" onClick={handleViewItem} className={styles.viewItemButton}>
+            View Item
+          </Button>
+        </div>
+      )}
 
       <div className={styles.body}>
         <h5 className={styles.title}>{title}</h5>
@@ -253,6 +319,7 @@ export const SocialCard = ({
         </div>
       )}
 
+
       <div className={styles.footer}>
         <Button
           variant="light"
@@ -265,24 +332,23 @@ export const SocialCard = ({
         </Button>
         <Button
           variant="light"
-          onClick={(e)=>{
-            e.stopPropagation();
-            onShowComments(post_id);
-          }}
+          onClick={(e) => { e.stopPropagation(); onShowComments(post_id); }}
           className={styles.button}
           style={{ color: isCommentMode ? 'blue' : 'gray' }}
         >
           <FaComment style={{ marginRight: '5px' }} />
           {numComments}
         </Button>
-        {user?.sub !== authorId && (<Button
-          variant="light"
-          onClick={handleFavoriteClick}
-          className={styles.button}
-          style={{ color: isFavorited ? 'red' : 'gray' }}
-        >
-          {isFavorited ? <FaHeart /> : <FaRegHeart />}
-        </Button>)}
+        {user?.sub !== authorId && (
+          <Button
+            variant="light"
+            onClick={handleFavoriteClick}
+            className={styles.button}
+            style={{ color: isFavorited ? 'red' : 'gray' }}
+          >
+            {isFavorited ? <FaHeart /> : <FaRegHeart />}
+          </Button>
+        )}
         <Button
           variant="light"
           onClick={handleShareClick}
@@ -293,10 +359,11 @@ export const SocialCard = ({
           {shares}
         </Button>
         {user?.sub === authorId && (
-          <Button variant="outline-warning" size="sm" onClick={(e) => {
-            e.stopPropagation();
-            setIsEditing(true);
-          }}>
+          <Button
+            variant="outline-warning"
+            size="sm"
+            onClick={(e) => { e.stopPropagation(); setIsEditing(true); }}
+          >
             ✏️ Edit
           </Button>
         )}
@@ -304,83 +371,95 @@ export const SocialCard = ({
 
       {alertMessage && <div className={styles.alert}>{alertMessage}</div>}
 
-      <Modal show={showShareModal} onHide={handleClose} onClick={(e) => e.stopPropagation()}>
+      <Modal show={showShareModal} onHide={handleCloseShareModal} onClick={(e) => e.stopPropagation()}>
         <Modal.Header closeButton>
           <Modal.Title className={styles.modalTitle}>Share Post</Modal.Title>
         </Modal.Header>
         <Modal.Body className={styles.modalBody}>
           <Form>
             <Button
-              variant={selectedOption === "friend" ? "primary" : "outline-primary"}
-              onClick={() => setSelectedOption("friend")}
+              variant={selectedOption === 'friend' ? 'primary' : 'outline-primary'}
+              onClick={() => setSelectedOption('friend')}
               className="form-check mb-2"
             >
               Select a Friend
             </Button>
-
-            {/* Community Share Option */}
             <Button
-              variant={selectedOption === "community" ? "primary" : "outline-primary"}
-              onClick={() => setSelectedOption("community")}
+              variant={selectedOption === 'community' ? 'primary' : 'outline-primary'}
+              onClick={() => setSelectedOption('community')}
               className="form-check mb-2"
             >
               Community Share
             </Button>
-
-
-            {/* Friend Selection Grid */}
-            {selectedOption === "friend" && (
-              <div className={styles.friendGrid}>
-                {friends.map((friend) => (
-                  <div key={friend.id} className={styles.friendItem}>
-                    <img
-                      src={friend.profilePic}
-                      alt={`${friend.name}'s profile`}
-                      className={`${styles.profilePic} ${selectedFriend === friend.id ? styles.selected : ""
-                        }`}
-                      onClick={() => setSelectedFriend(friend.id)}
-                    />
-                    <span className={styles.friendName}>{friend.name}</span> {/* Display name */}
+            {selectedOption === 'friend' && (
+              <>
+                {friendsLoading ? (
+                  <p>Loading friends...</p>
+                ) : allFriends.length === 0 ? (
+                  <p>No friends found. Add some friends first!</p>
+                ) : (
+                  <div className={styles.friendGrid}>
+                    {allFriends.map((friend) => (
+                      <div key={friend.friend_id} className={styles.friendItem}>
+                        <img
+                          src={friend.profile_picture}
+                          alt={friend.name}
+                          className={
+                            selectedFriend === friend.friend_id
+                              ? `${styles.profilePic} ${styles.selected}`
+                              : styles.profilePic
+                          }
+                          onClick={() => setSelectedFriend(friend.friend_id)}
+                        />
+                        <span className={styles.friendName}>{friend.name}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
-
-            {/* Community Dropdown */}
-            {selectedOption === "community" && (
+            {selectedOption === 'community' && (
               <Form.Group controlId="communitySelect" className="mt-3">
-                <Form.Label>Select a Community</Form.Label>
-                <Form.Control
-                  as="select"
-                  value={selectedCommunity}
-                  onChange={(e) => setSelectedCommunity(e.target.value)}
-                >
-                  <option value="">Choose...</option>
-                  {communities.map((community) => (
+              <Form.Label>Select a Community</Form.Label>
+              <Form.Control
+                as="select"
+                value={selectedCommunity || ''}
+                onChange={(e) => {setSelectedCommunity(e.target.value);}}
+              >
+                <option value="">Choose...</option>
+                {communities.length > 0 ? (
+                  communities.map((community) => (
                     <option key={community.id} value={community.id}>
                       {community.name}
                     </option>
-                  ))}
-                </Form.Control>
-              </Form.Group>
+                  ))
+                ) : (
+                  <option disabled>Loading communities...</option>
+                )}
+              </Form.Control>
+            </Form.Group>       
             )}
           </Form>
-
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={handleClose}>Cancel</Button>
-          <Button variant="primary" onClick={handleConfirmShare} disabled={!selectedFriend && !selectedCommunity}>
+          <Button variant="secondary" onClick={handleCloseShareModal}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleConfirmShare}
+            disabled={!selectedFriend && !selectedCommunity}
+          >
             Share
           </Button>
         </Modal.Footer>
       </Modal>
 
-      {/* Edit Modal */}
       <Modal show={isEditing} onHide={() => setIsEditing(false)} onClick={(e) => e.stopPropagation()}>
-        <Modal.Header closeButton style={{ color: "black" }}>
+        <Modal.Header closeButton style={{ color: 'black' }}>
           <Modal.Title>Edit Post</Modal.Title>
         </Modal.Header>
-        <Modal.Body style={{ color: "black" }}>
+        <Modal.Body style={{ color: 'black' }}>
           <Form>
             <Form.Group controlId="editTitle">
               <Form.Label>Title</Form.Label>
@@ -390,7 +469,6 @@ export const SocialCard = ({
                 onChange={(e) => setEditedTitle(e.target.value)}
               />
             </Form.Group>
-
             <Form.Group controlId="editDescription" className="mt-3">
               <Form.Label>Description</Form.Label>
               <Form.Control
@@ -400,7 +478,6 @@ export const SocialCard = ({
                 onChange={(e) => setEditedDescription(e.target.value)}
               />
             </Form.Group>
-
             <Form.Group controlId="editTags" className="mt-3">
               <Form.Label>Tags (comma-separated)</Form.Label>
               <Form.Control
@@ -409,7 +486,6 @@ export const SocialCard = ({
                 onChange={(e) => setEditedTags(e.target.value)}
               />
             </Form.Group>
-
             <Form.Group controlId="editImage" className="mt-3">
               <Form.Label>Image URL</Form.Label>
               <Form.Control
@@ -418,7 +494,6 @@ export const SocialCard = ({
                 onChange={(e) => setEditedImage(e.target.value)}
               />
             </Form.Group>
-
             <Form.Group controlId="editVideo" className="mt-3">
               <Form.Label>Video URL</Form.Label>
               <Form.Control
@@ -429,14 +504,15 @@ export const SocialCard = ({
             </Form.Group>
           </Form>
         </Modal.Body>
-
         <Modal.Footer>
-        <Button variant="secondary" onClick={() => setIsEditing(false)}>Cancel</Button>
-        <Button variant="danger" onClick={()=> handleDelete(post_id)} disabled={loading}>
-            {loading ? "Deleting..." : "Delete Post"}
+          <Button variant="secondary" onClick={() => setIsEditing(false)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={() => handleDelete(post_id)} disabled={loading}>
+            {loading ? 'Deleting...' : 'Delete Post'}
           </Button>
           <Button variant="primary" onClick={handleSave} disabled={loading}>
-            {loading ? "Saving..." : "Save Changes"}
+            {loading ? 'Saving...' : 'Save Changes'}
           </Button>
         </Modal.Footer>
       </Modal>
@@ -447,7 +523,7 @@ export const SocialCard = ({
 const likeAPICall = async (post_id, isLiked, token, userId) => {
   try {
     const URL = `${process.env.REACT_APP_BACKEND_URL}/api/feed/${post_id}/like`;
-    const method = isLiked ? 'POST' : 'POST'; // Keep it POST for both like/unlike
+    const method = isLiked ? 'POST' : 'POST';
     const response = await fetch(URL, {
       method,
       headers: {
@@ -455,12 +531,10 @@ const likeAPICall = async (post_id, isLiked, token, userId) => {
         'Authorization': `Bearer ${token}`
       },
     });
-
     if (!response.ok) {
       const errorData = await response.text();
       throw new Error(errorData || 'Something went wrong');
     }
-
     return await response.json();
   } catch (error) {
     console.error('API Error:', error);
@@ -479,15 +553,13 @@ const favoriteAPICall = async (listingId, action, token) => {
         'Authorization': `Bearer ${token}`,
       },
     });
-
-    if (response.ok) {
-      return true;
-    } else {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Something went wrong');
-    }
+    if (response.ok) return true;
+    const errorData = await response.json();
+    throw new Error(errorData.error || 'Something went wrong');
   } catch (error) {
     console.error('API Error:', error);
     throw error;
   }
 };
+
+export default SocialCard;

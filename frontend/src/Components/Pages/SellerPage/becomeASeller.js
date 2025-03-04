@@ -7,6 +7,7 @@ function BecomeASeller() {
   const navigate = useNavigate();
   
   return (
+    <div className={styles.bg}>
     <Container className={styles.container}>
       {/* Hero Section */}
       <section className={styles.heroSection}>
@@ -86,6 +87,7 @@ function BecomeASeller() {
         </div>
       </section>
     </Container>
+    </div>
   );
 }
 

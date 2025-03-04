@@ -35,3 +35,29 @@ export const createConversation = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+
+
+// Fetch all conversations for a user
+export const getConversations = async (req, res) => {
+  const { userId } = req.params;
+
+  console.log('Fetching conversations for user:', userId);
+
+  try {
+    const result = await pool.query(
+      `
+      SELECT conversation_id, user1_id, user2_id, created_at
+      FROM conversations
+      WHERE user1_id = $1 OR user2_id = $1
+      `,
+      [userId]
+    );
+
+    console.log('Conversations fetched:', result.rows);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching conversations:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};

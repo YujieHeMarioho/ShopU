@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -32,11 +32,36 @@ import SellerDashboard from './Components/Pages/SellerPage/SellerDashboard';
 function App() {
   const { loginWithRedirect, logout, user, isAuthenticated } = useAuth0();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const isEmailVerificationError =
     params.get('error') === 'access_denied' &&
     params.get('error_description')?.includes('verify your email');
+
+  // Initialize state without checking `localStorage` initially
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Check for stored theme in localStorage on mount (this is done in useEffect)
+  useEffect(() => {
+    const storedTheme = localStorage.getItem('theme');
+    if (storedTheme) {
+      setIsDarkMode(storedTheme === 'dark');
+    }
+  }, []); // This runs only once when the component mounts
+
+  // Apply the theme using useEffect
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
+
+  // Toggle theme and store it in localStorage
+  const toggleDarkMode = () => {
+    const newTheme = isDarkMode ? 'light' : 'dark';
+    setIsDarkMode(!isDarkMode);
+    localStorage.setItem('theme', newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+  };
 
   if (isEmailVerificationError) {
     return <EmailVerificationRequired />;
@@ -45,16 +70,14 @@ function App() {
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
-
   return (
     <div className={isSidebarOpen ? 'App body-shifted' : 'App'}>
       <div className="page-container">
 
         {/* Header */}
-        <Header toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} />
+        <Header toggleSidebar={toggleSidebar} isSidebarOpen={isSidebarOpen} toggleDarkMode={toggleDarkMode} />
 
         <div className="content-wrapper">
-
           {/* Routing Setup */}
           <Routes>
             <Route path="/" element={<AuthenticationGuard component={Home} />} />
@@ -80,6 +103,7 @@ function App() {
             <Route path="/messages" element={<AuthenticationGuard component={MessagesPage} />} />
             <Route path="/community/:community_id" element={<AuthenticationGuard component={CommunityHome} />} />
             <Route path="/chat/:conversation_id" element={<AuthenticationGuard component={ChatContent} />} />
+            <Route path="/feed/:post_id" element={<AuthenticationGuard component={SocialFeed} />} />
 
           </Routes>
 

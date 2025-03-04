@@ -419,6 +419,55 @@ export const leaveCommunity = async (req, res) => {
     }
 };
 
+export const addSharedPost = async (req, res) => {
+    const { post_id, community_id } = req.body;
+
+    // Extract user_id from JWT token
+    const token = req.headers.authorization?.split(' ')[1];
+    let user_id;
+    try {
+        const decodedToken = jwtDecode(token);
+        user_id = decodedToken.sub;
+    } catch (err) {
+        console.error('Error decoding token:', err);
+        return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    // Validate input
+    if (!post_id || !community_id || !user_id) {
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    try {
+        await pool.query('BEGIN'); // Start transaction
+
+        // Insert the post into the community_posts table
+        const insertQuery = `
+            INSERT INTO communities_posts (post_id, community_id, user_id)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (post_id, community_id, user_id) DO NOTHING;
+        `;
+        await pool.query(insertQuery, [post_id, community_id, user_id]);
+
+        // Count how many times this post has been shared in this community
+        const countQuery = `
+            SELECT COUNT(*) AS share_count
+            FROM communities_posts
+            WHERE post_id = $1 AND community_id = $2;
+        `;
+        const countResult = await pool.query(countQuery, [post_id, community_id]);
+        const shareCount = countResult.rows[0].share_count;
+
+        await pool.query('COMMIT'); // Commit transaction
+
+        res.status(201).json({ message: 'Post shared successfully', shareCount });
+    } catch (error) {
+        await pool.query('ROLLBACK'); // Rollback on failure
+        console.error('Error sharing post to community:', error);
+        res.status(500).json({ error: 'Failed to share post to community' });
+    }
+};
+
 // Endpoint to delete a community
 export const deleteCommunity = async (req, res) => {
     const { community_id } = req.params;  

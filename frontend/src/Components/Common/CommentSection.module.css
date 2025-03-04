@@ -1,0 +1,54 @@
+/* Optional: Adjust padding for the comment container */
+.commentContainer {
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+  
+  /* Adjust spacing between comment text and like button */
+  .commentText strong {
+    margin-right: 5px;
+  }
+  
+/* Style for the like button container */
+.likeContainer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end; /* Align like button to the right */
+    margin-left: auto; /* Push like button to the right */
+    color: gray; /* Default color for the heart button */
+  }
+  
+  .likeContainer .liked {
+    color: red; /* Color when liked */
+  }
+  
+  .likeCount {
+    margin-left: 5px;
+    font-size: 14px;
+    color: black; /* Ensure the like count is black */
+  }
+  
+  /* Modal Body Styling */
+  .modalBody {
+    padding: 20px;
+  }
+  
+  
+/* Alert */
+.alert {
+    margin-top: 15px;
+    padding: 10px;
+    background: #e3fcef;
+    border-left: 4px solid #28a745;
+    color: #155724;
+    font-size: 14px;
+    border-radius: 8px;
+  }
+  
+  /* Ensure comment text and username are black */
+  .commentText {
+    color: black;
+    display: flex;
+    align-items: center;  /* Align the text and like button */
+    justify-content: space-between;  /* Ensure the heart button is aligned to the right */
+  }

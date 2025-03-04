@@ -90,6 +90,7 @@ function Home() {
                 </div>
             </section>
 
+
             {/* Dynamic Statistics Section */}
             <section className={styles['statistics-section']}>
                 <h2>ShopU by the Numbers</h2>
