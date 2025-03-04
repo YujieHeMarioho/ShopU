@@ -117,19 +117,6 @@ const Header = () => {
                     <span className={styles.brandName}>ShopU</span>
                 </div>
 
-                {/* Search */}
-                <div className={styles.searchContainer}>
-                    <input
-                        type="text"
-                        className={styles.searchInput}
-                        placeholder="Search..."
-                        aria-label="Search"
-                    />
-                    <button className={styles.searchButton} aria-label="Search">
-                        <FaSearch />
-                    </button>
-                </div>
-
                 {/* Icons */}
                 {!isMobile && (
                 <div className={styles.iconContainer}>
