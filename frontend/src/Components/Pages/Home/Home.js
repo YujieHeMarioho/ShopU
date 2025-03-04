@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Banner } from '../../Common';
 import styles from './Home.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
+import { useNavigate } from 'react-router-dom';
 
 function Home() {    
     const { isAuthenticated, loginWithRedirect, getAccessTokenSilently } = useAuth0();
@@ -12,24 +13,26 @@ function Home() {
         feedPosts: 0,
     });
 
+    const [categories, setCategories] = useState([]);
+    const maxDisplayCategories = 10;
+
+    const navigate = useNavigate();  // Initialize navigate
+
+    // Handle the click event
+    const handleCategoryClick = (category) => {
+        navigate(`/marketplace?category=${encodeURIComponent(category)}`);
+    };
+
+
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const token = await getAccessTokenSilently(); // Retrieve Auth0 token
-    
                 const [feedRes, listingsRes, usersRes, productsRes] = await Promise.all([
-                    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/count`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    }),
-                    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings/count`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    }),
-                    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/users/count`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    }),
-                    // fetch(`${process.env.REACT_APP_BACKEND_URL}/api/products/sold/count`, {
-                    //     headers: { 'Authorization': `Bearer ${token}` }
-                    // })
+                    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/count`
+                    ),
+                    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings/count`),
+                    fetch(`${process.env.REACT_APP_BACKEND_URL}/api/users/count`),
+                    // fetch(`${process.env.REACT_APP_BACKEND_URL}/api/products/sold/count`)
                 ]);
     
                 if (!feedRes.ok || !listingsRes.ok || !usersRes.ok) {
@@ -54,8 +57,18 @@ function Home() {
         };
     
         fetchStats();
+        fetchCategories();
     }, []);
     
+    const fetchCategories = useCallback(async () => {
+        try {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/filters`);
+            const rawData = await response.json();
+            setCategories(rawData.categories.slice(0, maxDisplayCategories) || []);
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+        }
+    }, []);
 
     useEffect(() => {
         console.log('Authentication state:', isAuthenticated);
@@ -115,21 +128,27 @@ function Home() {
             </section>
 
 
-            {/* Interactive Hover Section */}
+           {/* Interactive Hover Section */}
             <section className={styles['hover-section']}>
                 <h2>Explore Our Categories</h2>
                 <div className={styles['hover-categories']}>
-                    <div className={styles['category-card']}>
-                        <h3>Dorm Furniture</h3>
-                    </div>
-                    <div className={styles['category-card']}>
-                        <h3>Textbooks</h3>
-                    </div>
-                    <div className={styles['category-card']}>
-                        <h3>Student Services</h3>
-                    </div>
+                    {categories.length > 0 ? (
+                        categories.map((category, index) => (
+                            <div 
+                                key={index} 
+                                className={styles['category-card']} 
+                                onClick={() => handleCategoryClick(category)}
+                            >
+                                <h3>{category}</h3>
+                            </div>
+                        ))
+                    ) : (
+                        <p>Loading categories...</p>
+                    )}
                 </div>
             </section>
+
+
 
             {/* Testimonials Section */}
             <section className={styles['testimonials']}>

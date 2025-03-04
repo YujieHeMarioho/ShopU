@@ -80,8 +80,8 @@ function App() {
         <div className="content-wrapper">
           {/* Routing Setup */}
           <Routes>
-            <Route path="/" element={<AuthenticationGuard component={Home} />} />
-            <Route path="/home" element={<AuthenticationGuard component={Home} />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/home" element={<Home />} />
             <Route path="/favorites" element={<AuthenticationGuard component={Favorites} />} />
             <Route path="/marketplace" element={<AuthenticationGuard component={Marketplace} />} />
             <Route path="/resources" element={<AuthenticationGuard component={Resources} />} />
