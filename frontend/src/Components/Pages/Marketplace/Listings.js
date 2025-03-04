@@ -3,7 +3,8 @@ import { Modal, Button, Dropdown, Carousel, Form } from 'react-bootstrap';
 import { CardComponent } from '../../Common';
 import styles from './Listings.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { FaMapMarkerAlt, FaMapPin } from 'react-icons/fa';
 import axios from 'axios';
 
 function ListingModal({ show, onHide, listing }) {
@@ -31,10 +32,6 @@ function ListingModal({ show, onHide, listing }) {
       if (!listing) return;
       sameCategoryListings();
    }, [listing]);
-
-   console.log(categoryListings);
-
-
 
 
    const handleDropDownClick = (option) => {
@@ -208,6 +205,10 @@ function ListingModal({ show, onHide, listing }) {
                            listing.title
                         )}
                      </Modal.Title>
+                     <FaMapPin size={20} color="red" className={styles.locationIcon} /> {/* Location icon with size and color */}
+                     <span className={styles.location}>
+                        {listing.location}
+                     </span>
                   </Modal.Header>
                   <Modal.Body className={styles.modalBody}>
                      <div className={styles.carouselContainerImages}>
@@ -225,6 +226,7 @@ function ListingModal({ show, onHide, listing }) {
                      </div>
                      <div className={styles.content}>
                         <div className={styles.priceAndButtons}>
+                           <div className={styles.contentHeader}>
                            <h5 className={styles.cardPrice}>
                               {isEditing ? (
                                  <Form.Control
@@ -236,6 +238,17 @@ function ListingModal({ show, onHide, listing }) {
                                  `$${listing.price}`
                               )}
                            </h5>
+
+                           {!isOwner && (
+                              <div className={styles.AuthorAndRating}>
+                                 <span className={styles.author}>{listing.author}</span>
+                                 <Link to={`/profile/${listing.user_id}`}>
+                                    <img src={listing.profile} alt={'Profile'} className={styles.profilePic} />
+                                 </Link>
+                              </div>
+                           )}
+                           </div>
+
                            {isOwner && (
                               <div className={styles.editButtons}>
                                  {isEditing ? (

@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import sharp from 'sharp';
 
 const bucketName = buckets.listings;
+const profileBucket = buckets.profile;
 
 // Helper function to extract user_id from the token
 const extractUserIdFromToken = (req) => {
@@ -31,31 +32,37 @@ const extractUserIdFromToken = (req) => {
 //Endpoint for fetching rows
 export const getAllListings = async (req, res) => {
   const query = `
-        SELECT
-          l.listing_id,
-          l.user_id,
-          l.title,
-          l.description,
-          c.name AS category,  -- Get the category name
-          l.item_type,
-          l.star_rating,
-          l.price,
-          ARRAY_AGG(li.file_key) AS file_keys 
-        FROM
-          listings l
-        JOIN
-          categories c ON l.category_id = c.category_id
-        INNER JOIN
-          listing_images li ON l.listing_id = li.listing_id
-        GROUP BY
-          l.listing_id, 
-          l.user_id,          -- Group by seller's ID
-          l.title, 
-          l.description, 
-          c.name, 
-          l.item_type, 
-          l.star_rating, 
-          l.price;
+    SELECT
+      l.listing_id,
+      l.user_id,
+      l.title,
+      l.description,
+      c.name AS category,  -- Get the category name
+      l.item_type,
+      l.price,
+      l.location,
+      ARRAY_AGG(li.file_key) AS file_keys,
+      u.name AS author,     
+      u.profile_image AS profile   
+    FROM
+      listings l
+    JOIN
+      categories c ON l.category_id = c.category_id
+    JOIN
+      users u ON l.user_id = u.user_id
+    INNER JOIN
+      listing_images li ON l.listing_id = li.listing_id
+    GROUP BY
+      l.listing_id, 
+      l.user_id,          -- Group by seller's ID
+      l.title, 
+      l.description, 
+      c.name, 
+      l.item_type, 
+      l.price,
+      l.location,
+      u.name,               
+      u.profile_image;      
       `;
 
   try {
@@ -73,6 +80,17 @@ export const getAllListings = async (req, res) => {
             return getSignedUrl(s3, command, { expiresIn: 86400 }); // URL expires in 1 day
           })
         );
+
+          if (listing.profile) {
+            const command = new GetObjectCommand({
+                Bucket: profileBucket,
+                Key: listing.profile,
+            });
+
+            // Generate the signed URL
+            listing.profile = await getSignedUrl(s3, command, { expiresIn: 86400 });
+        }
+
         return {
           ...listing,
           file_keys: signedUrls,
@@ -131,7 +149,6 @@ const getUserListings = async (userId) => {
       l.description,
       c.name AS category,
       l.item_type,
-      l.star_rating,
       l.price,
       l.user_id,
       ARRAY_AGG(li.file_key) AS file_keys 
@@ -149,7 +166,6 @@ const getUserListings = async (userId) => {
       l.description, 
       c.name, 
       l.item_type, 
-      l.star_rating, 
       l.price, 
       l.user_id;
   `;
@@ -224,7 +240,6 @@ export const getCommunityListings = async (req, res) => {
         l.description,
         c.name AS category,  -- Get the category name
         l.item_type,
-        l.star_rating,
         l.price,
         ARRAY_AGG(li.file_key) AS file_keys 
       FROM
@@ -243,8 +258,7 @@ export const getCommunityListings = async (req, res) => {
         l.title, 
         l.description, 
         c.name, 
-        l.item_type, 
-        l.star_rating, 
+        l.item_type,  
         l.price;
         
 `;
@@ -304,7 +318,6 @@ export const getFavoritedListings = async (req, res) => {
     l.description,
     c.name AS category,  -- Get the category name
     l.item_type,
-    l.star_rating,
     l.price,
     ARRAY_AGG(li.file_key) AS file_keys 
   FROM
@@ -322,8 +335,7 @@ export const getFavoritedListings = async (req, res) => {
     l.title, 
     l.description, 
     c.name, 
-    l.item_type, 
-    l.star_rating, 
+    l.item_type,  
     l.price;
 `;
 
@@ -363,7 +375,7 @@ export const getFavoritedListings = async (req, res) => {
 //Endpoint for create a listing
 export const createListing = async (req, res) => {
   try {
-    const { title, description, category, type, rating, price, condition, images } = req.body;
+    const { title, description, category, type, price, condition, location, images } = req.body;
     const parsedImages = images ? JSON.parse(images) : [];
 
     let userId;
@@ -378,11 +390,11 @@ export const createListing = async (req, res) => {
 
     //database call to create listing in listing table
     const listingQuery = `
-            INSERT INTO public.listings (title, description, category_id, item_type, star_rating, price, condition, date_posted, user_id)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            INSERT INTO public.listings (title, description, category_id, item_type, price, condition, date_posted, user_id, location)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING *;
         `;
-    const listingValues = [title, description, category, type, rating || 0, price, condition, new Date().toISOString(), userId];
+    const listingValues = [title, description, category, type,  price, condition, new Date().toISOString(), userId, location];
 
 
     // Execute listings table query
@@ -582,7 +594,6 @@ export const getSimilarListings = async ( req, res ) => {
             l.description,
             c.name AS category,  -- Get the category name
             l.item_type,
-            l.star_rating,
             l.price,
             ARRAY_AGG(li.file_key) AS file_keys 
         FROM listings l
@@ -596,8 +607,7 @@ export const getSimilarListings = async ( req, res ) => {
             l.title, 
             l.description, 
             c.name, 
-            l.item_type, 
-            l.star_rating, 
+            l.item_type,  
             l.price;
       `;
 
