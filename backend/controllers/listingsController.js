@@ -40,6 +40,7 @@ export const getAllListings = async (req, res) => {
       c.name AS category,  -- Get the category name
       l.item_type,
       l.price,
+      l.location,
       ARRAY_AGG(li.file_key) AS file_keys,
       u.name AS author,     
       u.profile_image AS profile   
@@ -59,6 +60,7 @@ export const getAllListings = async (req, res) => {
       c.name, 
       l.item_type, 
       l.price,
+      l.location,
       u.name,               
       u.profile_image;      
       `;
@@ -373,7 +375,7 @@ export const getFavoritedListings = async (req, res) => {
 //Endpoint for create a listing
 export const createListing = async (req, res) => {
   try {
-    const { title, description, category, type, rating, price, condition, images } = req.body;
+    const { title, description, category, type, price, condition, location, images } = req.body;
     const parsedImages = images ? JSON.parse(images) : [];
 
     let userId;
@@ -388,11 +390,11 @@ export const createListing = async (req, res) => {
 
     //database call to create listing in listing table
     const listingQuery = `
-            INSERT INTO public.listings (title, description, category_id, item_type, price, condition, date_posted, user_id)
+            INSERT INTO public.listings (title, description, category_id, item_type, price, condition, date_posted, user_id, location)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING *;
         `;
-    const listingValues = [title, description, category, type,  price, condition, new Date().toISOString(), userId];
+    const listingValues = [title, description, category, type,  price, condition, new Date().toISOString(), userId, location];
 
 
     // Execute listings table query

@@ -204,6 +204,9 @@ function ListingModal({ show, onHide, listing }) {
                            listing.title
                         )}
                      </Modal.Title>
+                     <span className={styles.location}>
+                        {listing.location}
+                     </span>
                   </Modal.Header>
                   <Modal.Body className={styles.modalBody}>
                      <div className={styles.carouselContainerImages}>
