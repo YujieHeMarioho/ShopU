@@ -113,7 +113,7 @@ const Header = () => {
                     onClick={() => navigate('/home')}
                     aria-label="Navigate to Home"
                 >
-                    <img src="ShopULogo.png" alt="ShopU Logo" className={styles.logo} />
+                    <img src="/ShopULogo.png" alt="ShopU Logo" className={styles.logo} />
                     <span className={styles.brandName}>ShopU</span>
                 </div>
 
