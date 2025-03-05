@@ -25,8 +25,60 @@ const CommunityHome = () => {
   const [showComments, setShowComments] = useState(false);
   const { user, isAuthenticated, getAccessTokenSilently, isLoading: authLoading } = useAuth0();
 
+  const [friends, setFriends] = useState([]);
+  const [friendsLoading, setFriendsLoading] = useState(true);
+
   const userId = isAuthenticated ? user?.sub : null;
 
+  
+  useEffect(() => {
+    if (!user) return;
+    const fetchFriends = async () => {
+      try {
+        const token = await getAccessTokenSilently();
+        const friendsResponse = await axios.get(
+          `${process.env.REACT_APP_BACKEND_URL}/api/friends`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { user_id: user.sub },
+          }
+        );
+
+        const friendDetails = await Promise.all(
+          friendsResponse.data.map(async (friend) => {
+            try {
+              const friendRes = await axios.get(
+                `${process.env.REACT_APP_BACKEND_URL}/api/user/${encodeURIComponent(friend.friend_id)}`,
+                { headers: { Authorization: `Bearer ${token}` } }
+              );
+              return {
+                ...friend,
+                name: friendRes.data.name || 'Unnamed User',
+                profile_picture: friendRes.data.picture || 'https://via.placeholder.com/40',
+              };
+            } catch (err) {
+              console.error('Error fetching user info for friend:', err);
+              return {
+                ...friend,
+                name: 'Unknown User',
+                profile_picture: 'https://via.placeholder.com/40',
+              };
+            }
+          })
+        );
+
+        setFriends(friendDetails);
+      } catch (error) {
+        console.error('Error fetching friends:', error);
+        setFriends([]);
+      } finally {
+        setFriendsLoading(false);
+      }
+    };
+
+    fetchFriends();
+  }, [user, getAccessTokenSilently]);
+  
   useEffect(() => {
     if (!isLoading) return;
 
@@ -49,6 +101,8 @@ const CommunityHome = () => {
         console.error('Error fetching community info:', error);
       }
     };
+
+    
 
     //get members of this community
     const fetchCommunityMembersInfo = async () => {
@@ -132,33 +186,37 @@ const CommunityHome = () => {
       }
     };
 
-    //get posts of this community
-    const getCommunityPosts = async () => {
-      try {
-        const token = await getAccessTokenSilently();
-
-        const response = await axios.get(
-          `${process.env.REACT_APP_BACKEND_URL}/api/feed/communities/${community_id}`,
-          {  
-            headers: {
-              Authorization: `Bearer ${token}`,
-            }, 
-          }
-        );
-
-        console.log('Fetched posts:', response.data); // Debugging log
-        setFeed(response.data);
-      } catch (error) {
-        console.error('Error fetching community info:', error);
-      }
-    };
-
     getCommunityDetails();
     fetchCommunityMembersInfo();
     getCommunityListings();
     getCommunityPosts();
     setIsLoading(false);
   });
+
+  //get posts of this community
+  const getCommunityPosts = async () => {
+    try {
+      const token = await getAccessTokenSilently();
+
+      const response = await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/api/feed/communities/${community_id}`,
+        {  
+          headers: {
+            Authorization: `Bearer ${token}`,
+          }, 
+        }
+      );
+
+      console.log('Fetched posts:', response.data); // Debugging log
+      setFeed(response.data);
+    } catch (error) {
+      console.error('Error fetching community info:', error);
+    }
+  };
+
+  const reloadFeed = async (pageArg) => {
+    getCommunityPosts();
+  };
 
   const handleShowComments = (post_id) => {
     setSelectedPostId(post_id);
@@ -335,18 +393,22 @@ const shareFeedPost = async (postId) => {
         >
             {selectedCard && (
                 <SocialCard
-                    post_id={selectedCard.post_id}
-                    image={selectedCard.image}
-                    title={selectedCard.title}
-                    description={selectedCard.content}
-                    profilePic={selectedCard.profile_pic_url}
-                    author={selectedCard.author}
-                    initialLikes={selectedCard.likes_count}
-                    initialShares={selectedCard.shares}
-                    isLikedAlready={selectedCard.isliked}
-                    tags={selectedCard.tags}
-                    onLike={() => handleLike(selectedCard.post_id, selectedCard.likes_count, selectedCard.is_liked)}
-                    onShare={() => shareFeedPost(selectedCard.post_id)}
+                  post_id={selectedCard.post_id}
+                  image={selectedCard.image}
+                  title={selectedCard.title}
+                  description={selectedCard.content}
+                  profilePic={selectedCard.profile}
+                  author={selectedCard.author}
+                  authorId={selectedCard.author_id}
+                  initialLikes={selectedCard.likes_count}
+                  initialShares={selectedCard.shares}
+                  isLikedAlready={selectedCard.isliked}
+                  tags={selectedCard.tags}
+                  listingId={selectedCard.listing_id}
+                  onShowComments={() => handleShowComments(selectedCard.post_id)}
+                  reloadFeed={reloadFeed}
+                  allFriends={friends}
+                  friendsLoading={friendsLoading}
                 />
             )}
         </Modal.Body>
