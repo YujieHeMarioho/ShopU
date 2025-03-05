@@ -240,6 +240,7 @@ const CreateListingPage = () => {
 
 
   return (
+    <div className={currentStyles.bg}>
     <Container className={currentStyles.createListingPage}>
       <h2 className={currentStyles.listingHeader}>{isServicePage ? 'Create Service Listing' : 'Create Item Listing'}</h2>
       <Row>
@@ -444,6 +445,7 @@ const CreateListingPage = () => {
         </Col>
       </Row>
     </Container>
+    </div>
   );
 };
 
