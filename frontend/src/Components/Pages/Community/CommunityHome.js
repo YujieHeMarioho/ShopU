@@ -283,7 +283,7 @@ const shareFeedPost = async (postId) => {
       </div>
       <p className={styles.sectionTitle}>Listings</p>
       <div>
-        <CardGrid className={listingStyles.cardGrid} styles="padding: 0" listings={listings} openListingDetails={handleCardClick} />
+        <CardGrid styles="padding: 0" listings={listings} openListingDetails={handleCardClick} />
       </div>
       <p className={styles.sectionTitle}>Social Posts</p>
       <div>
