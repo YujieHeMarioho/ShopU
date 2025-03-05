@@ -229,7 +229,7 @@ const shareFeedPost = async (postId) => {
 };
 
   return (
-    <div> 
+    <div className={styles.communityHomeContainer}> 
       <h1 className={styles.communityPageTitle}>{community.name + " Homepage"}</h1>
       <div className='community-information'>
         <div className={styles.communityImageAndButtons}>

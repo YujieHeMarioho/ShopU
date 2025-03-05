@@ -1,0 +1,109 @@
+.bg {
+  background-color: #f4f4f4;
+  min-height: 100vh;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.checkoutContainer {
+  width: 90%;
+  max-width: 900px;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.checkoutGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr; /* Two-thirds for items, one-third for summary */
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .checkoutGrid {
+    grid-template-columns: 1fr; /* Stack items on small screens */
+  }
+}
+
+
+.cartItems {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.cartItemImage {
+  width: 200px;
+  height: 200px;
+  object-fit: cover;
+  margin-right: 15px;
+  border-radius: 5px;
+}
+
+.cartItemInfo {
+  flex: 1;
+}
+
+.cartItemControls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color:black;
+}
+
+.cartItemControls button {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.cartItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* Pushes elements apart */
+  background: #fff;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.cartItemInfo {
+  flex: 1; /* Takes up remaining space */
+}
+
+.removeButton {
+  background: #ff4d4d;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: auto; /* Pushes the button to the right */
+}
+
+.removeButton:hover {
+  background: #cc0000;
+}
+
+
+.cartSummary {
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  color:black;
+}
+
+.errorMessage {
+  color: red;
+  margin-top: 10px;
+  font-weight: bold;
+}

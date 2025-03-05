@@ -328,11 +328,12 @@ const Communities = () => {
     console.log(createdCommunities);
 
   return (
-    <div>
+    <div className={styles.communityContainer}>
       <Banner
         title="Communities"
         description="Here are some communities in your orbit."
         showConnectButton={false}
+        className={styles.banner}
       />
 
       {/* Add Community Section */}

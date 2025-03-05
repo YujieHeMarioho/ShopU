@@ -3,8 +3,9 @@ import { Container, Row, Col } from 'react-bootstrap';
 import { CardComponent } from './Card';
 import {SocialCard} from '../Common';
 
-export const CardGrid = ({ listings = [], variant = 'marketplace', openListingDetails, onUnfavorite }) => {
+export const CardGrid = ({ listings = [], variant = 'marketplace', openListingDetails, onUnfavorite, className }) => {
   return (
+    <div className={className}>
     <Container style={{margin: 0}}>
       <Row>
         {listings.length === 0 ? (
@@ -58,6 +59,7 @@ export const CardGrid = ({ listings = [], variant = 'marketplace', openListingDe
         )}
       </Row>
     </Container>
+    </div>
   );
 };
 
