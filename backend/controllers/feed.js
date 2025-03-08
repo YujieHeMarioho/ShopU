@@ -372,7 +372,7 @@ export const createFeedPost = async (req, res) => {
       RETURNING post_id;
     `;
 
-    let postListingId = req.body.listingId && req.body.listingId !== "" ? listingId : null;
+    let postListingId = req.body.listingId && req.body.listingId !== "" ? req.bodylistingId : null;
 
     //will need to replace the placeholder with profile image, will get to that later 
     const postResult = await pool.query(postQuery, [title, content, 'https://via.placeholder.com/300x200', userId, postListingId]);
