@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaSearch, FaShoppingCart, FaHeart, FaBars, FaUser, FaEnvelope, FaTimes } from 'react-icons/fa';
+import { FaSearch, FaShoppingCart, FaHeart, FaBars, FaUser, FaEnvelope, FaTimes, FaSun, FaMoon, FaArrowLeft } from 'react-icons/fa';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import styles from './Header.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
@@ -9,11 +9,12 @@ import axios from 'axios';
 const Header = () => {
     const [showCategoriesPopup, setShowCategoriesPopup] = useState(false);
     const [showSidebar, setShowSidebar] = useState(false);
+    const [showProfileSidebar, setShowProfileSidebar] = useState(false); // Profile sidebar state
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
     const [categories, setCategories] = useState([]);
     const [unreadTotal, setUnreadTotal] = useState(0);
     const [showMobileLinks, setShowMobileLinks] = useState(false);
-
+    const [themeMode, setTheme] = useState(localStorage.getItem('theme') || 'light'); // Default theme is light
 
     const location = useLocation();
     const navigate = useNavigate();
@@ -100,9 +101,35 @@ const Header = () => {
         return () => clearInterval(intervalId);
     }, [isAuthenticated, user, getAccessTokenSilently]);
 
+
+    const detectSystemTheme = () => {
+        return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      };
+
+    // Theme change handler
+    const handleThemeChange = (mode) => {
+        setTheme(mode);
+        localStorage.setItem('theme', mode);
+        if (mode === 'dark') {
+            document.body.classList.add('dark-theme');
+        } else {
+            document.body.classList.remove('dark-theme');
+        }
+    };
+
+    useEffect(() => {
+    if (themeMode === "system") {
+        const systemTheme = detectSystemTheme();
+        document.documentElement.setAttribute("data-theme", systemTheme);
+    } else {
+        document.documentElement.setAttribute("data-theme", themeMode);
+    }
+    }, [themeMode]);
+
     if (isLoading) {
         return <div>{PageLoader}</div>;
     }
+
 
     return (
         <div className={styles.headerWrapper}>
@@ -142,11 +169,11 @@ const Header = () => {
                             <span className={styles.unreadDot}></span>
                         )}
                     </div>
-                    <div className={styles.icon} onClick={handleAuthAction}>
+                    <div className={styles.icon} onClick={() => setShowProfileSidebar(!showProfileSidebar)}>
                         <FaUser />
                     </div>
                 </div> )}
-                
+
                 {/* Hamburger Menu for Mobile */}
                 {isMobile && (
                 <div className={styles.icon} onClick={toggleSidebar}>
@@ -182,6 +209,57 @@ const Header = () => {
                     </div>
                 </div>
             )}
+
+            {/* Profile Sidebar */}
+            {showProfileSidebar && (
+                <div className={styles.profileSidebar}>
+                    <button className={styles.closeButton} onClick={() => setShowProfileSidebar(false)}>
+                        <FaTimes />
+                    </button>
+                    <div className={styles.profileContent}>
+                        <div className={styles.profileSection} onClick={() => { navigate('/profile'); setShowProfileSidebar(false); }}>
+                            <img src={user?.picture || '/default-avatar.png'} alt="Profile" className={styles.profileImage} />
+                            <span>{user?.name || 'Guest'}</span>
+                        </div>
+
+                        {/* "My Profile" Button */}
+                        <div className={styles.profileButton} onClick={() => { navigate('/profile'); setShowProfileSidebar(false); }}>
+                            <FaUser className={styles.sidebarIcon} />
+                            <span>My Profile</span>
+                        </div>
+
+                        <div className={styles.themeSection}>
+                            <h4>Theme</h4>
+                            <div className={styles.themeOptions}>
+                                <button 
+                                    onClick={() => handleThemeChange('light')} 
+                                    className={themeMode === 'light' ? styles.active : ''}
+                                >
+                                    <FaSun /> Light
+                                </button>
+                                <button 
+                                    onClick={() => handleThemeChange('dark')} 
+                                    className={themeMode === 'dark' ? styles.active : ''}
+                                >
+                                    <FaMoon /> Dark
+                                </button>
+                                <button 
+                                    onClick={() => handleThemeChange('system')} 
+                                    className={themeMode === 'system' ? styles.active : ''}
+                                >
+                                    Sync with System
+                                </button>
+                            </div>
+                        </div>
+                        <div className={styles.logoutSection}>
+                            <button onClick={handleLogout} className={styles.logoutButton}>
+                                Log Out
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
 
             {/* Second Layer */}
             <div className={styles.secondLayer}>
@@ -279,9 +357,6 @@ const Header = () => {
                     )}
                 </div> )}
             </div>
-
-            {/* Sidebar (if any) */}
-            {/* ... sidebar code ... */}
         </div>
     );
 };

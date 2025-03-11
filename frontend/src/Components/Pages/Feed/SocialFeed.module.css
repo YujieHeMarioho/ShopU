@@ -11,7 +11,8 @@ h2{
 
 /* Layout Toggle Button */
 .layoutToggleButton {
-  text-align: center;
+  display: flex;
+  justify-content: flex-start; /* Align button to the left */
   margin-bottom: 20px;
 }
 
@@ -44,7 +45,21 @@ h2{
   gap: 20px;
   transition: all 0.3s ease;
   background-color: none;
+  padding: 20px;
+  flex-grow: 1;
 }
+
+.sidebar {
+  position: fixed;
+  width: 250px;
+  height: 50vh;
+  background-color: #f8f9fa;
+  padding: 20px;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+
+}
+
 
 /* Instagram-style Scroll View (for phone) */
 .scrollView {
@@ -57,7 +72,7 @@ h2{
 /* Grid item styling in the scroll view */
 .scrollView .scrollItem {
   margin-bottom: 20px;
-  width: 100%;                 /* Full width of the container */
+  width: 70%;                 /* Full width of the container */
   max-width: 800px;            /* Limit the maximum width of each grid item */
   transition: transform 0.3s ease;
   margin: 0 auto; 
@@ -101,6 +116,9 @@ h2{
   }
   .scrollView {
     display: block; /* Ensure scroll view on smaller screens (phones) */
+  }
+  .sidebar {
+    display: none; /* Hide the sidebar on mobile */
   }
 }
 
