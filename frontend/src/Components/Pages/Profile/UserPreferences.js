@@ -6,12 +6,10 @@ const UserPreferences = () => {
   const { getAccessTokenSilently } = useAuth0();
 
   // Load theme from localStorage or default to 'light'
-  const [isDarkMode, setIsDarkMode] = useState(
-    localStorage.getItem("theme") === "dark"
-  );
+  const [themeMode, setThemeMode] = useState(localStorage.getItem("theme") || "light");
 
   const [preferences, setPreferences] = useState({
-    theme: isDarkMode ? "dark" : "light",
+    theme: themeMode,
     language: 'English',
     timezone: 'UTC',
     dateFormat: 'MM/DD/YYYY',
@@ -28,17 +26,25 @@ const UserPreferences = () => {
 
   const [message, setMessage] = useState('');
 
+  // Function to detect system theme
+  const detectSystemTheme = () => {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  };
+
   // Apply the theme on initial load
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", isDarkMode ? "dark" : "light");
-  }, [isDarkMode]);
+    if (themeMode === "system") {
+      const systemTheme = detectSystemTheme();
+      document.documentElement.setAttribute("data-theme", systemTheme);
+    } else {
+      document.documentElement.setAttribute("data-theme", themeMode);
+    }
+  }, [themeMode]);
 
-  const handleThemeToggle = () => {
-    const newTheme = isDarkMode ? "light" : "dark";
-    setIsDarkMode(!isDarkMode);
+  const handleThemeToggle = (e) => {
+    const newTheme = e.target.value;
+    setThemeMode(newTheme);
     localStorage.setItem("theme", newTheme);
-    document.documentElement.setAttribute("data-theme", newTheme);
-
     setPreferences((prev) => ({
       ...prev,
       theme: newTheme
@@ -79,29 +85,58 @@ const UserPreferences = () => {
     <div className={styles.container}>
       <div className={styles.header}>User Preferences</div>
 
-      {/* Theme Toggle */}
+      {/* Theme Radio Buttons */}
       <div className={styles.section}>
         <label className={styles.label}>Theme</label>
         <div className={styles.themeToggle}>
-          <span>Light</span>
-          <label className={styles.toggleContainer}>
+          <div className={styles.radioOption}>
             <input
-              type="checkbox"
-              checked={isDarkMode}
+              type="radio"
+              id="light"
+              name="theme"
+              value="light"
+              checked={themeMode === "light"}
               onChange={handleThemeToggle}
-              className={styles.toggleInput}
+              className={styles.radioInput}
             />
-            <span className={styles.toggleSlider}></span>
-          </label>
-          <span>Dark</span>
+            <label htmlFor="light" className={styles.radioLabel}>Light</label>
+          </div>
+
+          <div className={styles.radioOption}>
+            <input
+              type="radio"
+              id="dark"
+              name="theme"
+              value="dark"
+              checked={themeMode === "dark"}
+              onChange={handleThemeToggle}
+              className={styles.radioInput}
+            />
+            <label htmlFor="dark" className={styles.radioLabel}>Dark</label>
+          </div>
+
+          <div className={styles.radioOption}>
+            <input
+              type="radio"
+              id="system"
+              name="theme"
+              value="system"
+              checked={themeMode === "system"}
+              onChange={handleThemeToggle}
+              className={styles.radioInput}
+            />
+            <label htmlFor="system" className={styles.radioLabel}>Sync with System</label>
+          </div>
         </div>
       </div>
 
+      {/* Time Zone */}
       <div className={styles.section}>
         <label className={styles.label}>Time Zone</label>
         <input type="text" name="timezone" value={preferences.timezone} onChange={handleChange} className={styles.input} />
       </div>
 
+      {/* Date Format */}
       <div className={styles.section}>
         <label className={styles.label}>Date Format</label>
         <select name="dateFormat" value={preferences.dateFormat} onChange={handleChange} className={styles.select}>
@@ -110,6 +145,7 @@ const UserPreferences = () => {
         </select>
       </div>
 
+      {/* Notifications */}
       <div className={styles.section}>
         <h5>Notifications</h5>
         <label className={styles.checkbox}>
@@ -126,6 +162,7 @@ const UserPreferences = () => {
         </label>
       </div>
 
+      {/* Privacy */}
       <div className={styles.section}>
         <h5>Privacy</h5>
         <label className={styles.label}>Profile Visibility</label>
@@ -147,6 +184,7 @@ const UserPreferences = () => {
         </label>
       </div>
 
+      {/* Content Preferences */}
       <div className={styles.section}>
         <h5>Content Preferences</h5>
         <label className={styles.label}>Post/Feed Customization</label>
@@ -157,6 +195,7 @@ const UserPreferences = () => {
         </select>
       </div>
 
+      {/* Preferred Categories */}
       <div className={styles.section}>
         <label className={styles.label}>Preferred Categories</label>
         <input
@@ -169,13 +208,16 @@ const UserPreferences = () => {
         />
       </div>
 
+      {/* Action Buttons */}
       <div className={styles.buttonGroup}>
         <button className={`${styles.primaryButton} ${styles.warningButton}`}>Download My Data</button>
         <button className={`${styles.primaryButton} ${styles.dangerButton}`}>Deactivate/Delete Account</button>
       </div>
 
+      {/* Save Button */}
       <button className={styles.primaryButton} onClick={handleSavePreferences}>Save Preferences</button>
 
+      {/* Message Display */}
       {message && <p className={`${styles.message} ${message.includes('Error') ? styles.error : styles.success}`}>{message}</p>}
     </div>
   );

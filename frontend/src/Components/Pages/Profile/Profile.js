@@ -712,10 +712,20 @@ const Profile = () => {
                         <Card.Body>
                             <h5 className={styles.statisticsTitle}>User Statistics</h5>
                             <ul>
-                                <li>Posts: {userStatistics.posts}</li>
-                                <li>Listings: {userStatistics.listings}</li>
-                                <li>Followers: {userStatistics.friends}</li>
+                                <li>
+                                    <span>Posts</span>
+                                    <span>{userStatistics.posts}</span>
+                                </li>
+                                <li>
+                                    <span>Listings</span>
+                                    <span>{userStatistics.listings}</span>
+                                </li>
+                                <li>
+                                    <span>Followers</span>
+                                    <span>{userStatistics.friends}</span>
+                                </li>
                             </ul>
+
                         </Card.Body>
                     </Card>
                 </Tab>

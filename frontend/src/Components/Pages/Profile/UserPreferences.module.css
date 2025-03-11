@@ -1,174 +1,176 @@
 .container {
-    background: #f9f9f9;
-    border-radius: 15px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    max-width: 600px;
-    margin: 20px auto;
-    font-family: Arial, sans-serif;
-    color: #333;
-  }
-  
-  .header {
-    background: #007bff;
-    color: white;
-    padding: 15px;
-    border-radius: 8px 8px 0 0;
-    text-align: center;
-    font-size: 1.2rem;
-    font-weight: bold;
-  }
-  
-  .section {
-    background: white;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    padding: 15px;
-    margin-bottom: 15px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  }
-  
-  .label {
-    font-weight: bold;
-    margin-top: 10px;
-    display: block;
-  }
-  
-  .select,
-  .input {
-    width: 100%;
-    padding: 10px;
-    margin-top: 5px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    background: #fff;
-    color: #333;
-  }
-  
-  .select:focus,
-  .input:focus {
-    border-color: #007bff;
-    outline: none;
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-  }
-  
-  .checkbox {
-    margin-top: 10px;
-    display: flex;
-    align-items: center;
-  }
-  
-  .checkbox input {
-    margin-right: 10px;
-  }
-  
-  .buttonGroup {
-    display: flex;
-    gap: 10px;
-    margin-top: 15px;
-  }
-  
-  .primaryButton {
-    background: #007bff;
-    color: white;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: 0.3s;
-    font-size: 1rem;
-  }
-  
-  .primaryButton:hover {
-    background: #0056b3;
-  }
-  
-  .warningButton {
-    background: #ffc107;
-    color: black;
-  }
-  
-  .warningButton:hover {
-    background: #e0a800;
-  }
-  
-  .dangerButton {
-    background: #dc3545;
-    color: white;
-  }
-  
-  .dangerButton:hover {
-    background: #c82333;
-  }
-  
-  .message {
-    margin-top: 10px;
-    font-weight: bold;
-    padding: 10px;
-    border-radius: 5px;
-    text-align: center;
-  }
-  
-  .success {
-    color: green;
-    background: #e6f9e6;
-    border: 1px solid green;
-  }
-  
-  .error {
-    color: red;
-    background: #fde7e7;
-    border: 1px solid red;
-  }
-  
-  .themeToggle {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px;
-  }
-  
-  .toggleContainer {
-    position: relative;
-    width: 60px;
-    height: 30px;
-  }
-  
-  .toggleInput {
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
-  
-  .toggleSlider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ddd;
-    border-radius: 30px;
-    transition: 0.4s;
-  }
-  
-  .toggleSlider::before {
-    content: "";
-    position: absolute;
-    height: 22px;
-    width: 22px;
-    left: 4px;
-    bottom: 4px;
-    background-color: white;
-    border-radius: 50%;
-    transition: 0.4s;
-  }
-  
-  .toggleInput:checked + .toggleSlider {
-    background-color: #007bff;
-  }
-  
-  .toggleInput:checked + .toggleSlider::before {
-    transform: translateX(28px);
-  }
-  
+  background: #f9f9f9;
+  border-radius: 15px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  max-width: 600px;
+  margin: 20px auto;
+  font-family: Arial, sans-serif;
+  color: #333;
+}
+
+.header {
+  background: #007bff;
+  color: white;
+  padding: 15px;
+  border-radius: 8px 8px 0 0;
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.section {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 15px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.label {
+  font-weight: bold;
+  margin-top: 10px;
+  display: block;
+}
+
+.select,
+.input {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background: #fff;
+  color: #333;
+}
+
+.select:focus,
+.input:focus {
+  border-color: #007bff;
+  outline: none;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+.checkbox {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.checkbox input {
+  margin-right: 10px;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.primaryButton {
+  background: #007bff;
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: 0.3s;
+  font-size: 1rem;
+}
+
+.primaryButton:hover {
+  background: #0056b3;
+}
+
+.warningButton {
+  background: #ffc107;
+  color: black;
+}
+
+.warningButton:hover {
+  background: #e0a800;
+}
+
+.dangerButton {
+  background: #dc3545;
+  color: white;
+}
+
+.dangerButton:hover {
+  background: #c82333;
+}
+
+.message {
+  margin-top: 10px;
+  font-weight: bold;
+  padding: 10px;
+  border-radius: 5px;
+  text-align: center;
+}
+
+.success {
+  color: green;
+  background: #e6f9e6;
+  border: 1px solid green;
+}
+
+.error {
+  color: red;
+  background: #fde7e7;
+  border: 1px solid red;
+}
+
+.themeToggle {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+}
+
+.radioOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.radioInput {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #007bff;
+  cursor: pointer;
+  transition: 0.3s ease-in-out;
+}
+
+.radioInput:checked {
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.radioInput:checked::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background-color: white;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.radioLabel {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.radioOption:hover .radioInput {
+  border-color: #0056b3;
+}
+
+.radioOption:hover .radioLabel {
+  color: #0056b3;
+}
