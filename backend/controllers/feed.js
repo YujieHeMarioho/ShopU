@@ -756,3 +756,49 @@ export const getPostCommentCount = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch comment count" });
   }
 };
+export const getFavorites = async (req, res) => {
+  const userId = extractUserIdFromToken(req); // Get userId from the token
+
+  try {
+    const result = await pool.query(
+      `SELECT post_id FROM favoritedPosts WHERE user_id = $1`,
+      [userId]
+    );
+
+    res.json({ favorites: result.rows });
+  } catch (error) {
+    console.error('Error fetching favorites:', error);
+    res.status(500).json({ error: 'Failed to fetch favorites' });
+  }
+};
+
+
+export const handleFavoriteAction = async (req, res) => {
+  const { postId } = req.params;
+  const { action } = req.body;
+  const userId = extractUserIdFromToken(req); // Get userId from the token
+
+  try {
+    if (action === 'add') {
+      await pool.query(
+        `INSERT INTO favoritedPosts (post_id, user_id) 
+         VALUES ($1, $2) 
+         ON CONFLICT DO NOTHING`,
+        [postId, userId]
+      );
+      res.json({ success: true, message: 'Added to favorites' });
+    } else if (action === 'remove') {
+      await pool.query(
+        `DELETE FROM favoritedPosts 
+         WHERE post_id = $1 AND user_id = $2`,
+        [postId, userId]
+      );
+      res.json({ success: true, message: 'Removed from favorites' });
+    } else {
+      res.status(400).json({ error: 'Invalid action' });
+    }
+  } catch (error) {
+    console.error('Error handling favorite:', error);
+    res.status(500).json({ error: 'Failed to update favorite' });
+  }
+};

@@ -88,10 +88,26 @@ export const SocialCard = ({
       console.error("Error fetching communities:", error);
     }
   };
-  
-  
+
+  const fetchFavorites = async () => {
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/favorites`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch favorites');
+
+      const data = await response.json();
+      const isCurrentlyFavorited = data.favorites.some(fav => fav.post_id === post_id);
+      setIsFavorited(isCurrentlyFavorited);
+    } catch (error) {
+      console.error('Error fetching favorites:', error);
+    }
+  };
   
   useEffect(() => {
+    fetchFavorites();
     if (post_id) {
       fetchNumComments(post_id);
     }
@@ -197,11 +213,12 @@ export const SocialCard = ({
     e.stopPropagation();
     try {
       const token = await getAccessTokenSilently();
-      const action = isFavorited ? 'remove' : 'add';
-      const success = await favoriteAPICall(listingId, action, token);
+      const newFavoriteStatus = !isFavorited;
+      const success = await favoriteAPICall(post_id, newFavoriteStatus, token);
+  
       if (success) {
-        setIsFavorited(!isFavorited);
-        setAlertMessage(isFavorited ? 'Removed from favorites' : 'Added to favorites');
+        setIsFavorited(newFavoriteStatus);
+        setAlertMessage(newFavoriteStatus ? 'Added to favorites' : 'Removed from favorites');
         setTimeout(() => setAlertMessage(null), 3000);
       }
     } catch (error) {
@@ -210,6 +227,7 @@ export const SocialCard = ({
       setTimeout(() => setAlertMessage(null), 3000);
     }
   };
+  
 
   const handleSave = async () => {
     setLoading(true);
@@ -542,18 +560,19 @@ const likeAPICall = async (post_id, isLiked, token, userId) => {
   }
 };
 
-const favoriteAPICall = async (listingId, action, token) => {
+const favoriteAPICall = async (post_id, isFavoriting, token) => {
   try {
-    const URL = `${process.env.REACT_APP_BACKEND_URL}/api/favorite/${listingId}`;
-    const method = action === 'add' ? 'POST' : 'DELETE';
-    const response = await fetch(URL, {
-      method,
+    const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/favorites/${post_id}`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
+      body: JSON.stringify({ action: isFavoriting ? 'add' : 'remove' }), // Send action to backend
     });
+
     if (response.ok) return true;
+    
     const errorData = await response.json();
     throw new Error(errorData.error || 'Something went wrong');
   } catch (error) {
@@ -561,5 +580,7 @@ const favoriteAPICall = async (listingId, action, token) => {
     throw error;
   }
 };
+
+
 
 export default SocialCard;

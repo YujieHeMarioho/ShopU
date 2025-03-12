@@ -1,93 +1,113 @@
-.communityHomeContainer{
+/* Community Container */
+.communityHomeContainer {
 	background-color: var(--background-color);
-}
-
-
-.communityPageTitle {
+	padding: 20px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+  }
+  
+  /* Title */
+  .communityPageTitle {
 	text-align: center;
 	color: var(--text-color);
 	font-size: 3rem;
-}
-
-.communityImageAndButtons {
+	margin-bottom: 20px;
+	font-weight: bold;
+  }
+  
+  /* Community Image and Buttons Layout */
+  .communityImageAndButtons {
 	display: flex;
 	flex-direction: row;
-	justify-content:space-evenly;
-	
-}
-
-.emptyForFormatting {
-	width: 15%
-}
-
-.communityButtons {
+	justify-content: center;
+	gap: 2rem;
+	align-items: center;
+	margin-bottom: 30px;
+  }
+  
+  .emptyForFormatting {
+	width: 15%;
+  }
+  
+  .communityButtons {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
 	width: 15%;
-	gap: 2rem;
-}
-
-.communityButtons button{
-background-color: #10b981; /* Green */
-color: #fff;
-border: none;
-padding: 0.4rem 0.8rem;
-border-radius: 4px;
-cursor: pointer;
-font-weight: 600;
-width: 100%;
-}
-
-.communityButtons button:hover {
-background-color: #059669; /* Darker green */
-}
-
-.imageContainer {
+	gap: 1.5rem;
+  }
+  
+  .communityButtons button {
+	background-color: #10b981; /* Green */
+	color: #fff;
+	border: none;
+	padding: 0.5rem 1rem;
+	border-radius: 4px;
+	cursor: pointer;
+	font-weight: 600;
+	width: 100%;
+	transition: background-color 0.3s ease, transform 0.2s ease;
+  }
+  
+  .communityButtons button:hover {
+	background-color: #059669; /* Darker green */
+	transform: translateY(-3px);
+  }
+  
+  .communityButtons button:active {
+	transform: translateY(1px);
+  }
+  
+  /* Image Container */
+  .imageContainer {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	max-width: 50%;
-}
-.img {
+	border-radius: 10px;
+	overflow: hidden;
+  }
+  
+  .img {
 	max-width: 100%;
-}
-
-.content {
+	border-radius: 8px;
+  }
+  
+  /* Content Section */
+  .content {
 	display: flex;
 	flex-direction: column;
 	align-items: center;
 	margin-top: 1rem;
 	margin-bottom: 1rem;
-}
-
-.cardText {
+	font-size: 1.2rem;
+	color: var(--text-color);
+	line-height: 1.6;
+  }
+  
+  /* Card Text */
+  .cardText {
 	font-size: 1.5rem;
 	text-align: center;
 	color: white;
-}
-
-.defaultFiller {
-	color: var(--text-color);
-}
-
-.sectionTitle {
-	font-size: 1.5rem;
+	padding: 0 10px;
+  }
+  
+  /* Section Titles */
+  .sectionTitle {
+	font-size: 1.8rem;
 	text-align: center;
-	margin-bottom: .25rem;
-	margin-top: 1rem;
+	margin-bottom: 1rem;
+	margin-top: 2rem;
 	color: var(--text-color);
 	border-top: 5px solid var(--primary-color);
-}
-
-/*member list stuff*/
-.no-members {
-  color: #6b7280;
-  text-align: center;
-}
-
-.membersGrid {
+	padding-top: 15px;
+  }
+  
+  /* Members Grid */
+  .membersGrid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
 	gap: 1rem;
@@ -96,12 +116,18 @@ background-color: #059669; /* Darker green */
   .memberCard {
 	background-color: #f9fafb;
 	border-radius: 8px;
-	padding: 1rem;
-	flex-direction: column;
+	padding: 1.2rem;
 	display: flex;
+	flex-direction: column;
 	align-items: center;
 	gap: 0.75rem;
-	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+	transition: transform 0.2s ease, box-shadow 0.3s ease;
+  }
+  
+  .memberCard:hover {
+	transform: translateY(-5px);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
   
   .memberAvatar {
@@ -113,35 +139,81 @@ background-color: #059669; /* Darker green */
   }
   
   .memberInfo {
-	flex: 1;
+	text-align: center;
   }
   
   .memberInfo h3 {
 	margin: 0 0 0.25rem;
+	font-size: 1.3rem;
+	color: var(--text-color);
   }
   
   .memberInfo p {
 	margin: 0.25rem 0;
 	color: #4b5563;
   }
-
-  /*  Member Buttons */
-.memberMessageButton, .addFriendButton {
+  
+  /* Member Buttons */
+  .memberMessageButton,
+  .addFriendButton {
 	background-color: #10b981; /* Green */
 	color: #fff;
 	border: none;
-	padding: 0.4rem 0.8rem;
+	padding: 0.6rem 1.2rem;
 	border-radius: 4px;
 	cursor: pointer;
 	font-weight: 600;
+	transition: background-color 0.3s ease, transform 0.2s ease;
   }
   
-  .memberMessageButton:hover, .addFriendButton:hover {
+  .memberMessageButton:hover,
+  .addFriendButton:hover {
 	background-color: #059669; /* Darker green */
+	transform: translateY(-3px);
   }
   
-  /* Actions Container */
-.memberActions {
-	display: flex;
-	gap: 0.5rem; /* Space between buttons */
+  .memberMessageButton:active,
+  .addFriendButton:active {
+	transform: translateY(1px);
   }
+  
+  .memberActions {
+	display: flex;
+	gap: 0.5rem;
+  }
+  
+  /* Listings and Feed Section */
+  .masonryGrid {
+	margin-top: 1rem;
+  }
+  
+  .masonryColumn {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+  }
+  
+  .gridItem {
+	cursor: pointer;
+	transition: transform 0.3s ease;
+  }
+  
+  .gridItem:hover {
+	transform: translateY(-5px);
+  }
+  
+  /* Modal Style */
+  .modal-dialog-bottom {
+	transform: translateY(100px);
+  }
+  
+  .bottom-modal .modal-body {
+	padding: 30px;
+  }
+  
+  /* Placeholder Styling */
+  .defaultFiller {
+	color: #6b7280;
+	text-align: center;
+  }
+  

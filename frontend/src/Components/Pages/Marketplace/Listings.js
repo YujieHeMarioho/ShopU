@@ -183,7 +183,7 @@ function ListingModal({ show, onHide, listing }) {
 
 
    return (
-      <>
+      <div>
          {/* Main Listing Modal */}
          <Modal show={show} onHide={handleCloseModal} dialogClassName='modal' centered className={styles.modal}>
             {!listing ? (
@@ -326,7 +326,7 @@ function ListingModal({ show, onHide, listing }) {
                <Button variant="danger" onClick={confirmExit}>Yes, Exit</Button>
             </Modal.Footer>
          </Modal>
-      </>
+      </div>
    );
 }
 
