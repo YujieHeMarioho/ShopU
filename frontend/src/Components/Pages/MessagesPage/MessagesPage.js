@@ -3,7 +3,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { debounce } from 'lodash'; // Import debounce from lodash
-import './MessagesPage.css';
+import styles from './MessagesPage.module.css';
 
 const MessagesPage = () => {
   const { user, getAccessTokenSilently, isLoading: authLoading } = useAuth0();
@@ -278,12 +278,12 @@ const MessagesPage = () => {
   };
 
   return (
-    <div className="messages-page">
-      <div className="history">
+    <div className={styles.messagesPage}>
+      <div className={styles.history}>
         <h3>Conversations</h3>
         {error && <p className="error-message">{error}</p>}
         {isLoadingConversations ? (
-          <div className="spinner">Loading conversations...</div>
+          <div className={styles.spinner}>Loading conversations...</div>
         ) : conversations.length === 0 ? (
           <p>No conversations found. Start chatting!</p>
         ) : (
@@ -293,20 +293,20 @@ const MessagesPage = () => {
                 key={conv.conversation_id}
                 onClick={() => handleSelectConversation(conv)}
                 className={
-                  selectedConversation?.conversation_id === conv.conversation_id ? 'active' : ''
+                  selectedConversation?.conversation_id === conv.conversation_id ? styles.active : ''
                 }
               >
-                <div className="conversation-info">
+                <div className={styles.conversationInfo}>
                   <img
                     src={conv.otherProfilePicture || 'https://via.placeholder.com/40'}
                     alt={`Avatar of ${conv.otherUsername}`}
-                    className="conversation-avatar"
+                    className={styles.conversationAvatar}
                   />
                   <div>
                     <p>
                       {conv.otherUsername}
                       {conv.unread_count > 0 && (
-                        <span className="unread-badge">{conv.unread_count}</span>
+                        <span className={styles.unreadBadge}>{conv.unread_count}</span>
                       )}
                     </p>
                     <small>{conv.last_message}</small>
@@ -318,31 +318,26 @@ const MessagesPage = () => {
         )}
       </div>
 
-      <div className="main-content">
+      <div className={styles.mainContent}>
         {selectedConversation ? (
           <>
             <h3>Chat with {selectedConversation.otherUsername}</h3>
             {isLoadingMessages ? (
-              <div className="spinner">Loading messages...</div>
+              <div className={styles.spinner}>Loading messages...</div>
             ) : (
               <div
-                className="messages"
+                className={styles.messages}
                 ref={messagesContainerRef}
                 onScroll={handleScroll}
-                style={{
-                  height: '400px',
-                  overflowY: 'auto',
-                  border: '1px solid #ccc',
-                }}
               >
                 {messages.map((message) => {
                   const isSent =
                     message.sender_id?.toLowerCase() === user.sub.toLowerCase();
                   return (
-                    <div key={message.message_id} className={isSent ? 'sent' : 'received'}>
-                      <div className="message-bubble">
+                    <div key={message.message_id} className={isSent ? styles.sent : styles.received}>
+                      <div className={styles.messageBubble}>
                         <p>{renderMessageContent(message.content)}</p>
-                        <span className="message-time">
+                        <span className={styles.messageTime}>
                           {new Date(message.created_at).toLocaleTimeString([], {
                             hour: '2-digit',
                             minute: '2-digit',
@@ -354,7 +349,7 @@ const MessagesPage = () => {
                 })}
               </div>
             )}
-            <div className="message-input">
+            <div className={styles.messageInput}>
               <input
                 type="text"
                 placeholder="Type a message..."
