@@ -34,8 +34,18 @@ const Header = () => {
 
     useEffect(() => {
         setShowSidebar(false);
+        setShowProfileSidebar(false);
         setShowMobileLinks(false);
     }, [location.pathname]);
+
+    const handleNavClick = (path) => {
+    if (location.pathname !== path) {
+        navigate(path);
+    }
+        setShowSidebar(false); // Close the sidebar on click
+    };
+
+    
 
     // Fetch filters for categories
     const fetchFilters = useCallback(async () => {
@@ -189,25 +199,37 @@ const Header = () => {
                         <FaTimes />
                     </button>
                     <div className={styles.sidebarContent}>
-                        <div className={styles.sidebarItem} onClick={() => navigate('/cart')}>
+                        <div
+                            className={styles.sidebarItem}
+                            onClick={() => handleNavClick('/cart')}
+                        >
                             <FaShoppingCart className={styles.sidebarIcon} />
                             <span>Cart</span>
                         </div>
-                        <div className={styles.sidebarItem} onClick={() => navigate('/favorites')}>
+                        <div
+                            className={styles.sidebarItem}
+                            onClick={() => handleNavClick('/favorites')}
+                        >
                             <FaHeart className={styles.sidebarIcon} />
                             <span>Favorites</span>
                         </div>
-                        <div className={styles.sidebarItem} onClick={() => navigate('/messages')}>
+                        <div
+                            className={styles.sidebarItem}
+                            onClick={() => handleNavClick('/messages')}
+                        >
                             <FaEnvelope className={styles.sidebarIcon} />
                             <span>Messages</span>
-                            {unreadTotal > 0 && <span className={styles.unreadDot}></span>}
+                            {/* Example for unread notifications */}
                         </div>
-                        <div className={styles.sidebarItem} onClick={handleAuthAction}>
+                        <div
+                            className={styles.sidebarItem}
+                            onClick={() => handleNavClick('/profile')}
+                        >
                             <FaUser className={styles.sidebarIcon} />
-                            <span>{isAuthenticated ? "Profile" : "Sign In"}</span>
+                            <span>Profile</span>
                         </div>
                     </div>
-                </div>
+            </div>
             )}
 
             {/* Profile Sidebar */}
@@ -217,13 +239,27 @@ const Header = () => {
                         <FaTimes />
                     </button>
                     <div className={styles.profileContent}>
-                        <div className={styles.profileSection} onClick={() => { navigate('/profile'); setShowProfileSidebar(false); }}>
+                        <div className={styles.profileSection}  onClick={() => {
+                                    if (location.pathname !== '/profile') {
+                                    navigate('/profile');
+                                    setShowProfileSidebar(false);
+                                    } else {
+                                    setShowProfileSidebar(false);
+                                    }
+                                }}>
                             <img src={user?.picture || '/default-avatar.png'} alt="Profile" className={styles.profileImage} />
                             <span>{user?.name || 'Guest'}</span>
                         </div>
 
                         {/* "My Profile" Button */}
-                        <div className={styles.profileButton} onClick={() => { navigate('/profile'); setShowProfileSidebar(false); }}>
+                        <div className={styles.profileButton}  onClick={() => {
+                                if (location.pathname !== '/profile') {
+                                navigate('/profile');
+                                setShowProfileSidebar(false);
+                                } else {
+                                setShowProfileSidebar(false);
+                                }
+                            }}>
                             <FaUser className={styles.sidebarIcon} />
                             <span>My Profile</span>
                         </div>
