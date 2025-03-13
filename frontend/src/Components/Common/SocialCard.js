@@ -18,6 +18,7 @@ export const SocialCard = ({
   initialLikes = 0,
   initialShares = 0,
   isLikedAlready,
+  isFavoritedAlready,
   tags = [],
   listingId,
   reloadFeed,
@@ -31,7 +32,7 @@ export const SocialCard = ({
   const [shares, setShares] = useState(initialShares);
   const [isLiked, setIsLiked] = useState(isLikedAlready);
   const [isShared, setIsShared] = useState(false);
-  const [isFavorited, setIsFavorited] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(isFavoritedAlready);
   const [isCommentMode, setIsComment] = useState(false);
   const [alertMessage, setAlertMessage] = useState(null);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -95,16 +96,21 @@ export const SocialCard = ({
       const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/favorites`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
-
+  
       if (!response.ok) throw new Error('Failed to fetch favorites');
-
+  
       const data = await response.json();
-      const isCurrentlyFavorited = data.favorites.some(fav => fav.post_id === post_id);
-      setIsFavorited(isCurrentlyFavorited);
+  
+      // Assuming the data returned contains all the post details.
+      // Now check if the current post is favorited based on the returned data
+      const isCurrentlyFavorited = data.some(fav => fav.post_id === post_id);
+      
+      setIsFavorited(isCurrentlyFavorited);  // Update the favorite status based on post_id
     } catch (error) {
       console.error('Error fetching favorites:', error);
     }
   };
+  
   
   useEffect(() => {
     fetchFavorites();

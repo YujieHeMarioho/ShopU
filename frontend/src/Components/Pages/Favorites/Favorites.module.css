@@ -21,6 +21,7 @@
   font-size: 1.1rem;
   border: 1px solid #ccc;
   border-radius: 5px;
+  margin-top: 20px;
   margin-bottom: 20px; /* Space between search bar and listings */
   box-sizing: border-box; /* Include padding and border in the element's total width */
 }
@@ -152,3 +153,69 @@
 .filterSidebar .filterButton:hover {
   background-color: #2980b9;
 }
+
+.buttonContainer {
+  display: flex;
+  justify-content: center; /* Center the buttons horizontally */
+  align-items: center; /* Center the buttons vertically */
+  width: 100%;
+  margin-top: 150px;
+  height: 60px; /* Adjust the height as needed */
+  position: fixed; /* Fix the container to the top of the screen */
+  top: 0;
+  left: 0;
+  z-index: 1000; /* Ensure the buttons stay on top */
+}
+
+.toggleButton {
+  flex: 1; /* Make each button take up 50% of the width */
+  padding: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  background-color: #fff;
+  border: 2px solid var(--text-color);
+  cursor: pointer;
+  transition: background-color 0.4s ease-in-out, color 0.4s ease-in-out; /* Longer, smoother transition */
+}
+
+.toggleButton:hover {
+  background-color: var(--primary-color-dark);
+  color: #fff;
+}
+
+.toggleButton:focus {
+  outline: none;
+}
+
+.active {
+  background-color: var(--primary-color); /* Active button background color */
+  color: #fff;
+}
+
+/* Masonry Layout */
+.masonryGrid {
+  display: flex;
+  width: auto;
+}
+
+.masonryColumn {
+  padding: 10px;
+  background-clip: padding-box;
+}
+
+.gridItem {
+  margin-bottom: 20px;
+}
+
+.feedContainer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 20px;
+  background-color: none;
+  padding: 20px;
+  flex-grow: 1;
+  margin-top: 20px;
+}
+

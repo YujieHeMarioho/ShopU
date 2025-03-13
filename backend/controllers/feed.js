@@ -760,17 +760,86 @@ export const getFavorites = async (req, res) => {
   const userId = extractUserIdFromToken(req); // Get userId from the token
 
   try {
-    const result = await pool.query(
-      `SELECT post_id FROM favoritedPosts WHERE user_id = $1`,
-      [userId]
+    // Query to get the post details for the favorited posts of the user
+    const query = `
+      SELECT
+        f.post_id,
+        f.title,
+        f.content,
+        u.profile_image as profile,
+        fi.file_key as image,
+        f.date_created,
+        u.NAME AS author,
+        u.user_id AS author_id,
+        f.likes_count,
+        f.listing_id,
+        COALESCE(ARRAY_AGG(t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL), ARRAY[]::TEXT[]) AS tags,
+        EXISTS (
+            SELECT 1
+            FROM post_likes pl
+            WHERE pl.post_id = f.post_id AND pl.user_id = $1
+        ) AS isLiked -- Check if the current user liked the post
+      FROM
+          feed_posts f
+      JOIN
+          users u ON f.user_id = u.user_id
+      JOIN
+          post_images fi ON f.post_id = fi.post_id
+      LEFT JOIN
+          post_tags pt ON f.post_id = pt.post_id -- Join with post_tags
+      LEFT JOIN
+          tags t ON pt.tag_id = t.tag_id -- Join with tags
+      WHERE
+          f.post_id IN (SELECT post_id FROM favoritedPosts WHERE user_id = $1) -- Filter to only the user's favorited posts
+      GROUP BY
+          f.post_id, u.user_id, fi.file_key -- Group by post and user to aggregate tags
+      ORDER BY
+          f.date_created DESC;
+    `;
+
+    // Execute the query to get the favorite posts
+    const result = await pool.query(query, [userId]);
+
+    const feedWithUrls = await Promise.all(
+      result.rows.map(async (feed) => {
+        // Generate a pre-signed URL for the image file_key (if it exists)
+        if (feed.image) {
+          const command = new GetObjectCommand({
+            Bucket: bucketName,
+            Key: feed.image,
+          });
+
+          // Generate the signed URL
+          feed.image = await getSignedUrl(s3, command, { expiresIn: 86400 });
+        }
+
+        if (feed.profile) {
+          const command = new GetObjectCommand({
+            Bucket: profileBucketName,
+            Key: feed.profile,
+          });
+
+          // Generate the signed URL
+          feed.profile = await getSignedUrl(s3, command, { expiresIn: 86400 });
+        }
+
+        // Return the modified row with signed URLs
+        return feed;
+      })
     );
 
-    res.json({ favorites: result.rows });
-  } catch (error) {
-    console.error('Error fetching favorites:', error);
-    res.status(500).json({ error: 'Failed to fetch favorites' });
+    if (feedWithUrls.length === 0) {
+      console.log('No favorite feed posts found.');
+    }
+
+    // Respond with the full feed posts for the favorited posts
+    res.status(200).json(feedWithUrls);
+  } catch (err) {
+    console.error('Error fetching favorite feed posts:', err.message);
+    res.status(500).json({ error: err.message || 'Database error' });
   }
 };
+
 
 
 export const handleFavoriteAction = async (req, res) => {
