@@ -219,3 +219,75 @@
   margin-top: 20px;
 }
 
+/* For mobile screens (smaller than 768px) */
+@media (max-width: 768px) {
+  .marketplaceContainer {
+    padding: 10px;
+  }
+
+  .searchBar {
+    width: 80vw;
+    padding: 8px;
+  }
+
+  .layoutContainer {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .filterSidebarContainer {
+    min-width: 100%;
+    margin-bottom: 15px;
+  }
+
+  .cardGridContainer {
+    min-width: 100%;
+  }
+
+  .suggestionsDropdown {
+    width: 80vw;
+  }
+
+  .filterSidebar {
+    padding: 10px;
+  }
+
+  .cardGridItem {
+    padding: 10px;
+  }
+}
+
+/* For very small mobile screens (smaller than 480px) */
+@media (max-width: 480px) {
+  .searchBar {
+    width: 90vw;
+  }
+
+  .suggestionsDropdown {
+    width: 90vw;
+  }
+
+  .cardGridItem {
+    padding: 8px;
+  }
+
+  .cardGridItem img {
+    width: 100%;
+    height: auto;
+  }
+
+  .filterSidebar h3 {
+    font-size: 1rem;
+  }
+
+  .filterSidebar .filterOption label,
+  .filterSidebar .filterOption select,
+  .filterSidebar .filterOption input[type="checkbox"] {
+    font-size: 0.9rem;
+  }
+
+  .filterSidebar .filterButton {
+    font-size: 0.9rem;
+    padding: 8px;
+  }
+}
