@@ -20,6 +20,7 @@ const Header = () => {
     const navigate = useNavigate();
     const { loginWithRedirect, logout, getAccessTokenSilently, isAuthenticated, user, isLoading } = useAuth0();
 
+    
     // Update screen size on mount and resize
     useEffect(() => {
         const handleResize = () => {
