@@ -1,10 +1,88 @@
-import React, { useState } from 'react';
-import { Tab, Nav, Container, Row, Col, Button, Table } from 'react-bootstrap';
+import React, { useState, useEffect  } from 'react';
+import { Tab, Nav, Container, Row, Col, Button, Table, Form } from 'react-bootstrap';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { LineChart, Line } from 'recharts';
+import styles from './AdminDashboard.module.css';
+import { Typeahead } from 'react-bootstrap-typeahead';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("reports");
+  const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState('');
+  const [selectedRole, setSelectedRole] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    // Fetch users from your API
+    const fetchUsers = async () => {
+      setIsLoading(true);
+      try {
+        // Replace this with your actual API call
+        const response = await fetch('/api/users');
+        const data = await response.json();
+        setUsers(data);
+      } catch (error) {
+        console.error('Error fetching users:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  const handleAssignRole = async () => {
+    if (selectedUser.length > 0 && selectedRole) {
+      // Replace this with your actual API call to assign role
+      try {
+        const response = await fetch('/api/assign-role', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId: selectedUser[0].id, role: selectedRole }),
+        });
+        if (response.ok) {
+          alert('Role assigned successfully');
+          //Todo, refresh the user list with the new role
+        } else {
+          alert('Failed to assign role');
+        }
+      } catch (error) {
+        console.error('Error assigning role:', error);
+        alert('An error occurred while assigning the role');
+      }
+    } else {
+      alert('Please select both a user and a role');
+    }
+  };
+
+  const deleteAssignRole = async () => {
+    if (selectedUser.length > 0 && selectedRole) {
+      // Replace this with your actual API call to assign role
+      try {
+        const response = await fetch('/api/assign-role', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId: selectedUser[0].id, role: selectedRole }),
+        });
+        if (response.ok) {
+          alert('Role assigned successfully');
+          //Todo, refresh the user list with the new role
+        } else {
+          alert('Failed to assign role');
+        }
+      } catch (error) {
+        console.error('Error assigning role:', error);
+        alert('An error occurred while assigning the role');
+      }
+    } else {
+      alert('Please select both a user and a role');
+    }
+  };
+
 
   // Sample data for reports (replace with actual data)
   const reports = [
@@ -52,14 +130,17 @@ const AdminDashboard = () => {
   };
 
   return (
-    <Container>
-      <h2>Admin Dashboard</h2>
+    <Container className={styles.adminDashboard}>
+      <h1 className={styles.adminTitle}>Admin Dashboard</h1>
 
       {/* Tab Navigation */}
       <Tab.Container activeKey={activeTab} onSelect={(k) => setActiveTab(k)}>
         <Row>
           <Col sm={3}>
             <Nav variant="pills" className="flex-column">
+              <Nav.Item>
+                <Nav.Link eventKey="userAccessControl">User Access</Nav.Link>
+              </Nav.Item>
               <Nav.Item>
                 <Nav.Link eventKey="reports">Reports</Nav.Link>
               </Nav.Item>
@@ -76,7 +157,52 @@ const AdminDashboard = () => {
           </Col>
 
           <Col sm={9}>
-            <Tab.Content>
+            <Tab.Content className="mb-4">
+              {/* User Access Control Tab */}
+              <Tab.Pane eventKey="userAccessControl">
+                <h4>User Access Control</h4>
+                <Form>
+                  <Form.Group controlId="userSelect">
+                    <Form.Label>Select User</Form.Label>
+                    <Typeahead
+                      id="user-typeahead"
+                      labelKey="name"
+                      onChange={setSelectedUser}
+                      options={users}
+                      placeholder="Search for a user..."
+                      selected={selectedUser}
+                      isLoading={isLoading}
+                    />
+                  </Form.Group>
+
+                  <Form.Group controlId="userRoles">
+                    <Form.Label>Current Users Roles</Form.Label>
+                    <Form.Control as="textarea" rows={1} value={selectedUser.roles} readOnly />
+                  </Form.Group>
+
+                  <Form.Group controlId="roleSelect">
+                    <Form.Label>Select Role to Modify</Form.Label>
+                    <Form.Control 
+                      as="select" 
+                      value={selectedRole} 
+                      onChange={(e) => setSelectedRole(e.target.value)}
+                    >
+                      <option value="">Choose...</option>
+                      <option value="admin">Admin</option>
+                      <option value="moderator">Moderator</option>
+                      <option value="user">User</option>
+                    </Form.Control>
+                  </Form.Group>
+
+                  <Button variant="primary" onClick={handleAssignRole} className="me-2 mt-2"> 
+                    Assign Role
+                  </Button>
+                  <Button variant="danger" onClick={deleteAssignRole} className="me-2 mt-2">
+                    Remove Role
+                  </Button>
+                </Form>
+              </Tab.Pane>
+
               {/* Reports Tab (Merged View & Handle Reports) */}
               <Tab.Pane eventKey="reports">
                 <h4>User Reports</h4>
@@ -131,7 +257,8 @@ const AdminDashboard = () => {
               {/* Most Visited Sections Tab (Bar Chart Version) */}
               <Tab.Pane eventKey="mostVisited">
                 <h4>Most Visited Sections</h4>
-                <ResponsiveContainer width="100%" height={300}>
+                <div className={styles.chartContainer}>
+                <ResponsiveContainer>
                   <BarChart data={visitedData}>
                     <XAxis dataKey="section" />
                     <YAxis />
@@ -141,6 +268,7 @@ const AdminDashboard = () => {
                     <Bar dataKey="visits" fill="#82ca9d" />
                   </BarChart>
                 </ResponsiveContainer>
+                </div>
                 {/* Optional: You could display the sections in a table as well */}
                 <Table striped bordered hover>
                   <thead>
@@ -163,7 +291,8 @@ const AdminDashboard = () => {
               {/* User Activity Tab */}
               <Tab.Pane eventKey="userActivity">
                 <h4>User Activity per Month</h4>
-                <ResponsiveContainer width="100%" height={300}>
+                <div className={styles.chartContainer}>
+                <ResponsiveContainer>
                   <LineChart data={userActivityData}>
                     <XAxis dataKey="month" />
                     <YAxis />
@@ -173,6 +302,7 @@ const AdminDashboard = () => {
                     <Line type="monotone" dataKey="users" stroke="#8884d8" />
                   </LineChart>
                 </ResponsiveContainer>
+                </div>
                 {/* Optional: You could display the activity in a table as well */}
                 <Table striped bordered hover>
                   <thead>
@@ -195,7 +325,8 @@ const AdminDashboard = () => {
               {/* Post Activity Tab */}
               <Tab.Pane eventKey="postActivity">
                 <h4>Post Activity per Month</h4>
-                <ResponsiveContainer width="100%" height={300}>
+                <div className={styles.chartContainer}>
+                <ResponsiveContainer>
                   <LineChart data={postActivityData}>
                     <XAxis dataKey="month" />
                     <YAxis />
@@ -205,6 +336,7 @@ const AdminDashboard = () => {
                     <Line type="monotone" dataKey="posts" stroke="#82ca9d" />
                   </LineChart>
                 </ResponsiveContainer>
+                </div>
                 {/* Optional: You could display the post data in a table as well */}
                 <Table striped bordered hover>
                   <thead>
