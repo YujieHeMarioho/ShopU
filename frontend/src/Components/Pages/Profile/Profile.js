@@ -62,55 +62,6 @@ const Profile = () => {
         setSelectedPostId(null);
     };
 
-    const addComment = async () => {
-        if (!newComment.trim()) return;
-
-        // Optimistically add the new comment to the UI
-        const newCommentData = {
-            id: Date.now(),  // Temporary ID, will be replaced by the actual ID from the backend if needed
-            user_id: user.sub,
-            name: username,  // Assuming `username` is correctly set
-            text: newComment,
-            likes: 0,  // Assuming likes is 0 initially
-        };
-
-        setComments((prev) => ({
-            ...prev,
-            [selectedPostId]: [
-                ...(prev[selectedPostId] || []),
-                newCommentData
-            ],
-        }));
-
-        setNewComment("");  // Reset the new comment input
-
-        try {
-            const token = await getAccessTokenSilently();
-            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/comments`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`,
-                },
-                body: JSON.stringify({ postId: selectedPostId, userId: user.sub, text: newComment }),
-            });
-
-            if (!response.ok) throw new Error("Failed to post comment");
-
-            const postedCommentData = await response.json();
-
-            setComments((prev) => ({
-                ...prev,
-                [selectedPostId]: prev[selectedPostId].map(comment =>
-                    comment.id === newCommentData.id ? { ...comment, ...postedCommentData } : comment
-                ),
-            }));
-
-        } catch (error) {
-            console.error("Error posting comment:", error);
-        }
-    };
-
     const fetchComments = async (postId) => {
         try {
             const token = await getAccessTokenSilently();
@@ -218,33 +169,6 @@ const Profile = () => {
         }
     };
 
-
-    const handleDeleteComment = async (commentId) => {
-        try {
-            const token = await getAccessTokenSilently();
-            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/comments/${commentId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-            });
-
-            if (!response.ok) throw new Error("Failed to delete comment");
-
-            // Remove the deleted comment from the local state (optimistic update)
-            setComments((prevComments) => {
-                const updatedComments = { ...prevComments };
-                const updatedPostComments = updatedComments[selectedPostId].filter(
-                    (comment) => comment.comment_id !== commentId
-                );
-                updatedComments[selectedPostId] = updatedPostComments;
-                return updatedComments;
-            });
-        } catch (error) {
-            console.error("Error deleting comment:", error);
-        }
-    };
     const [newProfilePicture, setNewProfilePicture] = useState(null);
 
     const handleCardClick = (post) => {

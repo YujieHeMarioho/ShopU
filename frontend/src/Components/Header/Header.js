@@ -19,7 +19,17 @@ const Header = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { loginWithRedirect, logout, getAccessTokenSilently, isAuthenticated, user, isLoading } = useAuth0();
-
+    const currUserId = isAuthenticated && user ? user.sub : null;
+    const [formData, setFormData] = useState({
+        name: user?.name || '',
+        email: user?.email || '',
+        picture: user?.picture || ''
+    });
+    
+    useEffect(() => {
+            fetchUserInfo();
+    }, [currUserId]);
+    
     
     // Update screen size on mount and resize
     useEffect(() => {
@@ -46,7 +56,36 @@ const Header = () => {
         setShowSidebar(false); // Close the sidebar on click
     };
 
-    
+    const fetchUserInfo = async () => {
+        if (!currUserId) {
+            return;
+        }
+        
+        try {
+            const token = await getAccessTokenSilently();
+            const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/user/${currUserId}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    }
+                });
+
+            // Map the data to match the desired format
+            const formattedData = {
+                user_id: response.data.user_id,
+                create_date: response.data.create_date,
+                email: response.data.email,
+                name: response.data.name,
+                picture: response.data.picture
+            };
+
+            setFormData(formattedData);
+
+
+        } catch (error) {
+            console.error('Error user data:', error);
+        }
+    }
 
     // Fetch filters for categories
     const fetchFilters = useCallback(async () => {
@@ -248,7 +287,7 @@ const Header = () => {
                                     setShowProfileSidebar(false);
                                     }
                                 }}>
-                            <img src={user?.picture || '/default-avatar.png'} alt="Profile" className={styles.profileImage} />
+                            <img src={formData.picture || '/default-avatar.png'} alt="Profile" className={styles.profileImage} />
                             <span>{user?.name || 'Guest'}</span>
                         </div>
 
