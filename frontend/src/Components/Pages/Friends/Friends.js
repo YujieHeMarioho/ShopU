@@ -12,6 +12,8 @@ const Friends = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [userOptions, setUserOptions] = useState([]);
   const [selectedUser, setSelectedUser] = useState([]);
+  const [friendRequests, setFriendRequests] = useState([]);
+  const [activeTab, setActiveTab] = useState('friends');
 
   const navigate = useNavigate();
 
@@ -73,10 +75,52 @@ const Friends = () => {
     }
   };
 
+  const fetchFriendRequests = async () => {
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/friends/requests`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const requesterDetails = await Promise.all(
+        response.data.map(async (request) => {
+          try {
+            const requestResponse = await axios.get(
+              `${process.env.REACT_APP_BACKEND_URL}/api/user/${encodeURIComponent(request.requester_id)}`,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            return {
+              ...request,
+              name: requestResponse.data.name || 'Unknown User',
+              email: requestResponse.data.email || 'No Email Provided',
+              profile_picture: requestResponse.data.picture || 'https://via.placeholder.com/100',
+            };
+          } catch (error) {
+            console.error(
+              `Error fetching data for requester_id ${request.requester_id}:`,
+              error.response ? error.response.data : error.message
+            );
+            // Fallback
+            return {
+              ...request,
+              name: 'Unknown User',
+              email: 'No Email Provided',
+              profile_picture: 'https://via.placeholder.com/100',
+            };
+          }
+        })
+      );
+      setFriendRequests(requesterDetails);
+    } catch (error) {
+      console.error('Error fetching friend requests:', error);
+    }
+  };
+
   // 2) On mount or when user changes, load friend list
   useEffect(() => {
     if (!authLoading && user) {
       fetchUserInfo();
+      fetchFriendRequests();
     }
   }, [authLoading, user, getAccessTokenSilently]);
 
@@ -141,6 +185,19 @@ const Friends = () => {
     }
   };
 
+  const handleAcceptRequest = async (requestId, frId) => {
+    try {
+      const token = await getAccessTokenSilently();
+      await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/friends/accept`, { request_id: requestId, fr_id: frId }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchUserInfo();
+      fetchFriendRequests();
+    } catch (error) {
+      console.error('Error accepting friend request:', error);
+    }
+  };
+
   // -------------------------------
   // 5) Remove a friend
   // -------------------------------
@@ -162,6 +219,18 @@ const Friends = () => {
     } catch (error) {
       console.error('Error removing friend:', error.response ? error.response.data : error.message);
       alert('Error removing friend.');
+    }
+  };
+  
+  const handleRejectRequest = async (requestId) => {
+    try {
+      const token = await getAccessTokenSilently();
+      await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/friends/reject`, { request_id: requestId }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      fetchFriendRequests();
+    } catch (error) {
+      console.error('Error rejecting friend request:', error);
     }
   };
 
@@ -216,8 +285,24 @@ const Friends = () => {
         </div>
       </div>
 
+      <div className={styles.tabs}>
+          <button 
+            className={activeTab === 'friends' ? styles.activeTab : ''} 
+            onClick={() => setActiveTab('friends')}
+          >
+            Current Friends
+          </button>
+          <button 
+            className={activeTab === 'requests' ? styles.activeTab : ''} 
+            onClick={() => setActiveTab('requests')}
+          >
+            Friend Requests ({friendRequests.length})
+          </button>
+        </div>
+
       {/* Friends List */}
-      <div className={styles.friendsListSection}>
+      {activeTab === 'friends' ? (
+        <div className={styles.friendsListSection}>
         <h2>Current Friends</h2>
         {friends.length === 0 ? (
           <p className={styles.noFriends}>You have no friends yet. Add some friends to get started!</p>
@@ -246,7 +331,34 @@ const Friends = () => {
             ))}
           </div>
         )}
-      </div>
+      </div> ) : (
+        <div className={styles.friendsListSection}>
+            <h2>Friend Requests</h2>
+            {friendRequests.length === 0 ? (
+              <p className={styles.noFriends}>No pending friend requests.</p>
+            ) : (
+              <div className={styles.friendsGrid}>
+                {friendRequests.map((request) => (
+                  <div key={request.requester_id} className={styles.friendCard}>
+                    <Link to={`/profile/${request.requester_id}`}>
+                      <img src={request.profile_picture} alt={request.requester_name} className={styles.friendAvatar}/>
+                    </Link>
+                    <div className={styles.friendInfo}>
+                      <h3>{request.requester_name}</h3>
+                      <p>
+                        <strong>Requested At:</strong> {new Date(request.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className={styles.friendActions}>
+                        <button className={styles.acceptButton} onClick={() => handleAcceptRequest(request.requester_id, request.id)}>Accept</button>
+                        <button className={styles.rejectButton} onClick={() => handleRejectRequest(request.id)}>Reject</button>
+                      </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+      )}
     </div>
     </div>
   );

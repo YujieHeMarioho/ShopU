@@ -141,6 +141,55 @@ export const addFriend = async (req, res) => {
   }
 };
 
+export const acceptFriendRequest = async (req, res) => {
+  try {
+    const { request_id, fr_id } = req.body; // Get the friend's ID from the request body
+    console.log('Friend ID from request body:', request_id);
+
+    let user_id;
+    const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+    try {
+      const decodedToken = jwtDecode(token); // Decode the token to get the user ID
+      user_id = decodedToken.sub;
+      console.log('Decoded User ID from token:', user_id);
+    } catch (err) {
+      console.error('Error decoding token:', err);
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    // Check if the mutual friendship already exists
+    console.log(`Checking if friendship exists between ${user_id} and ${request_id}`);
+    const existingFriendship = await pool.query(
+      'SELECT * FROM friends WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1);',
+      [user_id, request_id]
+    );
+
+    if (existingFriendship.rows.length > 0) {
+      console.log('Friendship already exists.');
+      return res.status(400).json({ message: 'Friendship already exists.' });
+    }
+    // Insert mutual friendship (A -> B and B -> A)
+    console.log(`Inserting mutual friendship between ${user_id} and ${request_id}`);
+    const result = await pool.query(
+      'INSERT INTO friends (user_id, friend_id) VALUES ($1, $2), ($2, $1);',
+      [user_id, request_id]
+    );
+    if (result.rowCount === 2) {
+      console.log(`Mutual friendship added successfully between ${user_id} and ${request_id}`);
+      res.status(200).json({ message: 'Friendship added successfully.', status: 'followed' });
+    } else {
+      console.error('Error adding mutual friendship.');
+      res.status(500).json({ message: 'Error adding friendship.' });
+    }
+
+    await pool.query('DELETE FROM friend_requests WHERE id = $1', [fr_id]);
+  
+  } catch (error) {
+    console.error('Error adding friend:', error);
+    res.status(500).json({ message: 'Error adding friend', error });
+  }
+};
+
 export const deleteFriend = async (req, res) => {
   const { friend_id } = req.params;
 
@@ -214,6 +263,20 @@ export const deleteFriend = async (req, res) => {
   }
 };
 
+export const rejectFriendRequest = async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    
+    await pool.query('DELETE FROM friend_requests WHERE id = $1', [requestId]);
+
+    res.json({ message: 'Friend request rejected successfully' });
+  } catch (error) {
+    console.error('Error rejecting friend request:', error);
+    res.status(500).json({ error: 'Failed to reject friend request' });
+  }
+};
+
+
 export const getFriendRequestStatus = async (req, res) => {
   const { authorId } = req.params;
 
@@ -244,6 +307,26 @@ export const getFriendRequestStatus = async (req, res) => {
     // No follow or request found
     return res.json({ status: 'none' });
 
+  } catch (error) {
+    console.error('Error checking follow status:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const getFriendRequests = async (req, res) => {
+  try {
+    // Use the helper method to extract the user_id from the token
+    const userId = extractUserIdFromToken(req);
+
+    const friendRequests = await pool.query(
+      `SELECT fr.*, u.name AS requester_name
+       FROM friend_requests fr 
+       JOIN users u ON fr.requester_id = u.user_id 
+       WHERE fr.receiver_id = $1`,
+      [userId]
+    );
+
+    res.json(friendRequests.rows);
   } catch (error) {
     console.error('Error checking follow status:', error);
     return res.status(500).json({ error: 'Internal server error' });

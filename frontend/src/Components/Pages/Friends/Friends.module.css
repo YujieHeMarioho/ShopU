@@ -118,7 +118,8 @@
 }
 
 .messageButton,
-.removeButton {
+.removeButton, 
+.acceptButton, .rejectButton {
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 6px;
@@ -127,22 +128,49 @@
   transition: background-color 0.3s ease;
 }
 
-.messageButton {
+.messageButton, .acceptButton {
   background-color: #10b981;
   color: white;
 }
 
-.messageButton:hover {
+.messageButton:hover, .acceptButton:hover {
   background-color: #059669;
 }
 
-.removeButton {
+.removeButton, .rejectButton {
   background-color: #ef4444;
   color: white;
 }
 
-.removeButton:hover {
+.removeButton:hover, .rejectButton:hover {
   background-color: #dc2626;
+}
+
+.tabs {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.tabs button {
+  background-color: #f0f0f0;
+  border: none;
+  padding: 10px 20px;
+  margin: 0 5px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+.tabs button:hover {
+  background-color: var(--primary-color-dark);
+}
+
+.tabs .activeTab {
+  background-color: var(--primary-color);
+  color: white;
 }
 
 /* Responsive adjustments */
