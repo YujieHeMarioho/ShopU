@@ -671,7 +671,7 @@ const Profile = () => {
                       <Modal.Title style={{ color: 'black' }}>Comments</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
-                      <CommentSection selectedPostId={selectedPostId} userId={userId} />
+                      <CommentSection selectedPostId={selectedPostId} userId={currUserId} />
                     </Modal.Body>
                   </Modal>
         </Container>
