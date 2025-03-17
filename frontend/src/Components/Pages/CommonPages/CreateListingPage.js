@@ -29,8 +29,6 @@ const CreateListingPage = () => {
   const { getAccessTokenSilently } = useAuth0();
   const currentStyles = isServicePage ? serviceStyles : itemStyles;
 
-  console.log(formData.services);
-
   useEffect(() => {
     const currentPath = window.location.pathname;
     setIsServicePage(currentPath.includes('service'));

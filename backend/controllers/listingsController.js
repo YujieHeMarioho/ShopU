@@ -422,9 +422,7 @@ export const createItemListing = async (req, res) => {
 export const createServiceListing = async (req, res) => {
   try {
     const { title, description, category, type, price, condition, location, images, services } = req.body;
-    console.log(services)
-    console.log(req.body)
-    
+
     let userId;
     const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
     try {
@@ -458,8 +456,6 @@ export const createServiceListing = async (req, res) => {
     }
 
     for (const service of services) {
-      console.log('Service:', JSON.stringify(service, null, 2));  // Log each service object
-
       const serviceQuery = `
         INSERT INTO public.listing_services (listing_id, service_name, estimated_time, service_price)
         VALUES ($1, $2, $3, $4);
@@ -644,7 +640,6 @@ export const getSimilarListings = async ( req, res ) => {
     // Loop through each listing and generate signed URLs
     const categoryListings = await Promise.all(
       result.rows.map(async (listing) => {
-        console.log("Listing user_id:", listing.user_id); // Debug: Check each seller's user_id
         // Generate pre-signed URLs for file_keys
         const signedUrls = await Promise.all(
           (listing.file_keys || []).map(async (fileKey) => {
