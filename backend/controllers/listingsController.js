@@ -373,7 +373,7 @@ export const getFavoritedListings = async (req, res) => {
 };
 
 //Endpoint for create a listing
-export const createListing = async (req, res) => {
+export const createItemListing = async (req, res) => {
   try {
     const { title, description, category, type, price, condition, location, images } = req.body;
     const parsedImages = images ? JSON.parse(images) : [];
@@ -409,6 +409,69 @@ export const createListing = async (req, res) => {
 
       // Execute image insertion query
       await pool.query(imageQuery, imageValues);
+    }
+
+    res.status(201).json(listingResult.rows[0]);
+  } catch (err) {
+    console.error('Error creating listing:', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+};
+
+//Endpoint for create a listing
+export const createServiceListing = async (req, res) => {
+  try {
+    const { title, description, category, type, price, condition, location, images, services } = req.body;
+    console.log(services)
+    console.log(req.body)
+    
+    let userId;
+    const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+    try {
+      const decodedToken = jwtDecode(token); // Decode the token
+      userId = decodedToken.sub;
+    } catch (err) {
+      console.error('Error decoding token:', err);
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    // Database call to create listing in listings table
+    const listingQuery = `
+      INSERT INTO public.listings (title, description, category_id, item_type, price, condition, date_posted, user_id, location)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING *;
+    `;
+    const listingValues = [title, description, category, type, price, condition, new Date().toISOString(), userId, location];
+
+    // Execute listings table query
+    const listingResult = await pool.query(listingQuery, listingValues);
+
+    // Insert images into the listing_images table
+    for (const imageKey of images) {
+      const imageQuery = `
+        INSERT INTO public.listing_images (listing_id, file_key)
+        VALUES ($1, $2)
+      `;
+      const imageValues = [listingResult.rows[0].listing_id, imageKey];
+
+      await pool.query(imageQuery, imageValues);
+    }
+
+    for (const service of services) {
+      console.log('Service:', JSON.stringify(service, null, 2));  // Log each service object
+
+      const serviceQuery = `
+        INSERT INTO public.listing_services (listing_id, service_name, estimated_time, service_price)
+        VALUES ($1, $2, $3, $4);
+      `;
+      const serviceValues = [
+        listingResult.rows[0].listing_id, 
+        service.name, 
+        service.estimatedTime || 0, 
+        service.price
+      ];
+
+      await pool.query(serviceQuery, serviceValues);
     }
 
     res.status(201).json(listingResult.rows[0]);
@@ -503,44 +566,6 @@ export const deleteListing = async (req, res) => {
     return res.status(500).json({ message: 'Server error' });
   }
 };
-
-
-// //Endpoint for create a listing
-// export const createServiceListing = async (req, res) => {
-//   try {
-//       const { title, description, category, type, rating, price, condition} = req.body;
-
-//       let userId;
-//       const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
-//       try {
-//           const decodedToken = jwtDecode(token); // Decode the token
-//           userId = decodedToken.sub;
-//       } catch (err) {
-//           console.error('Error decoding token:', err);
-//           return res.status(401).json({ message: 'Invalid token' });
-//       }
-
-//       //database call to create listing in listing table
-//       const listingQuery = `
-//           INSERT INTO public.listings (title, description, category_id, item_type, star_rating, price, condition, date_posted, user_id)
-//           VALUES ($1, $2, 1, $3, $4, $5, $1, $6, $7, $8)
-//           RETURNING *;
-//       `;
-//       const listingValues = [title, description, type, rating || 0, price, condition, new Date().toISOString(), userId];
-
-//       // Execute listings table query
-//       const listingResult = await pool.query(listingQuery, listingValues);
-
-//       const imageQuery = `INSERT INTO public.listings`;
-
-//       const imageValues = [];
-
-//       res.status(201).json(listingQuery.rows[0]);
-//   } catch (err) {
-//       console.error('Error creating listing:', err);
-//       res.status(500).json({ error: 'Database error' });
-//   }
-// };
 
 export const uploadImages = async (req, res) => {
   try {
