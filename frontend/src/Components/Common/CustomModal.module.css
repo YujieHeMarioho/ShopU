@@ -1,0 +1,166 @@
+/* Full-screen overlay */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6); /* Semi-transparent black background */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    overflow: hidden; /* Prevent background scrolling */
+  }
+  
+  /* Modal content */
+  .modalContent {
+    position: relative;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 100vw; /* Full width */
+    height: 100vh; /* Full height */
+    overflow-y: auto; /* Ensure the modal content can scroll if it's too large */
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 30px;
+  }
+  
+  /* Centered content when 'centered' prop is used */
+  .centered {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Modal Header */
+  .modalHeader {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+  }
+  
+  /* Close button */
+  .closeButton {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: black;
+  }
+  
+  .closeButton:hover {
+    color: red;
+  }
+  
+  /* Modal Body */
+  .modalBody {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  /* Custom layout for SocialCard inside the Modal */
+  .modalContentWrapper {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .socialCardSection {
+    width: 70%;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .modalCardImage {
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+  }
+  
+  .socialCardFooter {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 10px;
+    color: gray;
+  }
+  
+  /* User Info Section */
+  .userInfoSection {
+    width: 30%;
+    padding: 20px;
+    border-left: 2px solid #ddd; /* Divider between card and user info */
+  }
+  
+  .userInfoBlock {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .userProfilePic {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 15px;
+  }
+  
+  .userInfoBlock h4 {
+    margin-bottom: 10px;
+    font-size: 18px;
+  }
+  
+  .userInfoBlock p {
+    color: gray;
+    font-size: 14px;
+  }
+  
+  /* Action buttons */
+  .actionButtons {
+    display: flex;
+    gap: 10px;
+    margin: 20px 0;
+    justify-content: center;
+  }
+  
+  .actionButtons button {
+    background: #f1f1f1;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+  }
+  
+  .actionButtons button:hover {
+    background-color: #ddd;
+  }
+  
+  .likeButton {
+    color: green;
+  }
+  
+  .favoriteButton {
+    color: red;
+  }
+  
+  .commentButton {
+    color: blue;
+  }
+  
+  .shareButton {
+    color: purple;
+  }
+  
+  .editButton {
+    color: orange;
+  }
+  

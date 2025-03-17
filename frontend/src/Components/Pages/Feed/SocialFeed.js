@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styles from './SocialFeed.module.css';
 import { Button } from 'react-bootstrap';
-import { SocialCard, CommentSection } from '../../Common';
+import { SocialCard, CommentSection, CustomModal } from '../../Common';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
 import { Modal } from 'react-bootstrap';
@@ -307,31 +307,33 @@ const SocialFeed = () => {
         {loading && <p>Loading more posts...</p>}
       </div>
 
-      <Modal show={!!selectedCard} onHide={closeCardModal} centered>
-        <Modal.Header closeButton />
-        <Modal.Body className={styles.modalBody}>
-          {selectedCard && (
-            <SocialCard
-              post_id={selectedCard.post_id}
-              image={selectedCard.image}
-              title={selectedCard.title}
-              description={selectedCard.content}
-              profilePic={selectedCard.profile}
-              author={selectedCard.author}
-              authorId={selectedCard.author_id}
-              initialLikes={selectedCard.likes_count}
-              initialShares={selectedCard.shares}
-              isLikedAlready={selectedCard.isliked}
-              tags={selectedCard.tags}
-              listingId={selectedCard.listing_id}
-              onShowComments={() => handleShowComments(selectedCard.post_id)}
-              reloadFeed={reloadFeed}
-              allFriends={friends}
-              friendsLoading={friendsLoading}
-            />
-          )}
-        </Modal.Body>
-      </Modal>
+      <CustomModal 
+        show={!!selectedCard} 
+        onHide={closeCardModal} 
+        centered 
+        selectedCard={selectedCard} // Pass selectedCard here
+      >
+         {selectedCard && (<SocialCard
+          post_id={selectedCard.post_id}
+          image={selectedCard.image}
+          title={selectedCard.title}
+          description={selectedCard.content}
+          profilePic={selectedCard.profile}
+          author={selectedCard.author}
+          authorId={selectedCard.author_id}
+          initialLikes={selectedCard.likes_count}
+          initialShares={selectedCard.shares}
+          isLikedAlready={selectedCard.isliked}
+          tags={selectedCard.tags}
+          listingId={selectedCard.listing_id}
+          onShowComments={() => handleShowComments(selectedCard.post_id)}
+          reloadFeed={reloadFeed}
+          allFriends={friends}
+          friendsLoading={friendsLoading}
+        />)}
+      </CustomModal>
+
+
 
       <Modal show={showModal} onHide={handleCloseModal} centered>
         <Modal.Header closeButton>
