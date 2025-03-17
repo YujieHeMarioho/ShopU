@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from 'react-bootstrap';
-import { FaHeart, FaRegHeart, FaTrash } from 'react-icons/fa';
+import { FaHeart, FaRegHeart, FaEllipsisH, FaTrash, FaExclamationTriangle, FaUserTimes } from 'react-icons/fa';
 import styles from './CommentSection.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
 
@@ -12,6 +12,13 @@ export const CommentSection = ({ selectedPostId, userId }) => {
 
   const { user, isAuthenticated, getAccessTokenSilently, isLoading: authLoading } = useAuth0();
   const username = user?.name || 'Anonymous';
+
+  const [activeMenu, setActiveMenu] = useState(null);
+
+  const toggleMenu = (commentId) => {
+    setActiveMenu(activeMenu === commentId ? null : commentId);
+  };
+  
 
   useEffect(() => {
     if (!selectedPostId) return;
@@ -153,9 +160,20 @@ export const CommentSection = ({ selectedPostId, userId }) => {
       if (!response.ok) throw new Error('Failed to delete comment');
 
       setComments((prev) => prev.filter((comment) => comment.comment_id !== commentId));
+      setActiveMenu(null);
     } catch (error) {
       console.error('Error deleting comment:', error);
     }
+  };
+
+  const handleReport = (commentId) => {
+    console.log(`Reported comment: ${commentId}`);
+    setActiveMenu(null); // Close menu after action
+  };
+
+  const handleBlockUser = (userId) => {
+    console.log(`Blocked user: ${userId}`);
+    setActiveMenu(null); // Close menu after action
   };
 
   return (
@@ -178,20 +196,44 @@ export const CommentSection = ({ selectedPostId, userId }) => {
                   </Button>
                   <span className={styles.likeCount}>{likeCount[comment.comment_id] || 0}</span>
                 </div>
-              </div>
-              {comment.user_id === userId && (
-                <Button
-                  variant="link"
-                  onClick={() => handleDeleteComment(comment.comment_id)}
-                  className={styles.deleteButton}
+                <div
+                  className={`${styles.threeDotMenu} ${activeMenu === comment.comment_id ? styles.active : ''}`} // Use styles.active for the 'active' state
+                  onClick={() => toggleMenu(comment.comment_id)}
                 >
-                  <FaTrash />
-                </Button>
-              )}
+                  <FaEllipsisH />
+                </div>
+              </div>
+              <div className={styles.commentActions}>
+                {activeMenu === comment.comment_id && (
+                  <div className={styles.threeDotDropdown}>
+                    {comment.user_id === userId && (
+                      <div
+                        className={styles.dropdownItem}
+                        onClick={() => handleDeleteComment(comment.comment_id)}
+                      >
+                        <FaTrash /> Delete
+                      </div>
+                    )}
+                     {comment.user_id !== userId && (<div
+                      className={styles.dropdownItem}
+                      onClick={() => handleReport(comment.comment_id)}
+                    >
+                      <FaExclamationTriangle /> Report
+                    </div> )}
+                    {comment.user_id !== userId && (<div
+                      className={styles.dropdownItem}
+                      onClick={() => handleBlockUser(comment.user_id)}
+                    >
+                      <FaUserTimes /> Block User
+                    </div>)}
+                  </div>
+                )}
+              </div>
             </div>
           ))
         )}
       </div>
+
       <div className="mt-4 d-flex">
         <input
           type="text"

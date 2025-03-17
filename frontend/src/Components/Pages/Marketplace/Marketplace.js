@@ -215,6 +215,7 @@ export const Marketplace = () => {
 
 
   return (
+    <div>
     <div className={styles.marketplaceContainer}>
       {/* Search Bar */}
       <div className="my-4">
@@ -283,7 +284,8 @@ export const Marketplace = () => {
         </div>
       </div>
 
-      <ListingModal show={showListingModal} onHide={handleCloseListingModal} listing={selectedListing} />
+    </div>
+    <ListingModal show={showListingModal} onHide={handleCloseListingModal} listing={selectedListing} />
     </div>
   );
 
