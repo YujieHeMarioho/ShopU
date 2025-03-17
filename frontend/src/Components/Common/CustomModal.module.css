@@ -16,7 +16,7 @@
   /* Modal content */
   .modalContent {
     position: relative;
-    background: white;
+    background: var(--background-color);
     padding: 20px;
     border-radius: 8px;
     width: 100vw; /* Full width */
@@ -26,6 +26,11 @@
     flex-direction: row;
     justify-content: space-between;
     padding: 30px;
+    color: var(--text-color);
+  }
+
+  .modalContent h3, .modalContent p{
+    color: var(--text-color);
   }
   
   /* Centered content when 'centered' prop is used */
@@ -48,7 +53,7 @@
     border: none;
     font-size: 24px;
     cursor: pointer;
-    color: black;
+    color: var(--background-color-inverse);
   }
   
   .closeButton:hover {
@@ -79,17 +84,28 @@
   .modalCardImage {
     width: 100%;
     max-width: 400px;
-    margin-bottom: 20px;
     border-radius: 8px;
-  }
+    display: block;
+    margin: 0 auto; /* Centers the image horizontally */
+}
+
   
   .socialCardFooter {
     display: flex;
     justify-content: space-between;
     width: 100%;
     margin-top: 10px;
-    color: gray;
+    color: var(--text-color);
   }
+
+  .socialCardSection {
+    width: 70%;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Centers the content inside this section */
+}
+
   
   /* User Info Section */
   .userInfoSection {
@@ -115,10 +131,11 @@
   .userInfoBlock h4 {
     margin-bottom: 10px;
     font-size: 18px;
+    color: var(--text-color);
   }
   
   .userInfoBlock p {
-    color: gray;
+    color: var(--text-color);
     font-size: 14px;
   }
   
