@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from 'react-bootstrap';
 import { FaHeart, FaRegHeart, FaEllipsisH, FaTrash, FaExclamationTriangle, FaUserTimes } from 'react-icons/fa';
 import styles from './CommentSection.module.css';
@@ -14,16 +14,49 @@ export const CommentSection = ({ selectedPostId, userId }) => {
   const username = user?.name || 'Anonymous';
 
   const [activeMenu, setActiveMenu] = useState(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+  const dropdownRef = useRef(null);
 
-  const toggleMenu = (commentId) => {
-    setActiveMenu(activeMenu === commentId ? null : commentId);
+  const toggleMenu = (commentId, event) => {
+    event.stopPropagation(); // Prevents menu from closing on click
+  
+    if (activeMenu === commentId) {
+      setActiveMenu(null);
+    } else {
+      const button = event.currentTarget;
+      const menuOffsetTop = button.offsetTop + button.offsetHeight;
+      const menuOffsetLeft = button.offsetLeft;
+  
+      setMenuPosition({
+        top: menuOffsetTop,
+        left: menuOffsetLeft,
+      });
+  
+      setActiveMenu(commentId);
+    }
   };
+  
+  
   
 
   useEffect(() => {
     if (!selectedPostId) return;
     fetchComments();
   }, [selectedPostId]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setActiveMenu(null);
+      }
+    };
+  
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+  
 
   // Fetch comments for the selected post
   const fetchComments = async () => {
@@ -197,37 +230,42 @@ export const CommentSection = ({ selectedPostId, userId }) => {
                   <span className={styles.likeCount}>{likeCount[comment.comment_id] || 0}</span>
                 </div>
                 <div
-                  className={`${styles.threeDotMenu} ${activeMenu === comment.comment_id ? styles.active : ''}`} // Use styles.active for the 'active' state
-                  onClick={() => toggleMenu(comment.comment_id)}
+                  className={styles.threeDotMenu}
+                  onClick={(e) => toggleMenu(comment.comment_id, e)}
                 >
                   <FaEllipsisH />
                 </div>
               </div>
               <div className={styles.commentActions}>
-                {activeMenu === comment.comment_id && (
-                  <div className={styles.threeDotDropdown}>
-                    {comment.user_id === userId && (
-                      <div
-                        className={styles.dropdownItem}
-                        onClick={() => handleDeleteComment(comment.comment_id)}
-                      >
-                        <FaTrash /> Delete
+              {activeMenu === comment.comment_id && (
+                <div
+                  ref={dropdownRef}
+                  className={styles.threeDotDropdown}
+                  style={{
+                    position: 'absolute',
+                    top: `${menuPosition.top}px`,
+                    left: `${menuPosition.left}px`,
+                    zIndex: 10,
+                  }}
+                >
+                  {comment.user_id === userId && (
+                    <div className={styles.dropdownItem} onClick={() => handleDeleteComment(comment.comment_id)}>
+                      <FaTrash /> Delete
+                    </div>
+                  )}
+                  {comment.user_id !== userId && (
+                    <>
+                      <div className={styles.dropdownItem} onClick={() => handleReport(comment.comment_id)}>
+                        <FaExclamationTriangle /> Report
                       </div>
-                    )}
-                     {comment.user_id !== userId && (<div
-                      className={styles.dropdownItem}
-                      onClick={() => handleReport(comment.comment_id)}
-                    >
-                      <FaExclamationTriangle /> Report
-                    </div> )}
-                    {comment.user_id !== userId && (<div
-                      className={styles.dropdownItem}
-                      onClick={() => handleBlockUser(comment.user_id)}
-                    >
-                      <FaUserTimes /> Block User
-                    </div>)}
-                  </div>
-                )}
+                      <div className={styles.dropdownItem} onClick={() => handleBlockUser(comment.user_id)}>
+                        <FaUserTimes /> Block User
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+
               </div>
             </div>
           ))
