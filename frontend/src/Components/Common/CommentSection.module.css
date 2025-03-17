@@ -21,6 +21,10 @@
   .likeContainer .liked {
     color: red; /* Color when liked */
   }
+
+  .likeContainer button {
+    margin-top: -1px;
+}
   
   .likeCount {
     margin-left: 5px;
