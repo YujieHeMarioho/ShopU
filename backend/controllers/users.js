@@ -244,7 +244,7 @@ export const updateUser = async (req, res) => {
     const response = await ManagementApiUpdateUser(accessToken, userId, updatedDataJson);
     // Added 'await' since ManagementApiUpdateUser is async
 
-    const query = `UPDATE users SET name = $1, SET email = $2 WHERE user_id = $3;`;
+    const query = `UPDATE users SET name = $1, email = $2 WHERE user_id = $3;`;
     const updateUsersName = await pool.query(query, [name, email, userId]);
 
     res.status(200).json({ message: 'Updated user successfully', accessToken });
