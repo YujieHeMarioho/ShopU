@@ -21,6 +21,10 @@
   .likeContainer .liked {
     color: red; /* Color when liked */
   }
+
+  .likeContainer button {
+    margin-top: -1px;
+}
   
   .likeCount {
     margin-left: 5px;
@@ -52,3 +56,42 @@
     align-items: center;  /* Align the text and like button */
     justify-content: space-between;  /* Ensure the heart button is aligned to the right */
   }
+
+  /* 3 dot menu container */
+.threeDotMenu {
+  cursor: pointer;
+  margin-left: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.threeDotDropdown {
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  min-width: 150px;
+  position: absolute;
+  z-index: 10;
+}
+
+.threeDotDropdown .dropdownItem {
+  padding: 10px;
+  cursor: pointer;
+}
+
+.threeDotDropdown .dropdownItem:hover {
+  background: #f0f0f0;
+}
+
+/* Icons for dropdown items */
+.dropdownItem svg {
+  margin-right: 10px;
+}
+
+/* Style for the comment actions */
+.commentActions {
+  display: flex;
+  align-items: center;
+}

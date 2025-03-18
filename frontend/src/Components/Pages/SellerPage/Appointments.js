@@ -221,7 +221,7 @@ const AppointmentsComponent = () => {
               deliverableServices.map((service, index) => (
                 <ListGroup.Item key={index}>
                   <strong>{service.service_name}</strong> for {service.customer_name} -{" "}
-                  {service.remainingDays} day(s) remaining
+                  {service.remainingDays === 0 ? <strong>Due Today</strong>: `${service.remainingDays} day(s) remaining`}
                 </ListGroup.Item>
               ))
             ) : (
