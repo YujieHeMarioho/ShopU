@@ -292,6 +292,11 @@
   margin-top: 5px;
   font-size: 14px;
   color: #333;
+  text-overflow: ellipsis; /* Adds '...' if text is too long */
+  overflow: hidden; /* Hides the overflow text */
+  white-space: nowrap; /* Prevents the text from wrapping to the next line */
+  max-width: 100%; /* Ensures the name does not exceed the container */
+  display: block; /* Ensures the span behaves like a block element */
 }
 
 

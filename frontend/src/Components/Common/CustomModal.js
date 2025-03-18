@@ -9,13 +9,9 @@ import { FaThumbsUp, FaShare, FaHeart, FaRegHeart } from 'react-icons/fa';
 import { Modal, Form } from "react-bootstrap";
 
 export const CustomModal = ({ 
-  image,
   video,
-  title,
-  description,
-  tags = [],
   reloadFeed,
-  show, onHide, centered, selectedCard, allFriends, friendsLoading = true, isFavoritedAlready }) => {
+  show, onHide, selectedCard, allFriends, friendsLoading = true, isFavoritedAlready }) => {
   const { user, getAccessTokenSilently } = useAuth0();
   const [userData, setUserData] = useState(null);
   const authorId = selectedCard?.author_id;
@@ -33,11 +29,11 @@ export const CustomModal = ({
   const [selectedCommunity, setSelectedCommunity] = useState(null);
 
   const [isEditing, setIsEditing] = useState(false);
-  const [editedTitle, setEditedTitle] = useState(selectedCard?.title);
-  const [editedDescription, setEditedDescription] = useState(selectedCard?.content);
-  const [editedTags, setEditedTags] = useState(selectedCard?.tags);
-  const [editedImage, setEditedImage] = useState(selectedCard?.image);
-  const [editedVideo, setEditedVideo] = useState(video);
+  const [editedTitle, setEditedTitle] = useState('');
+  const [editedDescription, setEditedDescription] = useState('');
+  const [editedTags, setEditedTags] = useState([]);
+  const [editedImage, setEditedImage] = useState('');
+  const [editedVideo, setEditedVideo] = useState('');
   const [loading, setLoading] = useState(false);
 
   const [communities, setCommunities] = useState([]);
@@ -61,6 +57,42 @@ export const CustomModal = ({
       document.body.style.overflow = "auto";
     };
   }, [show]);
+
+  
+  useEffect(() => {
+    if (user && authorId) {
+      const fetchUserInfo = async () => {
+        try {
+          const token = await getAccessTokenSilently();
+          const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/user/${authorId}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            }
+          });
+          setUserData(response.data);
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
+      };
+      fetchUserInfo();
+      fetchCommunities();
+      fetchFavorites();
+    }
+  }, [user, authorId, getAccessTokenSilently]);
+  
+  useEffect(() => {
+    if (selectedCard) {
+      const { image = '', title = '', content = '', tags = [] } = selectedCard;
+      setEditedTitle(title);
+      setEditedDescription(content);
+      setEditedTags(tags);
+      setEditedImage(image);
+    }
+  }, [selectedCard]); // Depend on the selectedCard
+
+  // Return null early if selectedCard is not available, ensuring hooks are not called conditionally
+  if (!selectedCard) return null;
+
 
   const fetchPostLikes = async (postId) => {
     if (!postId) return;
@@ -137,27 +169,6 @@ export const CustomModal = ({
       console.error('Error fetching favorites:', error);
     }
   };
-
-  useEffect(() => {
-    if (user && authorId) {
-      const fetchUserInfo = async () => {
-        try {
-          const token = await getAccessTokenSilently();
-          const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/user/${authorId}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            }
-          });
-          setUserData(response.data);
-        } catch (error) {
-          console.error('Error fetching user data:', error);
-        }
-      };
-      fetchUserInfo();
-      fetchCommunities();
-      fetchFavorites();
-    }
-  }, [user, authorId, getAccessTokenSilently]);
 
 
   if (!show) return null;
@@ -424,7 +435,7 @@ export const CustomModal = ({
                   </Button>
                   {user?.sub !== authorId && (
                     <Button variant="light" onClick={handleFavoriteClick} className={styles.button} style={{ color: isFavorited ? 'red' : 'gray' }}>
-                      {isFavorited ? <FaHeart /> : <FaRegHeart />} {isFavorited ? "Favorited" : "Favorite"}
+                      {isFavorited ? <FaHeart /> : <FaRegHeart />}{isFavorited ? "Favorited" : "Favorite"}
                     </Button>
                   )}
                   <Button variant="light" onClick={handleShareClick} className={styles.button} style={{ color: isShared ? 'green' : 'gray' }}>
@@ -467,7 +478,7 @@ export const CustomModal = ({
         <Modal.Header closeButton>
           <Modal.Title className={styles.modalTitle}>Share Post</Modal.Title>
         </Modal.Header>
-        <Modal.Body className={styles.modalBody}>
+        <Modal.Body className={styles.shareModalBody}>
           {/* Share options */}
           <Form>
             <Button variant={selectedOption === 'friend' ? 'primary' : 'outline-primary'} onClick={() => setSelectedOption('friend')} className="form-check mb-2">

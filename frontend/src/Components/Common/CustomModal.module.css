@@ -32,6 +32,14 @@
   .modalContent h3, .modalContent p{
     color: var(--text-color);
   }
+
+  .modalContent p {
+    color: var(--text-color);
+    text-align: center; /* Center the text */
+    margin: 0 auto; /* Ensure the paragraph is centered */
+    width: 90%; 
+    max-width: 700px; 
+  }
   
   /* Centered content when 'centered' prop is used */
   .centered {
@@ -46,6 +54,46 @@
     top: 10px;
     left: 10px;
   }
+  .friendGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+  }
+  
+  .friendName {
+    margin-top: 5px;
+    font-size: 14px;
+    color: #333;
+    text-overflow: ellipsis; /* Adds '...' if text is too long */
+    overflow: hidden; /* Hides the overflow text */
+    white-space: nowrap; /* Prevents the text from wrapping to the next line */
+    max-width: 100%; /* Ensures the name does not exceed the container */
+    display: block; /* Ensures the span behaves like a block element */
+  }
+  
+  
+  .friendItem {
+    text-align: center;
+  }
+
+  .profilePic {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out, border 0.2s;
+  }
+  
+  .profilePic:hover {
+    transform: scale(1.1);
+  }
+  
+  .selected {
+    border: 3px solid #007bff;
+  }
+  
   
   /* Close button */
   .closeButton {
@@ -68,6 +116,11 @@
     align-items: center;
     justify-content: flex-start; /* Ensures content grows downward */
 }
+
+  .shareModalBody {
+    padding: 20px;
+    color: #000;
+  }
 
   
   /* Custom layout for SocialCard inside the Modal */
