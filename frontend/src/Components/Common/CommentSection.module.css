@@ -1,63 +1,102 @@
-/* Optional: Adjust padding for the comment container */
+.commentSection {
+  overflow: hidden;
+}
 .commentContainer {
-    padding: 10px;
-    margin-bottom: 10px;
-  }
-  
-  /* Adjust spacing between comment text and like button */
-  .commentText strong {
-    margin-right: 5px;
-  }
-  
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+/* Adjust spacing between comment text and like button */
+.commentText strong {
+  margin-right: 5px;
+}
+
+/* Ensure comment input and button align properly */
+.commentInputContainer {
+  display: flex;
+  align-items: flex-start; /* Align to the top */
+  position: relative; /* Enable absolute positioning for the button */
+  width: 100%;
+  max-width: 100%; /* Ensure the container can expand fully */
+}
+
+.commentInput {
+  flex-grow: 1; /* Allow the textarea to take up all available width */
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  resize: none; /* Prevent manual resizing */
+  overflow-y: hidden; /* Hide scrollbar until needed */
+  min-height: 40px;
+  max-height: 150px; /* Optional: Set a max height */
+  line-height: 1.4; /* Adjust line height for better readability */
+  width: 100%; /* Ensure it takes the full available width of the parent */
+}
+
+/* Comment post button style */
+.commentPostButton {
+  padding: 10px 15px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+  border-radius: 4px;
+  margin-left: 8px;
+  margin-top: -1px;
+  align-items: center;
+  justify-content: center;
+}
+
 /* Style for the like button container */
 .likeContainer {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end; /* Align like button to the right */
-    margin-left: auto; /* Push like button to the right */
-    color: gray; /* Default color for the heart button */
-  }
-  
-  .likeContainer .liked {
-    color: red; /* Color when liked */
-  }
-
-  .likeContainer button {
-    margin-top: -1px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end; /* Align like button to the right */
+  margin-left: auto; /* Push like button to the right */
+  color: gray; /* Default color for the heart button */
 }
-  
-  .likeCount {
-    margin-left: 5px;
-    font-size: 14px;
-    color: black; /* Ensure the like count is black */
-  }
-  
-  /* Modal Body Styling */
-  .modalBody {
-    padding: 20px;
-  }
-  
-  
+
+.likeContainer .liked {
+  color: red; /* Color when liked */
+}
+
+.likeContainer button {
+  margin-top: -1px;
+}
+
+.likeCount {
+  margin-left: 5px;
+  font-size: 14px;
+  color: black; /* Ensure the like count is black */
+}
+
+/* Modal Body Styling */
+.modalBody {
+  padding: 20px;
+}
+
 /* Alert */
 .alert {
-    margin-top: 15px;
-    padding: 10px;
-    background: #e3fcef;
-    border-left: 4px solid #28a745;
-    color: #155724;
-    font-size: 14px;
-    border-radius: 8px;
-  }
-  
-  /* Ensure comment text and username are black */
-  .commentText {
-    color: black;
-    display: flex;
-    align-items: center;  /* Align the text and like button */
-    justify-content: space-between;  /* Ensure the heart button is aligned to the right */
-  }
+  margin-top: 15px;
+  padding: 10px;
+  background: #e3fcef;
+  border-left: 4px solid #28a745;
+  color: #155724;
+  font-size: 14px;
+  border-radius: 8px;
+}
 
-  /* 3 dot menu container */
+/* Ensure comment text and username are black */
+.commentText {
+  color: black;
+  display: flex;
+  align-items: center;  /* Align the text and like button */
+  justify-content: space-between;  /* Ensure the heart button is aligned to the right */
+}
+
+/* 3 dot menu container */
 .threeDotMenu {
   cursor: pointer;
   margin-left: 10px;
@@ -66,6 +105,7 @@
   justify-content: center;
 }
 
+/* Style for the 3-dot dropdown menu */
 .threeDotDropdown {
   background: white;
   border: 1px solid #ccc;
@@ -94,4 +134,11 @@
 .commentActions {
   display: flex;
   align-items: center;
+}
+
+/* Add styles for the scrollable comment list */
+.commentList {
+  max-height: 60vh;  /* Adjust this value depending on the desired height */
+  overflow-y: auto;   /* Enables scrolling if content exceeds max height */
+  padding-right: 10px; /* Prevents content from being hidden behind the scrollbar */
 }

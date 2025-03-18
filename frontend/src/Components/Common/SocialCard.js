@@ -356,7 +356,8 @@ export const SocialCard = ({
       });
       if (response.ok) {
         setIsEditing(false);
-        reloadFeed();
+        console.log("Post updated successfully, reloading feed...");
+        reloadFeed(); // Make sure this runs
       } else {
         console.error('Failed to update post:', await response.text());
       }
