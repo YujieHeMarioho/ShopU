@@ -42,6 +42,7 @@ const SocialFeed = () => {
   const username = user?.name || 'Anonymous';
 
   const location = useLocation();
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -54,6 +55,19 @@ const SocialFeed = () => {
       }
     }
   }, [location, feed]);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 991);
+    };
+
+    // Initial check
+    checkMobile();
+
+    // Event listener to update on window resize
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -208,19 +222,26 @@ const SocialFeed = () => {
 
   return (
     <div className={styles.socialFeedContainer}>
-      <h2>Social Feed</h2>
-      <div className={styles.layoutToggleButton}>
-        <Button onClick={toggleLayout} variant="outline-primary">
-          {isGridLayout ? 'Switch to Scrolling Layout' : 'Switch to Grid Layout'}
+      <div className={styles.sidebar}>
+        <h2>Social Feed</h2>
+        <div className={styles.layoutToggleButton}>
+          <Button onClick={toggleLayout} variant="outline-primary">
+            {isGridLayout ? 'Switch to Scrolling Layout' : 'Switch to Grid Layout'}
+          </Button>
+        </div>
+        <Button onClick={createFeedPost} variant="outline-primary">
+          Create new Post
         </Button>
       </div>
-      <Button onClick={createFeedPost} variant="outline-primary">
-        Create new Post
-      </Button>
-      <div className={styles.feedContainer}>
+      <div
+        className={styles.feedContainer}
+        style={
+          !isMobile && isGridLayout ? { marginLeft: '260px' } : { marginLeft: '0' }
+        }
+      >
         {isGridLayout ? (
           <Masonry
-            breakpointCols={{ default: 8, 2560: 6, 1920: 5, 1280: 3, 1024: 2, 768: 1 }}
+            breakpointCols={{ default: 8, 2816:7, 2560: 6, 2176: 5, 1920: 4, 1536: 3, 1280:2,  768: 1 }}
             className={styles.masonryGrid}
             columnClassName={styles.masonryColumn}
           >

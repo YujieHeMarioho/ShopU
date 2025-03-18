@@ -240,6 +240,16 @@ export const createUser = async (req, res) => {
       [created_at, user_id, 'blank-profile-picture-973460_1280.png']
     );
 
+    // Auto-populate default user settings
+    await pool.query(
+      `INSERT INTO user_settings (
+        user_id, privacy_level, email_notifications, push_notifications, 
+        language, theme, timezone, user_interests, follow_privacy
+       ) VALUES ($1, 'public', true, true, 'English', 'light', 'UTC', ARRAY[]::text[], 'public')
+       ON CONFLICT (user_id) DO NOTHING;`,
+      [user_id]
+    );
+
     res.status(201).json({ message: 'User created successfully', user: newUser.rows[0] });
   } catch (error) {
     // Handle errors including duplicate key violation
