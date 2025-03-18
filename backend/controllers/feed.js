@@ -188,7 +188,7 @@ export const getCommunityFeedPosts = async (req, res) => {
         f.image_url as profile,
         fi.file_key as image,
         f.date_created,
-        u.user_id AS author,
+        u.name AS author,
         f.likes_count,
         ARRAY_AGG(t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL) AS tags, -- Aggregate tags into an array
         COUNT(cp.post_id) AS sharedBy  -- Count the number of shared by for the post in the community
