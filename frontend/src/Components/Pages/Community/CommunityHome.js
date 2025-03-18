@@ -9,7 +9,7 @@ import { Modal } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import styles from "./CommunityHome.module.css";
 import feedStyles from '../Feed/SocialFeed.module.css';
-import listingStyles from '../../Common/CardGrid.module.css'
+import listingStyles from '../Marketplace/Marketplace.module.css';
 
 const CommunityHome = () => {
   const { community_id } = useParams(); // Get community id from URL
@@ -478,11 +478,11 @@ const leaveCommunity = async () => {
         ))}
       </div>
       <p className={styles.sectionTitle}>Listings</p>
-      <div>
-        <CardGrid styles="padding: 0" listings={listings} openListingDetails={handleCardClick} />
+      <div className={listingStyles.cardGridContainer}>
+        <CardGrid listings={listings} className={listingStyles.cardGrid} openListingDetails={handleCardClick} />
       </div>
       <p className={styles.sectionTitle}>Social Posts</p>
-      <div>
+      <div style={{width: "100%"}}>
         {feed.length === 0 ? (
           <p className={styles.defaultFiller}>No posts available.</p>
         ) : (
