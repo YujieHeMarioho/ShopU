@@ -58,16 +58,19 @@ const SocialFeed = () => {
 
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 991);
+      const mobile = window.innerWidth < 991;
+      setIsMobile(mobile);
+      if (mobile) setIsGridLayout(false); // Ensure grid layout is disabled on mobile
     };
-
+  
     // Initial check
     checkMobile();
-
+  
     // Event listener to update on window resize
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+  
 
   useEffect(() => {
     if (!user) return;
@@ -271,6 +274,7 @@ const SocialFeed = () => {
                   reloadFeed={reloadFeed}
                   allFriends={friends}
                   friendsLoading={friendsLoading}
+                  selected={selectedCard !== null}
                 />
               </div>
             ))}
@@ -316,8 +320,7 @@ const SocialFeed = () => {
         selectedCard={selectedCard} // Pass selectedCard here
         allFriends={friends}
         friendsLoading={friendsLoading}
-      >
-      </CustomModal>
+      ></CustomModal>
 
 
 

@@ -25,6 +25,7 @@ export const SocialCard = ({
   onShowComments,
   allFriends = [],
   friendsLoading = true,
+  selected = false
 }) => {
   const { user, getAccessTokenSilently } = useAuth0();
 
@@ -150,6 +151,33 @@ export const SocialCard = ({
     }
   };
 
+  const fetchPostLikes = async (postId) => {
+    if (!postId) return;
+  
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/feed/${postId}/likes`,
+        {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+  
+      if (!response.ok) {
+        throw new Error(`Failed to fetch likes: ${response.statusText}`);
+      }
+  
+      const data = await response.json();
+  
+      // Ensure likes is a number, not an object
+      setLikes(data.likesCount ?? 0); // Just store the number of likes
+      setIsLiked(data.isLiked ?? false); // Set the liked status
+  
+    } catch (error) {
+      console.error("Error fetching post likes:", error);
+    }
+  };
 
   const fetchNumComments = async (postId) => {
     try {
@@ -217,9 +245,17 @@ export const SocialCard = ({
     fetchFavorites();
     if (post_id) {
       fetchNumComments(post_id);
+      fetchPostLikes(post_id);
     }
     fetchCommunities();
   }, [post_id]);
+
+  useEffect(() => {
+    if (selected && post_id) {
+      fetchPostLikes(post_id);  // Re-fetch likes when selected
+    }
+  }, [selected, post_id]);
+
 
   const handleLikeClick = async (e) => {
     e.stopPropagation();
@@ -494,13 +530,16 @@ export const SocialCard = ({
           {shares}
         </Button>
         {user?.sub === authorId && (
-          <Button
+            <Button
             variant="outline-warning"
             size="sm"
             onClick={(e) => { e.stopPropagation(); setIsEditing(true); }}
+            className="editButton"
           >
-            ✏️ Edit
+            <i className="fa fa-edit">✏️</i>
+            <span className="editText">Edit</span>
           </Button>
+       
         )}
       </div>
 

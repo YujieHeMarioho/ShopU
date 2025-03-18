@@ -21,8 +21,6 @@ export const CustomModal = ({
   const authorId = selectedCard?.author_id;
   const post_id = selectedCard?.post_id;
   const [alertMessage, setAlertMessage] = useState(null);
-
-  console.log(selectedCard)
   const [likes, setLikes] = useState(selectedCard?.likes_count || 0);
   const [shares, setShares] = useState(0);
   const [isLiked, setIsLiked] = useState(selectedCard?.isliked);
@@ -46,10 +44,12 @@ export const CustomModal = ({
 
   const navigate = useNavigate();
 
-  useEffect(()=>{
-    setLikes(selectedCard?.likes_count);
-    setIsLiked(selectedCard?.isliked);
-  }, [selectedCard])
+  useEffect(() => {
+    if (selectedCard?.post_id) {
+      fetchPostLikes(selectedCard?.post_id);
+    }
+  }, [selectedCard, likes, isLiked]);
+  
 
   useEffect(() => {
     if (show) {
@@ -61,6 +61,35 @@ export const CustomModal = ({
       document.body.style.overflow = "auto";
     };
   }, [show]);
+
+  const fetchPostLikes = async (postId) => {
+    if (!postId) return;
+  
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/feed/${postId}/likes`,
+        {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+  
+      if (!response.ok) {
+        throw new Error(`Failed to fetch likes: ${response.statusText}`);
+      }
+  
+      const data = await response.json();
+  
+      // Ensure likes is a number, not an object
+      setLikes(data.likesCount ?? 0); // Just store the number of likes
+      setIsLiked(data.isLiked ?? false); // Set the liked status
+  
+    } catch (error) {
+      console.error("Error fetching post likes:", error);
+    }
+  };
+  
 
   const fetchCommunities = async () => {
     try {
@@ -130,26 +159,6 @@ export const CustomModal = ({
     }
   }, [user, authorId, getAccessTokenSilently]);
 
-  // useEffect(() => {
-  //   if (selectedCard?.post_id) {
-  //     const fetchPostDetails = async () => {
-  //       try {
-  //         const token = await getAccessTokenSilently();
-  //         const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/feed/${selectedCard.post_id}`, {
-  //           headers: { 'Authorization': `Bearer ${token}` },
-  //         });
-  //         console.log("DATA", response.data)
-  //         setLikes(response.data.likes || 0);
-  //         setShares(response.data.shares || 0);
-  //         setIsLiked(response.data.isLiked || false);
-  //         setIsFavorited(response.data.isFavorited || false);
-  //       } catch (error) {
-  //         console.error('Error fetching post details:', error);
-  //       }
-  //     };
-  //     fetchPostDetails();
-  //   }
-  // }, [selectedCard, getAccessTokenSilently]);
 
   if (!show) return null;
 
@@ -396,9 +405,9 @@ export const CustomModal = ({
 
   return (
     <div className={styles.modalOverlay} onClick={onHide}>
-      <div className={`${styles.modalContent} ${centered ? styles.centered : ""}`} onClick={(e) => e.stopPropagation()}>
+      <div className={`${styles.modalContent}`} onClick={(e) => e.stopPropagation()}>
         <CustomModal.Header closeButton onHide={onHide} />
-        <CustomModal.Body className={styles.modalBody}>
+        <CustomModal.Body>
           {isSocialCard ? (
             <div className={styles.modalContentWrapper}>
               {/* Social Card Section (Scrollable) */}
