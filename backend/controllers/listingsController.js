@@ -569,6 +569,7 @@ export const uploadImages = async (req, res) => {
       return res.status(400).json({ message: "No files uploaded" });
     }
 
+    console.log('did it hit the try')
     const uploadedFiles = [];
 
     for (const file of req.files) {

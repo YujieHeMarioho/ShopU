@@ -191,7 +191,7 @@ const CreateListingPage = () => {
       const uploadedImages = await uploadImages(formData.images);
 
       if (uploadedImages.length === 0) {
-          alert('Failed to upload image(s). Please Try Again');
+        alert('Failed to upload image(s). Please ensure each file is smaller than 10MB and try again.');
           return;
       }
 
@@ -245,7 +245,7 @@ const CreateListingPage = () => {
       const uploadedImages = await uploadImages(formData.images);
 
       if (uploadedImages.length === 0) {
-        alert('Failed to upload image(s). Please Try Again');
+        alert('Failed to upload image(s). Please ensure each file is smaller than 10MB and try again.');
         return
       }
 
