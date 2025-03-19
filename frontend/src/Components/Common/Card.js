@@ -70,7 +70,7 @@ export const CardComponent = ({ image, title, description, price, onListingClick
       <Card className={styles.card} onClick={handleCardClick}>
         <div className={styles.imageContainer}>
           {image.length > 1 ? (
-              <Carousel interval={null} className={styles.carousel}>
+              <Carousel interval={null} className={styles.carousel} slide={false}>
                 {image.map((img, index) => (
                   <Carousel.Item key={index}>
                     <img
