@@ -127,6 +127,8 @@ const CommunityHome = () => {
                 { headers: { Authorization: `Bearer ${token}` } }
               );
               console.log(`Member ${member.user_id} Details:`, memberResponse.data);
+              if (member.user_id == user.sub)
+                setIsJoined(true);
               return { 
                 ...member, 
                 name: memberResponse.data.name, 
@@ -468,7 +470,7 @@ const leaveCommunity = async () => {
               </button> 
               <button
                 className={styles.addFriendButton}
-                /* onClick={() => handleMessage(member.user_id)} */
+                /* onClick={() => handleFriend(member.user_id)} */
               >
                 Add Friend
               </button> 
