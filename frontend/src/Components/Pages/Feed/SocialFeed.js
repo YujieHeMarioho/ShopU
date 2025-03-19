@@ -58,16 +58,19 @@ const SocialFeed = () => {
 
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 991);
+      const mobile = window.innerWidth < 991;
+      setIsMobile(mobile);
+      if (mobile) setIsGridLayout(false); // Ensure grid layout is disabled on mobile
     };
-
+  
     // Initial check
     checkMobile();
-
+  
     // Event listener to update on window resize
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+  
 
   useEffect(() => {
     if (!user) return;
@@ -210,7 +213,9 @@ const SocialFeed = () => {
   };
 
   const handleCardClick = (post) => {
-    setSelectedCard(post);
+    if(isGridLayout){
+      setSelectedCard(post);
+    }
   };
 
   const closeCardModal = () => {
@@ -269,6 +274,7 @@ const SocialFeed = () => {
                   reloadFeed={reloadFeed}
                   allFriends={friends}
                   friendsLoading={friendsLoading}
+                  selected={selectedCard !== null}
                 />
               </div>
             ))}
@@ -312,26 +318,9 @@ const SocialFeed = () => {
         onHide={closeCardModal} 
         centered 
         selectedCard={selectedCard} // Pass selectedCard here
-      >
-         {selectedCard && (<SocialCard
-          post_id={selectedCard.post_id}
-          image={selectedCard.image}
-          title={selectedCard.title}
-          description={selectedCard.content}
-          profilePic={selectedCard.profile}
-          author={selectedCard.author}
-          authorId={selectedCard.author_id}
-          initialLikes={selectedCard.likes_count}
-          initialShares={selectedCard.shares}
-          isLikedAlready={selectedCard.isliked}
-          tags={selectedCard.tags}
-          listingId={selectedCard.listing_id}
-          onShowComments={() => handleShowComments(selectedCard.post_id)}
-          reloadFeed={reloadFeed}
-          allFriends={friends}
-          friendsLoading={friendsLoading}
-        />)}
-      </CustomModal>
+        allFriends={friends}
+        friendsLoading={friendsLoading}
+      ></CustomModal>
 
 
 
@@ -372,15 +361,17 @@ const SocialFeed = () => {
       </Modal>
 
       {/* Comments Modal */}
-      <Modal  show={showComments}
+      <Modal
+        show={showComments}
         onHide={handleCloseComments}
         animation={true}
-        className="bottom-modal"
-        dialogClassName="modal-dialog-bottom">
-        <Modal.Header closeButton>
+        className={styles.modalDialogBottom}  // Use the CSS module class
+        dialogClassName={styles.modalDialogBottom}  // Apply the modal positioning class here
+      >
+        <Modal.Header closeButton className={styles.modalHeaderClose}> {/* Optional close button styling */}
           <Modal.Title style={{ color: 'black' }}>Comments</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
+        <Modal.Body className={styles.modalBody}> {/* Apply modal body scroll */}
           <CommentSection selectedPostId={selectedPostId} userId={userId} />
         </Modal.Body>
       </Modal>

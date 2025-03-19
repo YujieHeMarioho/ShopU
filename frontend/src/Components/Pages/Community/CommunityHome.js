@@ -185,7 +185,7 @@ const CommunityHome = () => {
           rating: item.star_rating,
           price: item.price,
           image: item.file_keys,  // or item.file_keys[0] if you only want one image
-          
+          location: item.location,
         }));
 
         console.log('Fetched info:', formattedData); // Debugging log
@@ -520,7 +520,8 @@ const leaveCommunity = async () => {
         )
         }
       </div>
-      <ListingModal show={showListingModal} onHide={handleCloseListingModal} listing={selectedListing} />
+      {selectedListing && (<ListingModal show={showListingModal} onHide={handleCloseListingModal} listing={selectedListing} />)}
+      
       {/* Feed Modal */}
       <Modal show={!!selectedCard} onHide={closeCardModal} centered>
         <Modal.Header closeButton>

@@ -72,6 +72,10 @@ function EditImage() {
               containerStyle: {
                 transform: `scaleX(${flipHorizontal ? -1 : 1}) scaleY(${flipVertical ? -1 : 1})`,
                 filter: `brightness(${brightness}%) contrast(${contrast}%)`,
+                maxWidth: '500px',
+                display: 'flex',    // Center the cropper
+                justifyContent: 'center',  // Center horizontally
+                alignItems: 'center',  // Center vertically
               },
             }}
           />

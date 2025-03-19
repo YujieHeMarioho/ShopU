@@ -4,7 +4,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { FaThumbsUp, FaShare, FaHeart, FaRegHeart, FaComment } from 'react-icons/fa';
 import styles from './SocialCard.module.css';
 import axios from 'axios';
-import {Link} from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
 
 export const SocialCard = ({
   post_id,
@@ -25,6 +25,7 @@ export const SocialCard = ({
   onShowComments,
   allFriends = [],
   friendsLoading = true,
+  selected = false
 }) => {
   const { user, getAccessTokenSilently } = useAuth0();
 
@@ -52,6 +53,8 @@ export const SocialCard = ({
 
   const [followStatus, setFollowStatus] = useState(null);
   const [showFollowButton, setShowFollowButton] = useState(false);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const checkFollowStatus = async () => {
@@ -150,6 +153,33 @@ export const SocialCard = ({
     }
   };
 
+  const fetchPostLikes = async (postId) => {
+    if (!postId) return;
+  
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/feed/${postId}/likes`,
+        {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+  
+      if (!response.ok) {
+        throw new Error(`Failed to fetch likes: ${response.statusText}`);
+      }
+  
+      const data = await response.json();
+  
+      // Ensure likes is a number, not an object
+      setLikes(data.likesCount ?? 0); // Just store the number of likes
+      setIsLiked(data.isLiked ?? false); // Set the liked status
+  
+    } catch (error) {
+      console.error("Error fetching post likes:", error);
+    }
+  };
 
   const fetchNumComments = async (postId) => {
     try {
@@ -217,9 +247,17 @@ export const SocialCard = ({
     fetchFavorites();
     if (post_id) {
       fetchNumComments(post_id);
+      fetchPostLikes(post_id);
     }
     fetchCommunities();
   }, [post_id]);
+
+  useEffect(() => {
+    if (selected && post_id) {
+      fetchPostLikes(post_id);  // Re-fetch likes when selected
+    }
+  }, [selected, post_id]);
+
 
   const handleLikeClick = async (e) => {
     e.stopPropagation();
@@ -356,7 +394,8 @@ export const SocialCard = ({
       });
       if (response.ok) {
         setIsEditing(false);
-        reloadFeed();
+        console.log("Post updated successfully, reloading feed...");
+        reloadFeed(); // Make sure this runs
       } else {
         console.error('Failed to update post:', await response.text());
       }
@@ -381,6 +420,7 @@ export const SocialCard = ({
       if (!response.ok) throw new Error('Failed to delete post');
       reloadFeed();
       setIsEditing(false);
+      navigate("/feed");
     } catch (error) {
       console.error('Error deleting post:', error);
     } finally {
@@ -493,13 +533,16 @@ export const SocialCard = ({
           {shares}
         </Button>
         {user?.sub === authorId && (
-          <Button
+            <Button
             variant="outline-warning"
             size="sm"
             onClick={(e) => { e.stopPropagation(); setIsEditing(true); }}
+            className="editButton"
           >
-            ✏️ Edit
+            <i className="fa fa-edit">✏️</i>
+            <span className="editText">Edit</span>
           </Button>
+       
         )}
       </div>
 

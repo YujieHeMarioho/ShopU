@@ -9,6 +9,7 @@ export const CommentSection = ({ selectedPostId, userId }) => {
   const [newComment, setNewComment] = useState('');
   const [isLiked, setIsLiked] = useState({});
   const [likeCount, setLikeCount] = useState({});
+  const textAreaRef = useRef(null);
 
   const { user, isAuthenticated, getAccessTokenSilently, isLoading: authLoading } = useAuth0();
   const username = user?.name || 'Anonymous';
@@ -36,7 +37,15 @@ export const CommentSection = ({ selectedPostId, userId }) => {
     }
   };
   
-  
+  const handleCommentChange = (e) => {
+    setNewComment(e.target.value);
+
+    // Auto-expand the textarea
+    const textarea = textAreaRef.current;
+    textarea.style.height = "auto"; // Reset height
+    textarea.style.height = `${textarea.scrollHeight}px`; // Set new height based on content
+  };
+
   
 
   useEffect(() => {
@@ -211,79 +220,82 @@ export const CommentSection = ({ selectedPostId, userId }) => {
 
   return (
     <div className={styles.commentSection}>
+      <div className={styles.commentInputContainer}>
+        <textarea
+          className={styles.commentInput}
+          value={newComment}
+          onChange={(e) => handleCommentChange(e)}
+          placeholder="Add a comment..."
+          rows="1"
+          ref={textAreaRef}
+        />
+        <Button className={styles.commentPostButton} onClick={addComment}>
+          Post
+        </Button>
+      </div>
+  
       <div className="space-y-2">
         {comments.length === 0 ? (
           <p className={styles.noComments}>No Comments yet, be the first!</p>
         ) : (
-          comments.map((comment) => (
-            <div key={comment.comment_id} className={styles.commentContainer}>
-              <div className={styles.commentText}>
-                <strong>{comment.name}:</strong> {comment.text}
-                <div className={styles.likeContainer}>
-                  <Button
-                    variant="link"
-                    onClick={() => handleCommentLike(comment.comment_id, isLiked[comment.comment_id])}
-                    style={{ color: isLiked[comment.comment_id] ? 'red' : 'gray' }}
+          <div className={styles.commentList}> {/* Add this wrapper for scrollable comments */}
+            {comments.map((comment) => (
+              <div key={comment.comment_id} className={styles.commentContainer}>
+                <div className={styles.commentText}>
+                  <strong>{comment.name}:</strong> {comment.text}
+                  <div className={styles.likeContainer}>
+                    <Button
+                      variant="link"
+                      onClick={() => handleCommentLike(comment.comment_id, isLiked[comment.comment_id])}
+                      style={{ color: isLiked[comment.comment_id] ? 'red' : 'gray' }}
+                    >
+                      {isLiked[comment.comment_id] ? <FaHeart /> : <FaRegHeart />}
+                    </Button>
+                    <span className={styles.likeCount}>{likeCount[comment.comment_id] || 0}</span>
+                  </div>
+                  <div
+                    className={styles.threeDotMenu}
+                    onClick={(e) => toggleMenu(comment.comment_id, e)}
                   >
-                    {isLiked[comment.comment_id] ? <FaHeart /> : <FaRegHeart />}
-                  </Button>
-                  <span className={styles.likeCount}>{likeCount[comment.comment_id] || 0}</span>
+                    <FaEllipsisH />
+                  </div>
                 </div>
-                <div
-                  className={styles.threeDotMenu}
-                  onClick={(e) => toggleMenu(comment.comment_id, e)}
-                >
-                  <FaEllipsisH />
-                </div>
-              </div>
-              <div className={styles.commentActions}>
-              {activeMenu === comment.comment_id && (
-                <div
-                  ref={dropdownRef}
-                  className={styles.threeDotDropdown}
-                  style={{
-                    position: 'absolute',
-                    top: `${menuPosition.top}px`,
-                    left: `${menuPosition.left}px`,
-                    zIndex: 10,
-                  }}
-                >
-                  {comment.user_id === userId && (
-                    <div className={styles.dropdownItem} onClick={() => handleDeleteComment(comment.comment_id)}>
-                      <FaTrash /> Delete
+                <div className={styles.commentActions}>
+                  {activeMenu === comment.comment_id && (
+                    <div
+                      ref={dropdownRef}
+                      className={styles.threeDotDropdown}
+                      style={{
+                        position: 'absolute',
+                        top: `${menuPosition.top}px`,
+                        left: `${menuPosition.left}px`,
+                        zIndex: 10,
+                      }}
+                    >
+                      {comment.user_id === userId && (
+                        <div className={styles.dropdownItem} onClick={() => handleDeleteComment(comment.comment_id)}>
+                          <FaTrash /> Delete
+                        </div>
+                      )}
+                      {comment.user_id !== userId && (
+                        <>
+                          <div className={styles.dropdownItem} onClick={() => handleReport(comment.comment_id)}>
+                            <FaExclamationTriangle /> Report
+                          </div>
+                          <div className={styles.dropdownItem} onClick={() => handleBlockUser(comment.user_id)}>
+                            <FaUserTimes /> Block User
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
-                  {comment.user_id !== userId && (
-                    <>
-                      <div className={styles.dropdownItem} onClick={() => handleReport(comment.comment_id)}>
-                        <FaExclamationTriangle /> Report
-                      </div>
-                      <div className={styles.dropdownItem} onClick={() => handleBlockUser(comment.user_id)}>
-                        <FaUserTimes /> Block User
-                      </div>
-                    </>
-                  )}
                 </div>
-              )}
-
               </div>
-            </div>
-          ))
+            ))}
+          </div>
         )}
       </div>
-
-      <div className="mt-4 d-flex">
-        <input
-          type="text"
-          className="form-control"
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-          placeholder="Add a comment..."
-        />
-        <Button className="ml-2" onClick={addComment} variant="primary">
-          Post
-        </Button>
-      </div>
+      <div className={styles.footer}></div>
     </div>
   );
 };

@@ -82,6 +82,40 @@ export const getUserInfo = async (req, res) => {
   const { user_id } = req.params;
 
   try {
+    const query = 'SELECT name, create_date, profile_image, email FROM users WHERE user_id = $1';
+    const result = await pool.query(query, [user_id]);
+
+    if (result.rows && result.rows.length > 0) {
+      let { name, create_date, profile_image, email } = result.rows[0];
+      const command = new GetObjectCommand({
+        Bucket: bucketName,
+        Key: profile_image,
+      });
+
+      // Generate the signed URL
+      const imageURL = await getSignedUrl(s3, command, { expiresIn: 86400 });
+      profile_image = imageURL;
+
+      res.status(200).json({
+        name: name || 'Unnamed User',
+        email: email || 'No Email Provided', // Return email
+        picture: profile_image || 'https://via.placeholder.com/40', // Fallback image
+        create_date: create_date,
+      });
+    } else {
+      res.status(404).json({ message: 'results not found'});
+    }
+  } catch (error) {
+    console.error('Error fetching user details:', error.response ? error.response.data : error.message);
+    res.status(500).json({ message: 'Error fetching user details', error: error.message });
+  }
+};
+
+// Get User Info getUserInfoFromAuth0
+export const getUserInfoFromAuth0 = async (req, res) => {
+  const { user_id } = req.params;
+
+  try {
     const accessToken = await getManagementApiAccessToken();
     const response = await axios.get(
       `${audience}users/${encodeURIComponent(user_id)}`,
@@ -210,8 +244,8 @@ export const updateUser = async (req, res) => {
     const response = await ManagementApiUpdateUser(accessToken, userId, updatedDataJson);
     // Added 'await' since ManagementApiUpdateUser is async
 
-    const query = `UPDATE users SET name = $1 WHERE user_id = $2;`;
-    const updateUsersName = await pool.query(query, [name, userId]);
+    const query = `UPDATE users SET name = $1, email = $2 WHERE user_id = $3;`;
+    const updateUsersName = await pool.query(query, [name, email, userId]);
 
     res.status(200).json({ message: 'Updated user successfully', accessToken });
   } catch (error) {
@@ -222,7 +256,7 @@ export const updateUser = async (req, res) => {
 
 // Create User
 export const createUser = async (req, res) => {
-  const { user_id } = req.body;
+  const { user_id, email, name } = req.body;
 
   try {
     const result = await pool.query(
@@ -236,8 +270,8 @@ export const createUser = async (req, res) => {
     // Generate the created_at timestamp
     const created_at = new Date().toISOString(); // Current timestamp in ISO format
     const newUser = await pool.query(
-      'INSERT INTO users (create_date, user_id, profile_image) VALUES ($1, $2, $3) RETURNING *',
-      [created_at, user_id, 'blank-profile-picture-973460_1280.png']
+      'INSERT INTO users (user_id, create_date, name, profile_image, email) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [user_id, created_at, name, 'blank-profile-picture-973460_1280.png', email]
     );
 
     // Auto-populate default user settings
