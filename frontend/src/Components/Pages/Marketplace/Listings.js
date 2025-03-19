@@ -251,26 +251,40 @@ export const ListingModal = ({ show, onHide, listing }) => {
             <div className={styles.content}>
                <div className={styles.priceAndButtons}>
                   <h5>
-                  {isEditing ? (
-                     <Form.Control type="number" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} />
-                  ) : (
-                     `$${listing?.price}`
-                  )}
-                  </h5>
-                  {isOwner && (
-                  <div className={styles.editButtons}>
                      {isEditing ? (
-                        <>
-                        <Button variant="success" onClick={handleSaveClick}>Save</Button>
-                        <Button variant="warning" onClick={handleCancelClick}>Cancel</Button>
-                        </>
+                        <Form.Control 
+                           type="number" 
+                           value={editPrice} 
+                           onChange={(e) => setEditPrice(e.target.value)} 
+                        />
                      ) : (
-                        <Button variant="secondary" onClick={handleEditClick}>Edit</Button>
+                        `$${listing?.price}`
                      )}
-                     <Button variant="danger" onClick={handleDeleteClick}>Delete</Button>
-                  </div>
+                  </h5>
+                  {console.log(listing)}
+                  {isOwner ? (
+                     <div className={styles.editButtons}>
+                        {isEditing ? (
+                           <>
+                              <Button variant="success" onClick={handleSaveClick}>Save</Button>
+                              <Button variant="warning" onClick={handleCancelClick}>Cancel</Button>
+                           </>
+                        ) : (
+                           <Button variant="secondary" onClick={handleEditClick}>Edit</Button>
+                        )}
+                        <Button variant="danger" onClick={handleDeleteClick}>Delete</Button>
+                     </div>
+                  ) : (
+                     <div className={styles.profileInfo}>
+                        <span>{listing?.author}</span>
+                        <Link to={`/profile/${listing?.user_id}`}>
+                           <img src={listing?.profile} alt="Profile" className={styles.profilePic} />
+                        </Link>
+                     </div>
                   )}
                </div>
+
+
 
                {/* Product Options */}
                <div className={styles.productOptions}>

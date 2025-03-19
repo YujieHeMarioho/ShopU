@@ -169,13 +169,41 @@ p {
     white-space: nowrap;
 }
 
-.profilePic {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    border: 2px solid #ddd;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+.profileInfo {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Adjust spacing between elements */
+    padding: 8px 12px;
+    border-radius: 8px;
+    background-color: var(--background-color); /* Light background */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    max-width: fit-content;
 }
+
+.profileInfo span {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.profileInfo a {
+    display: flex; /* Ensures the link wraps the image properly */
+}
+
+.profilePic {
+    width: 40px; /* Adjust size */
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    transition: transform 0.2s ease-in-out;
+    border: 2px solid #ddd;
+}
+
+.profilePic:hover {
+    transform: scale(1.1);
+    border-color: var(--primary-color);
+}
+
 
 .author {
     font-weight: bold;
