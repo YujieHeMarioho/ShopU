@@ -33,6 +33,21 @@ export const ListingModal = ({ show, onHide, listing }) => {
       sameCategoryListings();
    }, [listing]);
 
+   useEffect(() => {
+      if (show) {
+         // Lock scrolling
+         document.body.style.overflow = 'hidden';
+      } else {
+         // Restore scrolling when modal is closed
+         document.body.style.overflow = 'auto';
+      }
+
+      // Cleanup when the component unmounts
+      return () => {
+         document.body.style.overflow = 'auto';
+      };
+   }, [show]);
+
 
    const handleDropDownClick = (option) => {
       setDropDownTitle(option);
