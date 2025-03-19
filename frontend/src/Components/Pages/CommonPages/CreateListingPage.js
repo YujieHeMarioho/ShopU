@@ -307,6 +307,10 @@ const CreateListingPage = () => {
                     <Form.Label>Description</Form.Label>
                     <Form.Control as="textarea" name="description" value={formData.description} onChange={handleChange} />
                   </Form.Group>
+                  <Form.Group controlId="location">
+                    <Form.Label>Location</Form.Label>
+                    <Form.Control type="text" name="location" value={formData.location} onChange={handleChange} />
+                  </Form.Group>
                   <FormGroup controlId="category">
                     <FormLabel>Category</FormLabel>
                     <FormSelect name="category" value={formData.category} onChange={handleChange}>
