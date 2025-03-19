@@ -1,0 +1,368 @@
+/* Full-screen overlay */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1001;
+  overflow-y: hidden;
+}
+  
+  /* Modal content */
+  .modalContent {
+    position: relative;
+    background: var(--background-color);
+    padding: 20px;
+    border-radius: 8px;
+    width: 100vw; /* Full width */
+    height: 100vh; /* Full height */
+    overflow-y: auto; /* Ensure the modal content can scroll if it's too large */
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 30px;
+    color: var(--text-color);
+  }
+
+  .modalContent h3, .modalContent p{
+    color: var(--text-color);
+  }
+
+  .modalContent p {
+    color: var(--text-color);
+    text-align: center; /* Center the text */
+    margin: 0 auto; /* Ensure the paragraph is centered */
+    width: 90%; 
+    max-width: 700px; 
+  }
+  
+  /* Centered content when 'centered' prop is used */
+  .centered {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Modal Header */
+  .modalHeader {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+  }
+  .friendGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+  }
+  
+  .friendName {
+    margin-top: 5px;
+    font-size: 14px;
+    color: #333;
+    text-overflow: ellipsis; /* Adds '...' if text is too long */
+    overflow: hidden; /* Hides the overflow text */
+    white-space: nowrap; /* Prevents the text from wrapping to the next line */
+    max-width: 100%; /* Ensures the name does not exceed the container */
+    display: block; /* Ensures the span behaves like a block element */
+  }
+  
+  
+  .friendItem {
+    text-align: center;
+  }
+
+  .profilePic {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out, border 0.2s;
+  }
+  
+  .profilePic:hover {
+    transform: scale(1.1);
+  }
+  
+  .selected {
+    border: 3px solid #007bff;
+  }
+  
+  
+  /* Close button */
+  .closeButton {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--background-color-inverse);
+  }
+  
+  .closeButton:hover {
+    color: red;
+  }
+  
+  /* Modal Body */
+  .modalBody {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    align-items: center;
+    justify-content: flex-start; /* Ensures content grows downward */
+}
+
+  .shareModalBody {
+    padding: 20px;
+    color: #000;
+  }
+
+  
+  /* Custom layout for SocialCard inside the Modal */
+  .modalContentWrapper {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .modalCardImage {
+    width: 100%;
+    max-width: 800px;
+    border-radius: 8px;
+    display: block;
+    margin: 0 auto; /* Centers the image horizontally */
+}
+
+  
+  .socialCardFooter {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 10px;
+    color: var(--text-color);
+  }
+
+  .socialCardSection {
+    width: 70%;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    margin: auto;
+}
+
+  
+  /* Right Side - User Info Section (Fixed) */
+.userInfoSection {
+  width:100%;
+  max-width: 500px;
+  background: var(--background-variation);
+  padding: 20px;
+  position: sticky;
+  top: 0;
+  height: 95vh;
+  overflow: hidden;
+  border: 1px solid var(--primary-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; /* This centers the content vertically */
+}
+
+/* User Info Block (Centering) */
+.userInfoBlock {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 250px; /* To ensure it doesn't stretch too wide */
+}
+
+/* User Profile Pic */
+.userProfilePic {
+  border-radius: 50%;
+  width: 100px;
+  height: 100px;
+  margin-bottom: 20px;
+  object-fit: cover;
+}
+
+/* User Info Text */
+.userInfoBlock h4 {
+  font-size: 20px;
+  margin-bottom: 5px;
+}
+
+.userInfoBlock p {
+  font-size: 14px;
+  color: var(--text-color);
+  margin-bottom: 20px;
+}
+
+/* Message Button */
+.userInfoBlock button {
+  font-size: 16px;
+  padding: 10px 20px;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.userInfoBlock button:hover {
+  background-color: var(--primary-color-dark);
+}
+
+  
+  /* Action buttons */
+  .actionButtons {
+    display: flex;
+    gap: 10px;
+    margin: 20px 0;
+    justify-content: center;
+  }
+  
+  .actionButtons .button {
+    display: flex;
+    align-items: center;
+    font-size: 16px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    color: #666;
+    transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
+    cursor: pointer;
+  }
+  
+  .button:hover {
+    background: #f5f5f5;
+    color: #333;
+    transform: scale(1.05);
+  }
+  
+  .button[style*="blue"] {
+    color: #007bff !important;
+    background: rgba(0, 123, 255, 0.1);
+  }
+  
+  .button[style*="green"] {
+    color: #28a745 !important;
+    background: rgba(40, 167, 69, 0.1);
+  }
+  
+  .button[style*="red"] {
+    color: #dc3545 !important;
+    background: rgba(220, 53, 69, 0.1);
+  }
+
+  /* Share Modal */
+.modalBody .form-check {
+  margin-top: 10px;
+}
+
+.form-check.mb-2 {
+  margin-bottom: 20px;
+}
+
+/* Edit Post Modal */
+.editPostModal {
+  padding: 10px;
+}
+
+.editPostModal button {
+  margin-top: 15px;
+}
+
+/* Media Queries */
+
+/* Mobile and smaller screens */
+@media (max-width: 768px) {
+  .modalContent {
+    flex-direction: column; /* Stack content vertically */
+    height: auto;
+    padding: 20px;
+  }
+
+  .modalBody {
+    justify-content: flex-start;
+    padding: 10px;
+  }
+
+  .modalHeader {
+    position: relative; /* Adjust header position */
+  }
+
+  .userInfoSection {
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+    position: relative;
+    border-left: none;
+    margin-top: 20px;
+  }
+
+  .userInfoBlock {
+    width: 90%;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+
+  .actionButtons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .modalCardImage {
+    max-width: 100%;
+    margin-bottom: 20px;
+  }
+
+  .modalContentWrapper {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+/* Extra small devices (mobile) */
+@media (max-width: 480px) {
+  .modalContent {
+    padding: 15px;
+  }
+
+  .modalBody {
+    padding: 0;
+  }
+
+  .socialCardFooter {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .actionButtons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .userInfoBlock h4 {
+    font-size: 18px;
+  }
+
+  .userInfoBlock p {
+    font-size: 12px;
+  }
+
+  .userProfilePic {
+    width: 80px;
+    height: 80px;
+  }
+}

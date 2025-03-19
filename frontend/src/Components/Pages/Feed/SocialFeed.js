@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styles from './SocialFeed.module.css';
 import { Button } from 'react-bootstrap';
-import { SocialCard, CommentSection } from '../../Common';
+import { SocialCard, CommentSection, CustomModal } from '../../Common';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
 import { Modal } from 'react-bootstrap';
@@ -42,6 +42,7 @@ const SocialFeed = () => {
   const username = user?.name || 'Anonymous';
 
   const location = useLocation();
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -54,6 +55,22 @@ const SocialFeed = () => {
       }
     }
   }, [location, feed]);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 991;
+      setIsMobile(mobile);
+      if (mobile) setIsGridLayout(false); // Ensure grid layout is disabled on mobile
+    };
+  
+    // Initial check
+    checkMobile();
+  
+    // Event listener to update on window resize
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  
 
   useEffect(() => {
     if (!user) return;
@@ -196,7 +213,9 @@ const SocialFeed = () => {
   };
 
   const handleCardClick = (post) => {
-    setSelectedCard(post);
+    if(isGridLayout){
+      setSelectedCard(post);
+    }
   };
 
   const closeCardModal = () => {
@@ -208,19 +227,26 @@ const SocialFeed = () => {
 
   return (
     <div className={styles.socialFeedContainer}>
-      <h2>Social Feed</h2>
-      <div className={styles.layoutToggleButton}>
-        <Button onClick={toggleLayout} variant="outline-primary">
-          {isGridLayout ? 'Switch to Scrolling Layout' : 'Switch to Grid Layout'}
+      <div className={styles.sidebar}>
+        <h2>Social Feed</h2>
+        <div className={styles.layoutToggleButton}>
+          <Button onClick={toggleLayout} variant="outline-primary">
+            {isGridLayout ? 'Switch to Scrolling Layout' : 'Switch to Grid Layout'}
+          </Button>
+        </div>
+        <Button onClick={createFeedPost} variant="outline-primary">
+          Create new Post
         </Button>
       </div>
-      <Button onClick={createFeedPost} variant="outline-primary">
-        Create new Post
-      </Button>
-      <div className={styles.feedContainer}>
+      <div
+        className={styles.feedContainer}
+        style={
+          !isMobile && isGridLayout ? { marginLeft: '260px' } : { marginLeft: '0' }
+        }
+      >
         {isGridLayout ? (
           <Masonry
-            breakpointCols={{ default: 8, 2560: 6, 1920: 5, 1280: 3, 1024: 2, 768: 1 }}
+            breakpointCols={{ default: 8, 2816:7, 2560: 6, 2176: 5, 1920: 4, 1536: 3, 1280:2,  768: 1 }}
             className={styles.masonryGrid}
             columnClassName={styles.masonryColumn}
           >
@@ -248,6 +274,7 @@ const SocialFeed = () => {
                   reloadFeed={reloadFeed}
                   allFriends={friends}
                   friendsLoading={friendsLoading}
+                  selected={selectedCard !== null}
                 />
               </div>
             ))}
@@ -286,31 +313,16 @@ const SocialFeed = () => {
         {loading && <p>Loading more posts...</p>}
       </div>
 
-      <Modal show={!!selectedCard} onHide={closeCardModal} centered>
-        <Modal.Header closeButton />
-        <Modal.Body className={styles.modalBody}>
-          {selectedCard && (
-            <SocialCard
-              post_id={selectedCard.post_id}
-              image={selectedCard.image}
-              title={selectedCard.title}
-              description={selectedCard.content}
-              profilePic={selectedCard.profile}
-              author={selectedCard.author}
-              authorId={selectedCard.author_id}
-              initialLikes={selectedCard.likes_count}
-              initialShares={selectedCard.shares}
-              isLikedAlready={selectedCard.isliked}
-              tags={selectedCard.tags}
-              listingId={selectedCard.listing_id}
-              onShowComments={() => handleShowComments(selectedCard.post_id)}
-              reloadFeed={reloadFeed}
-              allFriends={friends}
-              friendsLoading={friendsLoading}
-            />
-          )}
-        </Modal.Body>
-      </Modal>
+      <CustomModal 
+        show={!!selectedCard} 
+        onHide={closeCardModal} 
+        centered 
+        selectedCard={selectedCard} // Pass selectedCard here
+        allFriends={friends}
+        friendsLoading={friendsLoading}
+      ></CustomModal>
+
+
 
       <Modal show={showModal} onHide={handleCloseModal} centered>
         <Modal.Header closeButton>
@@ -349,15 +361,17 @@ const SocialFeed = () => {
       </Modal>
 
       {/* Comments Modal */}
-      <Modal  show={showComments}
+      <Modal
+        show={showComments}
         onHide={handleCloseComments}
         animation={true}
-        className="bottom-modal"
-        dialogClassName="modal-dialog-bottom">
-        <Modal.Header closeButton>
+        className={styles.modalDialogBottom}  // Use the CSS module class
+        dialogClassName={styles.modalDialogBottom}  // Apply the modal positioning class here
+      >
+        <Modal.Header closeButton className={styles.modalHeaderClose}> {/* Optional close button styling */}
           <Modal.Title style={{ color: 'black' }}>Comments</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
+        <Modal.Body className={styles.modalBody}> {/* Apply modal body scroll */}
           <CommentSection selectedPostId={selectedPostId} userId={userId} />
         </Modal.Body>
       </Modal>

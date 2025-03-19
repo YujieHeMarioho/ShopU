@@ -5,6 +5,7 @@
     --secondary-color: #ffa600;
     --secondary-color-hover:#d18904;
     --background-color: #ffffff;
+    --background-variation: #f8f9fa;
     --text-color: #252525;
     --text-dark:#252525;
     --text-color-inverse:#E0E0E0;
@@ -32,6 +33,7 @@
     --secondary-color: #ffa600;
     --secondary-color-hover:#d18904;
     --background-color: #121212;
+    --background-variation: #353535;
     --text-dark:#252525;
     --card-color:#ffffff;
     --text-color: #ffffff;

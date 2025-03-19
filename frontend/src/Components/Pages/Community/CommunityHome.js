@@ -6,9 +6,10 @@ import {CardGrid, SocialCard, CommentSection} from '../../Common'
 import Masonry from 'react-masonry-css';
 import ListingModal from '../Marketplace/Listings';
 import { Modal } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import styles from "./CommunityHome.module.css";
 import feedStyles from '../Feed/SocialFeed.module.css';
-import listingStyles from '../../Common/CardGrid.module.css'
+import listingStyles from '../Marketplace/Marketplace.module.css';
 
 const CommunityHome = () => {
   const { community_id } = useParams(); // Get community id from URL
@@ -17,10 +18,12 @@ const CommunityHome = () => {
   const [listings, setListings] = useState([]);
   const [feed, setFeed] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isJoined, setIsJoined] = useState(false);
   const [showListingModal, setShowListingModal] = useState(false);
   const [selectedListing, setSelectedListing] = useState(null);
   const [selectedCard, setSelectedCard] = useState(null);
   const [showModal, setShowModal] = useState(false); // State to toggle the modal
+  const navigate = useNavigate();
   const [selectedPostId, setSelectedPostId] = useState(null);
   const [showComments, setShowComments] = useState(false);
   const { user, isAuthenticated, getAccessTokenSilently, isLoading: authLoading } = useAuth0();
@@ -125,6 +128,8 @@ const CommunityHome = () => {
                 { headers: { Authorization: `Bearer ${token}` } }
               );
               console.log(`Member ${member.user_id} Details:`, memberResponse.data);
+              if (member.user_id == user.sub)
+                setIsJoined(true);
               return { 
                 ...member, 
                 name: memberResponse.data.name, 
@@ -176,7 +181,7 @@ const CommunityHome = () => {
           rating: item.star_rating,
           price: item.price,
           image: item.file_keys,  // or item.file_keys[0] if you only want one image
-          
+          location: item.location,
         }));
 
         console.log('Fetched info:', formattedData); // Debugging log
@@ -250,6 +255,28 @@ const CommunityHome = () => {
     setSelectedCard(null);
   };
 
+  // Handle Message button click
+  const handleMessage = async (memberId) => {
+    try {
+      console.log('Starting conversation with:', memberId);
+      const token = await getAccessTokenSilently();
+      console.log('Access token fetched:', token);
+
+      const response = await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/api/conversations`,
+        { user1_id: user.sub, user2_id: memberId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      console.log('Conversation Created:', response.data);
+      navigate(`/chat/${response.data.conversation_id}`);
+      console.log('Navigated to chat page for conversation ID:', response.data.conversation_id);
+    } catch (error) {
+      console.error('Error starting conversation:', error.response ? error.response.data : error.message);
+      alert('Unable to start a conversation. Please try again.');
+    }
+  };
+
   const handleLike = async (postId, currentLikes, isLiked) => {
     // Optimistic UI update for likes count
     setFeed((prev) =>
@@ -286,6 +313,119 @@ const shareFeedPost = async (postId) => {
     }
 };
 
+// join a community
+const joinCommunity = async () => {
+  try {
+    const token = await getAccessTokenSilently();
+    const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/communities`, {
+      community_id: community_id
+    }, 
+    {    
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      }
+    }
+  );
+    alert("Community added successfully"); // Success message
+
+    setIsJoined(true);
+    //get members of this community
+      const membersResponse = await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/api/communities/members/${community_id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      console.log(membersResponse.data)
+      const memberDetails = await Promise.all(
+        membersResponse.data.rows.map(async (member) => {
+          try {
+            const memberResponse = await axios.get(
+              `${process.env.REACT_APP_BACKEND_URL}/api/user/${encodeURIComponent(member.user_id)}`,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            console.log(`Member ${member.user_id} Details:`, memberResponse.data);
+            return { 
+              ...member, 
+              name: memberResponse.data.name, 
+              email: memberResponse.data.email, // Include email
+              profile_picture: memberResponse.data.picture 
+            };
+          } catch (error) {
+            console.error(`Error fetching data for member id ${member.user_id}:`, error.response ? error.response.data : error.message);
+            return { 
+              ...member, 
+              name: 'Unknown User', 
+              email: 'No Email Provided', // Fallback for email
+              profile_picture: 'https://via.placeholder.com/100' 
+            };
+          }
+        })
+      );
+  
+      console.log('Merged Member Details:', memberDetails);
+      setMembers(memberDetails);
+  } catch (error) {
+    console.error('Error adding community:', error);
+    alert('Error adding community.');
+  }
+};
+
+// Remove a community
+const leaveCommunity = async () => {
+  try {
+    const token = await getAccessTokenSilently();
+    const response = await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/communities/${community_id}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      }
+    );
+    alert(response.data.message);
+    setIsJoined(false);
+
+    //get members of this community
+    const membersResponse = await axios.get(
+      `${process.env.REACT_APP_BACKEND_URL}/api/communities/members/${community_id}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+    console.log(membersResponse.data)
+    const memberDetails = await Promise.all(
+      membersResponse.data.rows.map(async (member) => {
+        try {
+          const memberResponse = await axios.get(
+            `${process.env.REACT_APP_BACKEND_URL}/api/user/${encodeURIComponent(member.user_id)}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          console.log(`Member ${member.user_id} Details:`, memberResponse.data);
+          return { 
+            ...member, 
+            name: memberResponse.data.name, 
+            email: memberResponse.data.email, // Include email
+            profile_picture: memberResponse.data.picture 
+          };
+        } catch (error) {
+          console.error(`Error fetching data for member id ${member.user_id}:`, error.response ? error.response.data : error.message);
+          return { 
+            ...member, 
+            name: 'Unknown User', 
+            email: 'No Email Provided', // Fallback for email
+            profile_picture: 'https://via.placeholder.com/100' 
+          };
+        }
+      })
+    );
+    console.log('Merged Member Details:', memberDetails);
+    setMembers(memberDetails);
+  } catch (error) {
+    console.error('Error removing community:', error);
+    alert('Error removing community.');
+  }
+};
+
   return (
     <div className={styles.communityHomeContainer}> 
       <h1 className={styles.communityPageTitle}>{community.name + " Homepage"}</h1>
@@ -300,7 +440,8 @@ const shareFeedPost = async (postId) => {
               />
           </div>
           <div className={styles.communityButtons}>
-            <button>Join</button>
+          <button onClick={isJoined ? leaveCommunity : joinCommunity}>{isJoined ? "Leave" : "Join"}</button>
+              
             <button>Visit Community Groupchat</button>
           </div>
         </div>
@@ -325,13 +466,12 @@ const shareFeedPost = async (postId) => {
             <div className={styles.memberActions}>
                <button
                 className={styles.memberMessageButton}
-                /* onClick={() => handleMessage(member.user_id)} */
-              >
+                onClick={() => handleMessage(member.user_id)}>
                 Message
               </button> 
               <button
                 className={styles.addFriendButton}
-                /* onClick={() => handleMessage(member.user_id)} */
+                /* onClick={() => handleFriend(member.user_id)} */
               >
                 Add Friend
               </button> 
@@ -340,11 +480,11 @@ const shareFeedPost = async (postId) => {
         ))}
       </div>
       <p className={styles.sectionTitle}>Listings</p>
-      <div>
-        <CardGrid styles="padding: 0" listings={listings} openListingDetails={handleCardClick} />
+      <div className={listingStyles.cardGridContainer}>
+        <CardGrid listings={listings} className={listingStyles.cardGrid} openListingDetails={handleCardClick} />
       </div>
       <p className={styles.sectionTitle}>Social Posts</p>
-      <div>
+      <div style={{width: "100%"}}>
         {feed.length === 0 ? (
           <p className={styles.defaultFiller}>No posts available.</p>
         ) : (
@@ -376,7 +516,8 @@ const shareFeedPost = async (postId) => {
         )
         }
       </div>
-      <ListingModal show={showListingModal} onHide={handleCloseListingModal} listing={selectedListing} />
+      {selectedListing && (<ListingModal show={showListingModal} onHide={handleCloseListingModal} listing={selectedListing} />)}
+      
       {/* Feed Modal */}
       <Modal show={!!selectedCard} onHide={closeCardModal} centered>
         <Modal.Header closeButton>

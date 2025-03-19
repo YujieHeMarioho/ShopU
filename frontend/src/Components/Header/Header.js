@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaSearch, FaShoppingCart, FaHeart, FaBars, FaUser, FaEnvelope, FaTimes } from 'react-icons/fa';
+import { FaSearch, FaShoppingCart, FaHeart, FaBars, FaUser, FaEnvelope, FaTimes, FaSun, FaMoon, FaArrowLeft } from 'react-icons/fa';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import styles from './Header.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
@@ -9,16 +9,28 @@ import axios from 'axios';
 const Header = () => {
     const [showCategoriesPopup, setShowCategoriesPopup] = useState(false);
     const [showSidebar, setShowSidebar] = useState(false);
+    const [showProfileSidebar, setShowProfileSidebar] = useState(false); // Profile sidebar state
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
     const [categories, setCategories] = useState([]);
     const [unreadTotal, setUnreadTotal] = useState(0);
     const [showMobileLinks, setShowMobileLinks] = useState(false);
-
+    const [themeMode, setTheme] = useState(localStorage.getItem('theme') || 'light'); // Default theme is light
 
     const location = useLocation();
     const navigate = useNavigate();
     const { loginWithRedirect, logout, getAccessTokenSilently, isAuthenticated, user, isLoading } = useAuth0();
-
+    const currUserId = isAuthenticated && user ? user.sub : null;
+    const [formData, setFormData] = useState({
+        name: user?.name || '',
+        email: user?.email || '',
+        picture: user?.picture || ''
+    });
+    
+    useEffect(() => {
+            fetchUserInfo();
+    }, [currUserId]);
+    
+    
     // Update screen size on mount and resize
     useEffect(() => {
         const handleResize = () => {
@@ -33,8 +45,47 @@ const Header = () => {
 
     useEffect(() => {
         setShowSidebar(false);
+        setShowProfileSidebar(false);
         setShowMobileLinks(false);
     }, [location.pathname]);
+
+    const handleNavClick = (path) => {
+    if (location.pathname !== path) {
+        navigate(path);
+    }
+        setShowSidebar(false); // Close the sidebar on click
+    };
+
+    const fetchUserInfo = async () => {
+        if (!currUserId) {
+            return;
+        }
+        
+        try {
+            const token = await getAccessTokenSilently();
+            const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/user/${currUserId}`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    }
+                });
+
+            // Map the data to match the desired format
+            const formattedData = {
+                user_id: response.data.user_id,
+                create_date: response.data.create_date,
+                email: response.data.email,
+                name: response.data.name,
+                picture: response.data.picture
+            };
+
+            setFormData(formattedData);
+
+
+        } catch (error) {
+            console.error('Error user data:', error);
+        }
+    }
 
     // Fetch filters for categories
     const fetchFilters = useCallback(async () => {
@@ -100,9 +151,35 @@ const Header = () => {
         return () => clearInterval(intervalId);
     }, [isAuthenticated, user, getAccessTokenSilently]);
 
+
+    const detectSystemTheme = () => {
+        return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      };
+
+    // Theme change handler
+    const handleThemeChange = (mode) => {
+        setTheme(mode);
+        localStorage.setItem('theme', mode);
+        if (mode === 'dark') {
+            document.body.classList.add('dark-theme');
+        } else {
+            document.body.classList.remove('dark-theme');
+        }
+    };
+
+    useEffect(() => {
+    if (themeMode === "system") {
+        const systemTheme = detectSystemTheme();
+        document.documentElement.setAttribute("data-theme", systemTheme);
+    } else {
+        document.documentElement.setAttribute("data-theme", themeMode);
+    }
+    }, [themeMode]);
+
     if (isLoading) {
         return <div>{PageLoader}</div>;
     }
+
 
     return (
         <div className={styles.headerWrapper}>
@@ -142,11 +219,11 @@ const Header = () => {
                             <span className={styles.unreadDot}></span>
                         )}
                     </div>
-                    <div className={styles.icon} onClick={handleAuthAction}>
+                    <div className={styles.icon} onClick={() => setShowProfileSidebar(!showProfileSidebar)}>
                         <FaUser />
                     </div>
                 </div> )}
-                
+
                 {/* Hamburger Menu for Mobile */}
                 {isMobile && (
                 <div className={styles.icon} onClick={toggleSidebar}>
@@ -162,26 +239,103 @@ const Header = () => {
                         <FaTimes />
                     </button>
                     <div className={styles.sidebarContent}>
-                        <div className={styles.sidebarItem} onClick={() => navigate('/cart')}>
+                        <div
+                            className={styles.sidebarItem}
+                            onClick={() => handleNavClick('/cart')}
+                        >
                             <FaShoppingCart className={styles.sidebarIcon} />
                             <span>Cart</span>
                         </div>
-                        <div className={styles.sidebarItem} onClick={() => navigate('/favorites')}>
+                        <div
+                            className={styles.sidebarItem}
+                            onClick={() => handleNavClick('/favorites')}
+                        >
                             <FaHeart className={styles.sidebarIcon} />
                             <span>Favorites</span>
                         </div>
-                        <div className={styles.sidebarItem} onClick={() => navigate('/messages')}>
+                        <div
+                            className={styles.sidebarItem}
+                            onClick={() => handleNavClick('/messages')}
+                        >
                             <FaEnvelope className={styles.sidebarIcon} />
                             <span>Messages</span>
-                            {unreadTotal > 0 && <span className={styles.unreadDot}></span>}
+                            {/* Example for unread notifications */}
                         </div>
-                        <div className={styles.sidebarItem} onClick={handleAuthAction}>
+                        <div
+                            className={styles.sidebarItem}
+                            onClick={() => handleNavClick('/profile')}
+                        >
                             <FaUser className={styles.sidebarIcon} />
-                            <span>{isAuthenticated ? "Profile" : "Sign In"}</span>
+                            <span>Profile</span>
+                        </div>
+                    </div>
+            </div>
+            )}
+
+            {/* Profile Sidebar */}
+            {showProfileSidebar && (
+                <div className={styles.profileSidebar}>
+                    <button className={styles.closeButton} onClick={() => setShowProfileSidebar(false)}>
+                        <FaTimes />
+                    </button>
+                    <div className={styles.profileContent}>
+                        <div className={styles.profileSection}  onClick={() => {
+                                    if (location.pathname !== '/profile') {
+                                    navigate('/profile');
+                                    setShowProfileSidebar(false);
+                                    } else {
+                                    setShowProfileSidebar(false);
+                                    }
+                                }}>
+                            <img src={formData.picture || '/default-avatar.png'} alt="Profile" className={styles.profileImage} />
+                            <span>{user?.name || 'Guest'}</span>
+                        </div>
+
+                        {/* "My Profile" Button */}
+                        <div className={styles.profileButton}  onClick={() => {
+                                if (location.pathname !== '/profile') {
+                                navigate('/profile');
+                                setShowProfileSidebar(false);
+                                } else {
+                                setShowProfileSidebar(false);
+                                }
+                            }}>
+                            <FaUser className={styles.sidebarIcon} />
+                            <span>My Profile</span>
+                        </div>
+
+                        <div className={styles.themeSection}>
+                            <h4>Theme</h4>
+                            <div className={styles.themeOptions}>
+                                <button 
+                                    onClick={() => handleThemeChange('light')} 
+                                    className={themeMode === 'light' ? styles.active : ''}
+                                >
+                                    <FaSun /> Light
+                                </button>
+                                <button 
+                                    onClick={() => handleThemeChange('dark')} 
+                                    className={themeMode === 'dark' ? styles.active : ''}
+                                >
+                                    <FaMoon /> Dark
+                                </button>
+                                <button 
+                                    onClick={() => handleThemeChange('system')} 
+                                    className={themeMode === 'system' ? styles.active : ''}
+                                >
+                                    Sync with System
+                                </button>
+                            </div>
+                        </div>
+                        <div className={styles.logoutSection}>
+                            <button onClick={handleLogout} className={styles.logoutButton}>
+                                Log Out
+                            </button>
                         </div>
                     </div>
                 </div>
             )}
+
 
             {/* Second Layer */}
             <div className={styles.secondLayer}>
@@ -279,9 +433,6 @@ const Header = () => {
                     )}
                 </div> )}
             </div>
-
-            {/* Sidebar (if any) */}
-            {/* ... sidebar code ... */}
         </div>
     );
 };

@@ -1,12 +1,11 @@
-/* src/views/Profile.css */
+/* src/views/Profile.module.css */
 
 .profileContainer {
   background-color: var(--background-color);
-  width:100%;
-  height:100%;
+  width: 100%;
+  height: 100%;
   padding-bottom: 20px;
 }
-
 
 .feedContainer {
   display: grid;
@@ -53,7 +52,7 @@
 }
 
 .saveChangesTextModal {
-  color: black; 
+  color: black;
 }
 
 /* Tabs Container */
@@ -62,3 +61,280 @@
   border-bottom: 2px solid #ddd;
 }
 
+/* Tab Styling */
+.navTabs {
+  border-bottom: none;
+  margin-bottom: 20px;
+}
+
+.navItem {
+  margin-bottom: 0;
+}
+
+.navLink {
+  padding: 10px 20px;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  font-weight: 600;
+  color: #555;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  text-transform: uppercase; /* Make tab text capitalized */
+}
+
+.navLink:hover {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.navLinkActive {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+  font-weight: 700;
+}
+
+/* Tabs Content */
+.tabContent {
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.tabContent .tabPane {
+  display: none;
+}
+
+.tabContent .tabPaneActive {
+  display: block;
+}
+
+/* Active Tab Panel */
+.tabPaneActive {
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Modify Tab Title Color */
+.navLink {
+  color: #555; /* Default color */
+}
+
+.navLinkActive {
+  color: white;
+}
+
+/* Make the hover effect smoother */
+.navLink:hover {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+/* Add border to the active tab for clear differentiation */
+.navTabs .navLinkActive {
+  border: 2px solid var(--primary-color);
+  border-radius: 8px;
+}
+
+/* Customize the active tab's indicator */
+.navTabs .navLinkActive::after {
+  content: "";
+  display: block;
+  height: 3px;
+  background-color: white;
+  border-radius: 4px;
+  margin-top: 5px;
+}
+
+/* Style for tabs when they are active */
+.tabPane {
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tabPane p {
+  font-size: 1rem;
+  color: #555;
+  line-height: 1.6;
+}
+
+/* Statistics Tab Styling */
+.statisticsCard {
+  background: #f4f6f9;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.statisticsCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+.statisticsTitle {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.statisticsCard ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.statisticsCard li {
+  margin-bottom: 12px;
+  padding: 10px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.statisticsCard li:hover {
+  background-color: #e9ecef;
+  transform: scale(1.02);
+}
+
+.statisticsCard li span {
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.statisticsCard li span:last-child {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--primary-color);
+}
+
+.statisticsCard li:last-child {
+  margin-bottom: 0;
+}
+
+/* Profile Picture and Editable Input */
+.profilePictureInputWrapper {
+  flex: 1;
+  display: flex;
+}
+
+.profilePictureInput {
+  width: auto;
+}
+
+/* Editable Input Field Styling */
+.editableInput {
+  background-color: #f9f9f9;
+}
+
+.readOnlyInput {
+  background-color: #e9ecef;
+  border: none;
+}
+
+/* Profile Card */
+.profileCard {
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.profileHeader {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 15px;
+  border-radius: 10px 10px 0 0;
+}
+
+.profileFooter {
+  background-color: #f7f7f7;
+  padding: 10px;
+  border-radius: 0 0 10px 10px;
+}
+
+/* Buttons */
+.saveButton {
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  background-color: var(--primary-color);
+  border: none;
+  color: white;
+  border-radius: 8px;
+}
+
+.saveButton:hover {
+  background-color: var(--primary-color-dark);
+}
+
+/* Modal Styling */
+.bottomModal .modalDialogBottom {
+  position: absolute;
+  bottom: 0;
+  margin: 0;
+  max-width: 100%;
+  width: 100%;
+}
+
+.modalBody {
+  background-color: #f9f9f9;
+  padding: 30px;
+}
+
+.saveChangesTextModal {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.errorText {
+  color: red;
+}
+
+.successText {
+  color: green;
+}
+
+/* Comments Section */
+.commentSection {
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.commentInput {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+
+/* Profile Image Container */
+.profileImageContainer {
+  position: relative;
+  width: 100%;
+  height: auto;
+  max-width: 150px;
+  margin: 0 auto;
+}
+
+/* No content Text */
+.noContentText {
+  font-size: 1.2rem;
+  text-align: center;
+  color: #777;
+}

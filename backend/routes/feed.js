@@ -17,7 +17,10 @@ import {
     likeComment,
     unlikeComment,
     getLikesForComment,
-    getPostCommentCount
+    getPostCommentCount,
+    getFavorites,
+    handleFavoriteAction,
+    getPostLikes
 } from '../controllers/feed.js';
 import upload from '../middleware/multer.js';
 
@@ -52,6 +55,9 @@ router.post('/feed/:postId/share', shareFeedPost);
 // Like a post
 router.post('/feed/:id/like', likeFeedPost);
 
+// Get num likes for a post by ID
+router.get('/feed/:postId/likes', getPostLikes);
+
 // Upload image to S3
 router.post('/feed/upload', upload.single('postImage'), uploadImage);
 
@@ -74,5 +80,9 @@ router.delete('/feed/comments/:commentId/like', unlikeComment);
 router.get('/feed/comments/:commentId/likes', getLikesForComment);
 
 router.get('/feed/comments/count/:postId', getPostCommentCount);
+
+router.get('/feed/favorites', getFavorites);
+
+router.post('/feed/favorites/:postId', handleFavoriteAction);
 
 export default router;

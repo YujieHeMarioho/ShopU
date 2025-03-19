@@ -11,7 +11,8 @@ h2{
 
 /* Layout Toggle Button */
 .layoutToggleButton {
-  text-align: center;
+  display: flex;
+  justify-content: flex-start; /* Align button to the left */
   margin-bottom: 20px;
 }
 
@@ -44,7 +45,22 @@ h2{
   gap: 20px;
   transition: all 0.3s ease;
   background-color: none;
+  padding: 20px;
+  flex-grow: 1;
 }
+
+.sidebar {
+  position: fixed;
+  width: 250px;
+  height: 50vh;
+  background-color: var(--background-variation);
+  color: var(--text-color);
+  padding: 20px;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+
+}
+
 
 /* Instagram-style Scroll View (for phone) */
 .scrollView {
@@ -57,7 +73,7 @@ h2{
 /* Grid item styling in the scroll view */
 .scrollView .scrollItem {
   margin-bottom: 20px;
-  width: 100%;                 /* Full width of the container */
+  width: 70%;                 /* Full width of the container */
   max-width: 800px;            /* Limit the maximum width of each grid item */
   transition: transform 0.3s ease;
   margin: 0 auto; 
@@ -101,6 +117,9 @@ h2{
   }
   .scrollView {
     display: block; /* Ensure scroll view on smaller screens (phones) */
+  }
+  .sidebar {
+    display: none; /* Hide the sidebar on mobile */
   }
 }
 
@@ -272,13 +291,6 @@ h2{
   border-radius: 8px;
 }
 
-/* Ensure comment text and username are black */
-.commentText {
-  color: black;
-  display: flex;
-  align-items: center;  /* Align the text and like button */
-  justify-content: space-between;  /* Ensure the heart button is aligned to the right */
-}
 
 /* Style for the like button container */
 .likeContainer {
@@ -302,17 +314,7 @@ h2{
 /* Modal Body Styling */
 .modalBody {
   padding: 20px;
-}
-
-/* Optional: Adjust padding for the comment container */
-.commentContainer {
-  padding: 10px;
-  margin-bottom: 10px;
-}
-
-/* Adjust spacing between comment text and like button */
-.commentText strong {
-  margin-right: 5px;
+  background-color: var(--background-color);
 }
 
 /* Modal Styling */
@@ -411,3 +413,38 @@ h2{
 .secondaryButton:hover {
     background: #5a6268;
 }
+
+/* Modal Dialog (position and sizing) */
+.modalDialogBottom {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  margin: auto;
+  max-width: 1200px;
+  min-height: 80vh;
+  max-height: 80vh;
+  height: auto;
+}
+
+/* Modal Content (height limit and overflow) */
+.modalContent {
+  max-height: 80vh; /* Set the max height of the modal */
+  overflow: hidden; /* Prevent scrolling on the entire modal */
+  border-radius: 10px 10px 0 0; 
+}
+
+/* Modal Body */
+.modalBody {
+  padding: 20px;
+  max-height: 70vh; /* Set a max height for the body to allow scrolling */
+  overflow-y: hidden; /* Enable scrolling if the content exceeds max height */
+  flex-grow: 1;
+}
+
+.modalHeaderClose {
+  font-size: 1.5rem;
+  color: #000;
+  opacity: 1;
+}
+

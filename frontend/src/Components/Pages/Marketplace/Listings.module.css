@@ -1,164 +1,241 @@
+/* General Styles */
 p {
-	color: black;
+    color: black;
 }
 
-:global(.modal) {
-    max-width: calc(100% - 40px) !important;
-    max-height: calc(100% - 80px) !important;
-    padding: 20px 10px !important;
-    box-sizing: border-box !important;
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
 }
 
-.cardTitle {
-	color: black;
-	font-weight: bold;
+.modalContent {
+    background-color: var(--background-variation);
+    padding: 20px;
+    border-radius: 10px;
+    width: 95%;
+    max-width: 1600px;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.closeButton {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+	color: var(--text-color);
+}
+
+/* Header Styles */
+.modalTitle {
+    color: var(--text-color);
+    font-weight: bold;
+	font-size: 1.5rem;  /* Increase font size */
+	position: absolute; /* Position the title absolutely */
+    left: 50%; /* Move title to the center horizontally */
+    transform: translateX(-50%); /* Correct centering of title */
+    text-align: center; /* Ensure the title is centered */
 }
 
 .modalHeader {
     display: flex;
-    flex-direction: row;
     justify-content: space-between;
     align-items: center;
 }
 
-.modalHeader .cardTitle {
-    flex-grow: 1; /* Allows the title to take up available space */
-}
-
-/* Styling the modal body */
+/* Body Layout */
 .modalBody {
-	display: flex;
-	flex-direction: row;
-	gap: 20px;
-	align-items: flex-start;
-	width: 100%;
-	height: auto; /* Allow dynamic height */
-}
-
-.modalFooter {
     display: flex;
-    flex-direction: row; /* Match .modalBody */
-    gap: 20px; /* Match spacing */
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: row;
+    gap: 20px;
+    align-items: flex-start;
     width: 100%;
     padding: 10px;
-    flex: 0 0 auto; /* Prevent it from being larger than needed */
-    max-height: 20%; /* Ensure it never gets too big */
+    overflow: hidden;
 }
 
-/* Image container takes 60% of the modal */
 .carouselContainerImages {
-	flex: 60%;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	max-width: 60%;
+    flex: 1 1 60%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 60%;
 }
 
-/* Ensure the image scales properly */
 .img {
-	width: 100%; /* Image scales with container */
-	height: auto; /* Maintain aspect ratio */
-	max-height: 80vh; /* Prevents image from being too tall */
-	border-radius: 8px;
-	object-fit: cover;
+    width: 100%;
+    height: auto;
+    max-height: 80vh;
+    border-radius: 8px;
+    object-fit: cover;
 }
 
-/* Content container takes 40% */
 .content {
-	flex: 40%;
-	display: flex;
-	flex-direction: column;
-	gap: 10px;
-	width: 100%;
-	max-width: 40%;
+    flex: 1 1 40%;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+    max-width: 40%;
 }
 
+/* Price and Button Section */
 .priceAndButtons {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	width: 100%; /* Ensure it spans the full width */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
 }
 
-.priceAndButtons .cardPrice {
-	margin: 0; /* Remove margin so it's aligned properly */
-}
+/* Make the buttons span the full width of their parent section */
+.offerSellerButton, .messageSellerButton {
+	width: 100%; /* Make button containers take the full width of the section */
+	margin: 10px 0; /* Add vertical space between buttons */
+  }
+  
+  .offerSellerButton button, .messageSellerButton button {
+	width: 100%; /* Make the buttons take the full width of their container */
+	padding: 12px; /* Adjust padding as needed */
+	font-size: 1rem; /* Adjust font size as needed */
+  }
+  
 
 .editButtons {
-	display: flex;
-	gap: 5px; /* Adds spacing between buttons */
-	margin-left: auto; /* Pushes the buttons to the right */
+    display: flex;
+    gap: 5px;
+    margin-left: auto;
 }
 
-/* Styling for individual content elements */
+/* Text and Price Styles */
 .cardText {
-	font-size: 1rem;
-	color: #555;
+    font-size: 1rem;
+	color: var(--text-color);
 }
 
 .cardPrice {
-	font-size: 1.25rem;
-	font-weight: bold;
-	color: #333;
+    font-size: 1.25rem;
+    font-weight: bold;
+	color: var(--text-color);
 }
 
-.dropdownText {
-	font-size: 1rem;
-	color: #555;
+.dropdownText, .button {
+    font-size: 1rem;
+	color: var(--text-color);
 }
+
+/* Style the dropdown toggle text */
+.dropdownToggle {
+	color: var(--text-color);
+  }
+  
+  /* Style the dropdown menu */
+  .dropdownMenu {
+	color: var(--text-color);
+  }
+  
+  /* Style each dropdown item */
+  .dropdownMenu .dropdown-item {
+	color: var(--text-color);
+  }
+
+  .dropdownMenu .dropdown-item:hover {
+	background-color: var(--background-color); /* Light background on hover */
+	color: black !important; /* Ensure text stays black on hover */
+  }
+  
+
 
 .button {
-	padding: 10px 20px;
-	font-size: 1rem;
+    padding: 10px 20px;
 }
 
-
+/* Listing Grid */
 .listingCardGrid {
     display: flex;
     justify-content: left;
     align-items: flex-start;
     gap: 8px;
     width: 100%;
-    max-width: 100%;
-    max-height: 100px; /* Adjust this to prevent it from getting too tall */
     padding: 10px;
     overflow-y: auto;
-    white-space: nowrap; /* Prevents items from wrapping */
+    white-space: nowrap;
 }
 
 .profilePic {
-	width: 60px;
-	height: 60px;
-	border-radius: 50%;
-	border: 2px solid #ddd;
-	box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
-  
-  .author {
-	font-weight: bold;
-	font-size: 18px;
-	color: #333;
-	padding: 5px;
-  }
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
 
-  .contentHeader {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	width: 100%;
-  }
+.author {
+    font-weight: bold;
+    font-size: 18px;
+    color: var(--text-color);
+    padding: 5px;
+}
 
-  .location {
-	margin-left: auto; /* Pushes the location to the right */
-	font-size: 1;
-	color: #666;
-	margin-right: 20px; 
-  }
+/* Location Styling */
+.contentHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
 
-  /* Icon Styling */
+.location {
+    margin-left: auto;
+    font-size: 1rem;
+    color: var(--text-color);
+    margin-right: 20px;
+}
+
 .locationIcon {
-	margin-right: 5px;   /* Add some space to the right of the icon */
-	margin-bottom: 4px;
- }
+    margin-right: 5px;
+    margin-bottom: 4px;
+}
+
+/* Confirmation Popup */
+.confirmationPopup {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.confirmationPopup.show {
+    display: block;
+}
+
+.confirmationContent {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+/* Mobile View Adjustments */
+@media (max-width: 768px) {
+    .modalBody {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .carouselContainerImages,
+    .content {
+        max-width: 100%;
+    }
+}

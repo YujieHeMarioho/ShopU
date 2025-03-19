@@ -151,6 +151,7 @@ const getUserListings = async (userId) => {
       l.item_type,
       l.price,
       l.user_id,
+      l.location,
       ARRAY_AGG(li.file_key) AS file_keys 
     FROM
       listings l
@@ -241,6 +242,7 @@ export const getCommunityListings = async (req, res) => {
         c.name AS category,  -- Get the category name
         l.item_type,
         l.price,
+        l.location,
         ARRAY_AGG(li.file_key) AS file_keys 
       FROM
         listings l
