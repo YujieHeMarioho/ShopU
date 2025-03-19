@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
 import axios from 'axios';
-import {CardGrid, SocialCard, CommentSection} from '../../Common'
+import {CardGrid, SocialCard, CommentSection, CustomModal} from '../../Common'
 import Masonry from 'react-masonry-css';
 import ListingModal from '../Marketplace/Listings';
 import { Modal } from 'react-bootstrap';
@@ -69,7 +69,6 @@ const CommunityHome = () => {
             }
           })
         );
-
         setFriends(friendDetails);
       } catch (error) {
         console.error('Error fetching friends:', error);
@@ -493,6 +492,7 @@ const leaveCommunity = async () => {
           >
           {feed.map((post) => (
             <div key={post.post_id} className={feedStyles.gridItem} onClick={() => handleFeedCardClick(post)}> 
+            {console.log(post.profile)}
               <SocialCard
                 post_id={post.post_id}
                 image={post.image}
@@ -507,6 +507,10 @@ const leaveCommunity = async () => {
                 tags={post.tags}
                 listingId={post.listing_id}
                 onShowComments={() => handleShowComments(post.post_id)}
+                reloadFeed={reloadFeed}
+                allFriends={friends}
+                friendsLoading={friendsLoading}
+                selected={selectedCard !== null}
               />
             </div>
           ))}
@@ -516,42 +520,15 @@ const leaveCommunity = async () => {
       </div>
       {selectedListing && (<ListingModal show={showListingModal} onHide={handleCloseListingModal} listing={selectedListing} />)}
       
-      {/* Feed Modal */}
-      <Modal show={!!selectedCard} onHide={closeCardModal} centered>
-        <Modal.Header closeButton>
-        </Modal.Header>
-
-        <Modal.Body
-            style={{
-                color: "#000000",
-                textAlign: "center",
-                display: "flex",
-                justifyContent: "center",
-                flexDirection: "column",
-            }}
-        >
-            {selectedCard && (
-                <SocialCard
-                  post_id={selectedCard.post_id}
-                  image={selectedCard.image}
-                  title={selectedCard.title}
-                  description={selectedCard.content}
-                  profilePic={selectedCard.profile}
-                  author={selectedCard.author}
-                  authorId={selectedCard.author_id}
-                  initialLikes={selectedCard.likes_count}
-                  initialShares={selectedCard.shares}
-                  isLikedAlready={selectedCard.isliked}
-                  tags={selectedCard.tags}
-                  listingId={selectedCard.listing_id}
-                  onShowComments={() => handleShowComments(selectedCard.post_id)}
-                  reloadFeed={reloadFeed}
-                  allFriends={friends}
-                  friendsLoading={friendsLoading}
-                />
-            )}
-        </Modal.Body>
-      </Modal>
+       <CustomModal 
+              show={!!selectedCard} 
+              onHide={closeCardModal} 
+              centered 
+              selectedCard={selectedCard} // Pass selectedCard here
+              allFriends={friends}
+              friendsLoading={friendsLoading}
+        ></CustomModal>
+      
 
       {/* Comments Modal */}
       <Modal  show={showComments}
