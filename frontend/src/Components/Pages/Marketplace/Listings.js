@@ -17,7 +17,7 @@ export const ListingModal = ({ show, onHide, listing }) => {
    const [editDescription, setEditDescription] = useState(listing?.description || '');
    const [showConfirm, setShowConfirm] = useState(false); // Confirmation Modal
    const [categoryListings, setCategoryListings] = useState([]);
-
+   const [location, setLocation] = useState('');
    const isOwner = isAuthenticated && listing && listing.user_id === user?.sub;
 
    useEffect(() => {
@@ -47,6 +47,13 @@ export const ListingModal = ({ show, onHide, listing }) => {
          document.body.style.overflow = 'auto';
       };
    }, [show]);
+
+
+   useEffect(() => {
+      if (listing) {
+         setLocation(listing.location || 'Location not available'); // Set location if available
+      }
+   }, [listing]);
 
 
    const handleDropDownClick = (option) => {
@@ -204,16 +211,17 @@ export const ListingModal = ({ show, onHide, listing }) => {
         <div className={styles.modalHeader}>
           <button className={styles.closeButton} onClick={handleCloseModal}>✕</button>
           <div className={styles.modalTitle}>
-            {isEditing ? (
-              <Form.Control type="text" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
+          {isEditing ? (
+               <Form.Control type="text" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
             ) : (
-              listing?.title
+               listing?.title
             )}
           </div>
           <div>
-          <FaMapPin size={20} color="red" className={styles.locationIcon} /> {/* Location icon with size and color */}
+          <FaMapPin size={20} color="red" className={styles.locationIcon} />
+            {/* Check if 'listing' exists before accessing 'location' */}
             <span className={styles.location}>
-               {listing.location}
+            {location} 
             </span>
           </div>
         </div>
