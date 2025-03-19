@@ -148,6 +148,12 @@ const CommunityHome = () => {
   
         console.log('Merged Member Details:', memberDetails);
         setMembers(memberDetails);
+        for (let member in memberDetails)
+        {
+          if (member.user_id == user.sub)
+            setIsJoined(true);
+          console.log("id: " + member.user_id)
+        }
       } catch (error) {
         console.error('Error fetching user info or members:', error.response ? error.response.data : error.message);
         alert('Failed to load community members. Please try again later.');
