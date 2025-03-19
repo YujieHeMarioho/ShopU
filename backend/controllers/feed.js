@@ -219,14 +219,15 @@ export const getCommunityFeedPosts = async (req, res) => {
 
 
     const query = `
-      SELECT
+       SELECT
         f.post_id,
         f.title,
         f.content,
-        f.image_url as profile,
+        u.profile_image as profile,
         fi.file_key as image,
         f.date_created,
         u.name AS author,
+        u.user_id AS author_id,
         f.likes_count,
         ARRAY_AGG(t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL) AS tags, -- Aggregate tags into an array
         COUNT(cp.post_id) AS sharedBy  -- Count the number of shared by for the post in the community
@@ -265,14 +266,24 @@ export const getCommunityFeedPosts = async (req, res) => {
               // Generate the signed URL
               feed.image = await getSignedUrl(s3, command, { expiresIn: 86400 });
           }
+
+          if (feed.profile) {
+            const command = new GetObjectCommand({
+                Bucket: profileBucketName,
+                Key: feed.profile,
+            });
+
+            // Generate the signed URL
+            feed.profile = await getSignedUrl(s3, command, { expiresIn: 86400 });
+        }
   
           // Return the modified row
           return feed;
        })
     );
 
-    if (feedWithUrls.length === 0) {
-      console.log('No posts found for this community.');
+    if (feedWithUrls.rowCount === 0) {
+      console.log('No feed posts found.');
     }
 
     // Respond with the results

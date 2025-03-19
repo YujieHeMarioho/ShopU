@@ -28,7 +28,6 @@ export const SocialCard = ({
   selected = false
 }) => {
   const { user, getAccessTokenSilently } = useAuth0();
-
   const [likes, setLikes] = useState(initialLikes);
   const [shares, setShares] = useState(initialShares);
   const [isLiked, setIsLiked] = useState(isLikedAlready);

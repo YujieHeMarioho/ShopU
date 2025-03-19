@@ -49,9 +49,6 @@ export const CardGrid = ({ listings = [], variant = 'marketplace', openListingDe
                   isLiked={listing.isLiked}
                   isShared={listing.isShared}
                   tags={listing.tags}
-                  onDelete={() => deleteFeedPost(listing.id)} // Example function, replace as needed
-                  onEdit={() => setEditPost(listing)} // Example function, replace as needed
-                  onShare={() => shareFeedPost(listing.id)} // Example function, replace as needed
                 />
               )}
             </Col>
@@ -70,16 +67,4 @@ const openListingDetails = (listing) => {
 
 const saveToFavorites = (listing) => {
   // Logic to save the item to favorites
-};
-
-const deleteFeedPost = (postId) => {
-  // Logic to delete the post from the feed
-};
-
-const setEditPost = (post) => {
-  // Logic to set the post for editing
-};
-
-const shareFeedPost = (postId) => {
-  // Logic to share the post
 };
