@@ -176,6 +176,7 @@ export const CustomModal = ({
   const isSocialCard = selectedCard && selectedCard.post_id;
 
   const handleSave = async () => {
+    const tagsArray = typeof editedTags === 'string' ? editedTags.split(',').map((t) => t.trim()) : [];
     setLoading(true);
     try {
       const token = await getAccessTokenSilently();
@@ -188,7 +189,7 @@ export const CustomModal = ({
         body: JSON.stringify({
           title: editedTitle,
           description: editedDescription,
-          tags: editedTags.split(',').map((t) => t.trim()),
+          tags: tagsArray,
           image: editedImage,
           video: editedVideo,
         }),
@@ -494,7 +495,7 @@ export const CustomModal = ({
                   <div className={styles.friendGrid}>
                     {allFriends.map((friend) => (
                       <div key={friend.friend_id} className={styles.friendItem}>
-                        <img src={friend.profile_picture} alt={friend.name} className={selectedFriend === friend.friend_id ? `${styles.profilePic} ${styles.selected}` : styles.profilePic} onClick={() => setSelectedFriend(friend.friend_id)} />
+                        <img src={friend.profile_picture} alt={friend.namHe} className={selectedFriend === friend.friend_id ? `${styles.profilePic} ${styles.selected}` : styles.profilePic} onClick={() => setSelectedFriend(friend.friend_id)} />
                         <span className={styles.friendName}>{friend.name}</span>
                       </div>
                     ))}
