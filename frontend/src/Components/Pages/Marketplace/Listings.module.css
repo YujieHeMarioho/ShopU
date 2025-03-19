@@ -17,11 +17,11 @@ p {
 }
 
 .modalContent {
-    background-color: white;
+    background-color: var(--background-variation);
     padding: 20px;
     border-radius: 10px;
     width: 95%;
-    max-width: 2100px;
+    max-width: 1600px;
     box-sizing: border-box;
     position: relative;
 }
@@ -31,11 +31,12 @@ p {
     border: none;
     font-size: 20px;
     cursor: pointer;
+	color: var(--text-color);
 }
 
 /* Header Styles */
 .modalTitle {
-    color: black;
+    color: var(--text-color);
     font-weight: bold;
 	font-size: 1.5rem;  /* Increase font size */
 	position: absolute; /* Position the title absolutely */
@@ -116,38 +117,37 @@ p {
 /* Text and Price Styles */
 .cardText {
     font-size: 1rem;
-    color: #555;
+	color: var(--text-color);
 }
 
 .cardPrice {
     font-size: 1.25rem;
     font-weight: bold;
-    color: #333;
+	color: var(--text-color);
 }
 
 .dropdownText, .button {
     font-size: 1rem;
-    color: #555;
+	color: var(--text-color);
 }
 
 /* Style the dropdown toggle text */
 .dropdownToggle {
-	color: black; /* Set the dropdown toggle text to black */
+	color: var(--text-color);
   }
   
   /* Style the dropdown menu */
   .dropdownMenu {
-	color: black; /* Set dropdown item text color to black */
+	color: var(--text-color);
   }
   
   /* Style each dropdown item */
   .dropdownMenu .dropdown-item {
-	color: black !important; /* Ensure dropdown items text is black */
+	color: var(--text-color);
   }
-  
-  /* Optional: Change the background color and text color on hover */
+
   .dropdownMenu .dropdown-item:hover {
-	background-color: #f8f9fa; /* Light background on hover */
+	background-color: var(--background-color); /* Light background on hover */
 	color: black !important; /* Ensure text stays black on hover */
   }
   
@@ -180,7 +180,7 @@ p {
 .author {
     font-weight: bold;
     font-size: 18px;
-    color: #333;
+    color: var(--text-color);
     padding: 5px;
 }
 
@@ -195,7 +195,7 @@ p {
 .location {
     margin-left: auto;
     font-size: 1rem;
-    color: #666;
+    color: var(--text-color);
     margin-right: 20px;
 }
 
