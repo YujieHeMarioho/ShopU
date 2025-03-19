@@ -128,6 +128,8 @@ const CommunityHome = () => {
                 { headers: { Authorization: `Bearer ${token}` } }
               );
               console.log(`Member ${member.user_id} Details:`, memberResponse.data);
+              if (member.user_id == user.sub)
+                setIsJoined(true);
               return { 
                 ...member, 
                 name: memberResponse.data.name, 
@@ -148,12 +150,6 @@ const CommunityHome = () => {
   
         console.log('Merged Member Details:', memberDetails);
         setMembers(memberDetails);
-        for (let member in memberDetails)
-        {
-          if (member.user_id == user.sub)
-            setIsJoined(true);
-          console.log("id: " + member.user_id)
-        }
       } catch (error) {
         console.error('Error fetching user info or members:', error.response ? error.response.data : error.message);
         alert('Failed to load community members. Please try again later.');
@@ -475,7 +471,7 @@ const leaveCommunity = async () => {
               </button> 
               <button
                 className={styles.addFriendButton}
-                /* onClick={() => handleMessage(member.user_id)} */
+                /* onClick={() => handleFriend(member.user_id)} */
               >
                 Add Friend
               </button> 
