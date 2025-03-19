@@ -295,6 +295,7 @@ export const CommentSection = ({ selectedPostId, userId }) => {
           </div>
         )}
       </div>
+      <div className={styles.footer}></div>
     </div>
   );
 };

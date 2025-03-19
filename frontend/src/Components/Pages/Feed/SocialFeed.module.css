@@ -314,6 +314,7 @@ h2{
 /* Modal Body Styling */
 .modalBody {
   padding: 20px;
+  background-color: var(--background-color);
 }
 
 /* Modal Styling */
