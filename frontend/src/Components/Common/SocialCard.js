@@ -4,7 +4,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { FaThumbsUp, FaShare, FaHeart, FaRegHeart, FaComment } from 'react-icons/fa';
 import styles from './SocialCard.module.css';
 import axios from 'axios';
-import {Link} from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
 
 export const SocialCard = ({
   post_id,
@@ -53,6 +53,8 @@ export const SocialCard = ({
 
   const [followStatus, setFollowStatus] = useState(null);
   const [showFollowButton, setShowFollowButton] = useState(false);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const checkFollowStatus = async () => {
@@ -418,6 +420,7 @@ export const SocialCard = ({
       if (!response.ok) throw new Error('Failed to delete post');
       reloadFeed();
       setIsEditing(false);
+      navigate("/feed");
     } catch (error) {
       console.error('Error deleting post:', error);
     } finally {

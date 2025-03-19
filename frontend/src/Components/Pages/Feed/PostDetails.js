@@ -13,6 +13,7 @@ function PostDetails() {
   const location = useLocation();
   const { user, isAuthenticated, getAccessTokenSilently, isLoading: authLoading } = useAuth0();
   const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   // Retrieve the edited image from the previous step
   const { image } = location.state || {};
@@ -87,9 +88,11 @@ function PostDetails() {
     };
 
     try {
+      setLoading(true);
       postData.image = await uploadImage();
     } catch {
       // Handle upload failure
+      setLoading(false);
     }
 
     try {
@@ -112,6 +115,8 @@ function PostDetails() {
     } catch (err) {
       console.error("Error creating post:", err);
       alert("Error creating post. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -178,8 +183,8 @@ function PostDetails() {
           <Button className="me-2" onClick={() => navigate(-1)} variant="primary">
             Back
           </Button>
-          <Button variant="primary" onClick={handleSubmit}>
-            Confirm
+          <Button variant="primary" onClick={handleSubmit} disabled={loading}>
+            {loading ? "Creating..." : "Confirm"}
           </Button>
         </div>
       </Form>

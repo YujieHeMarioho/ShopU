@@ -219,8 +219,8 @@ export const CustomModal = ({
         },
       });
       if (!response.ok) throw new Error('Failed to delete post');
-      reloadFeed();
       setIsEditing(false);
+      navigate("/feed");
     } catch (error) {
       console.error('Error deleting post:', error);
     } finally {
