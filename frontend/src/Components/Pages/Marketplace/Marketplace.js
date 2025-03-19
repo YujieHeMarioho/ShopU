@@ -285,7 +285,9 @@ export const Marketplace = () => {
       </div>
 
     </div>
-    <ListingModal show={showListingModal} onHide={handleCloseListingModal} listing={selectedListing} />
+    {showListingModal && (
+        <ListingModal show={showListingModal} onHide={handleCloseListingModal} listing={selectedListing} />
+      )}
     </div>
   );
 

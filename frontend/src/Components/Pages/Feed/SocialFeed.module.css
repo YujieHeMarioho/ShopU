@@ -291,13 +291,6 @@ h2{
   border-radius: 8px;
 }
 
-/* Ensure comment text and username are black */
-.commentText {
-  color: black;
-  display: flex;
-  align-items: center;  /* Align the text and like button */
-  justify-content: space-between;  /* Ensure the heart button is aligned to the right */
-}
 
 /* Style for the like button container */
 .likeContainer {
@@ -321,17 +314,6 @@ h2{
 /* Modal Body Styling */
 .modalBody {
   padding: 20px;
-}
-
-/* Optional: Adjust padding for the comment container */
-.commentContainer {
-  padding: 10px;
-  margin-bottom: 10px;
-}
-
-/* Adjust spacing between comment text and like button */
-.commentText strong {
-  margin-right: 5px;
 }
 
 /* Modal Styling */
@@ -429,5 +411,39 @@ h2{
 
 .secondaryButton:hover {
     background: #5a6268;
+}
+
+/* Modal Dialog (position and sizing) */
+.modalDialogBottom {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  margin: auto;
+  max-width: 1200px;
+  min-height: 80vh;
+  max-height: 80vh;
+  height: auto;
+}
+
+/* Modal Content (height limit and overflow) */
+.modalContent {
+  max-height: 80vh; /* Set the max height of the modal */
+  overflow: hidden; /* Prevent scrolling on the entire modal */
+  border-radius: 10px 10px 0 0; 
+}
+
+/* Modal Body */
+.modalBody {
+  padding: 20px;
+  max-height: 70vh; /* Set a max height for the body to allow scrolling */
+  overflow-y: hidden; /* Enable scrolling if the content exceeds max height */
+  flex-grow: 1;
+}
+
+.modalHeaderClose {
+  font-size: 1.5rem;
+  color: #000;
+  opacity: 1;
 }
 

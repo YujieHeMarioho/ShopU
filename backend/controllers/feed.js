@@ -111,6 +111,44 @@ export const getAllFeedPosts = async (req, res) => {
   }
 };
 
+export const getPostLikes = async (req, res) => {
+  try {
+    const { postId } = req.params; // Extract postId from request parameters
+    const userId = extractUserIdFromToken(req); // Extract user ID from token
+
+    if (!postId) {
+      return res.status(400).json({ error: "Post ID is required" });
+    }
+
+    const query = `
+      SELECT 
+        f.likes_count,
+        EXISTS (
+          SELECT 1
+          FROM post_likes pl
+          WHERE pl.post_id = $1 AND pl.user_id = $2
+        ) AS isLiked
+      FROM feed_posts f
+      WHERE f.post_id = $1;
+    `;
+
+    // Execute query with postId and userId
+    const result = await pool.query(query, [postId, userId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    const { likes_count, isliked } = result.rows[0];
+
+    res.status(200).json({ likesCount: likes_count, isLiked: isliked });
+  } catch (err) {
+    console.error("Error fetching post likes:", err.message);
+    res.status(500).json({ error: "Database error" });
+  }
+};
+
+
 //Endpoint to get the total number of active posts in the feed
 export const getFeedPostCount = async (req, res) => {
   const query = `SELECT COUNT(*) AS total_feed_posts FROM feed_posts;`;
