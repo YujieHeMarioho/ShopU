@@ -176,6 +176,7 @@ export const Marketplace = () => {
     setActiveFilters(prevState => ({
       ...prevState,
       ...filter,
+      listingId: "none",
     }));
   };
 
