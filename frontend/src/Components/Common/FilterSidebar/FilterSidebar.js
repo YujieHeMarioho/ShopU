@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button, Form, ButtonGroup } from 'react-bootstrap';
 import styles from './FilterSidebar.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
+import { FaChevronDown } from 'react-icons/fa';
 
 const FilterSidebar = ({ onFilterChange, initialFilters }) => {
   const [selectedType, setSelectedType] = useState(''); // Initially no selection
@@ -9,6 +10,7 @@ const FilterSidebar = ({ onFilterChange, initialFilters }) => {
   const [categories, setCategories] = useState([]); // State to store categories fetched from the API
   const { getAccessTokenSilently } = useAuth0();  
   const [selectedCategories, setSelectedCategories] = useState(initialFilters.categories || []);
+  const [isOpen, setIsOpen] = useState(true);
 
   // Fetch the most recent listings from the server
   const fetchFilters = async () => {
@@ -76,70 +78,77 @@ const FilterSidebar = ({ onFilterChange, initialFilters }) => {
 
   return (
     <div className={styles.filterSidebar}>
-      <div className={styles.title}>Filters</div>
+      <div className={styles.title}>
+        Filters 
+        <FaChevronDown 
+          className={`${styles.arrow} ${isOpen ? styles.open : ''}`} 
+          onClick={() => setIsOpen(!isOpen)}
+        />
+      </div>
+      <div className={`${styles.filterContent} ${isOpen ? styles.open : ''}`}>
+        {/* Categories Filter */}
+        <Form.Group className="checkbox-group">
+          <Form.Label>Categories</Form.Label>
+          {categories.map((category, index) => (
+            <Form.Check
+              key={index}
+              type="checkbox"
+              label={category}
+              value={category}
+              checked={selectedCategories.includes(category)}
+              onChange={handleCategoryChange}
+            />
+          ))}
+        </Form.Group>
 
-      {/* Categories Filter */}
-      <Form.Group className="checkbox-group">
-        <Form.Label>Categories</Form.Label>
-        {categories.map((category, index) => (
-          <Form.Check
-            key={index}
-            type="checkbox"
-            label={category}
-            value={category}
-            checked={selectedCategories.includes(category)}
-            onChange={handleCategoryChange}
-          />
-        ))}
-      </Form.Group>
+        {/* Type Filter (Toggle Buttons) */}
+        <Form.Group>
+          <Form.Label>Type</Form.Label>
+          <ButtonGroup>
+            <Button
+              variant="outline-primary"
+              active={selectedType === 'item'}
+              onClick={() => handleTypeChange('item')}
+            >
+              Item
+            </Button>
+            <Button
+              variant="outline-primary"
+              active={selectedType === 'service'}
+              onClick={() => handleTypeChange('service')}
+            >
+              Service
+            </Button>
+            <Button
+              variant="outline-primary"
+              active={selectedType === 'both'}
+              onClick={() => handleTypeChange('both')}
+            >
+              Both
+            </Button>
+          </ButtonGroup>
+        </Form.Group>
 
-      {/* Type Filter (Toggle Buttons) */}
-      <Form.Group>
-        <Form.Label>Type</Form.Label>
-        <ButtonGroup>
-          <Button
-            variant="outline-primary"
-            active={selectedType === 'item'}
-            onClick={() => handleTypeChange('item')}
-          >
-            Item
-          </Button>
-          <Button
-            variant="outline-primary"
-            active={selectedType === 'service'}
-            onClick={() => handleTypeChange('service')}
-          >
-            Service
-          </Button>
-          <Button
-            variant="outline-primary"
-            active={selectedType === 'both'}
-            onClick={() => handleTypeChange('both')}
-          >
-            Both
-          </Button>
-        </ButtonGroup>
-      </Form.Group>
+        {/* User Rating Filter (Multiple Checkboxes) */}
+        <Form.Group className="checkbox-group">
+          <Form.Label>User Rating</Form.Label>
+          {ratings.map((rating, index) => (
+            <Form.Check
+              key={index}
+              type="checkbox"
+              label={rating}
+              value={rating}
+              checked={selectedRatings.includes(rating)}
+              onChange={handleRatingChange}
+            />
+          ))}
+        </Form.Group>
 
-      {/* User Rating Filter (Multiple Checkboxes) */}
-      <Form.Group className="checkbox-group">
-        <Form.Label>User Rating</Form.Label>
-        {ratings.map((rating, index) => (
-          <Form.Check
-            key={index}
-            type="checkbox"
-            label={rating}
-            value={rating}
-            checked={selectedRatings.includes(rating)}
-            onChange={handleRatingChange}
-          />
-        ))}
-      </Form.Group>
-
-      {/* Apply Button */}
-      <Button className={styles.applyButton} onClick={handleApplyFilters}>
-        Apply Filters
-      </Button>
+        {/* Apply Button */}
+        <Button className={styles.applyButton} onClick={handleApplyFilters}>
+          Apply Filters
+        </Button>
+      </div>
     </div>
   );
 };

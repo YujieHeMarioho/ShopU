@@ -1,21 +1,48 @@
 .filterSidebar {
-  background-color: #f8f9fa;
+  background-color: var(--background-variation);
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   width: 100%;
   max-width: 250px;
+  transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  overflow: hidden;
 }
 
 .title {
   font-weight: bold;
   margin-bottom: 15px;
-  color: black;
+  color: var(--text-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.arrow {
+  transition: transform 0.3s ease-in-out;
+  cursor: pointer;
+}
+
+.arrow.open {
+  transform: rotate(180deg);
+}
+
+.filterContent {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+.filterContent.open {
+  max-height: 1000px; /* Adjust based on content */
+  opacity: 1;
 }
 
 .filterSidebar label,
 .filterSidebar .form-control {
-  color: black; /* Make form labels and inputs text black */
+  color: var(--text-color);
 }
 
 .filterSidebar .checkbox-group label,
@@ -24,14 +51,14 @@
   margin-bottom: 8px;
 }
 
-.applyButton {
+.filterSidebar .applyButton {
   width: 100%;
   margin-top: 20px;
-  background-color: var(--primary-color); /* Use global primary color */
-  border-color: var(--primary-color); /* Use global primary color for border */
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
 }
 
-.applyButton:hover {
-  background-color: var(--secondary-color); /* Use global secondary color on hover */
-  border-color: var(--secondary-color); /* Use global secondary color on hover */
+.filterSidebar .applyButton:hover {
+  background-color: var(--primary-color-dark);
+  border-color: var(--primary-color-dark);
 }

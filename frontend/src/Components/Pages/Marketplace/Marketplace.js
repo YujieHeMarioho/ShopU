@@ -274,7 +274,6 @@ export const Marketplace = () => {
           <FilterSidebar
             onFilterChange={handleFilterChange}
             initialFilters={activeFilters}
-            className={styles.filterSidebar}
           />
         </div>
 
