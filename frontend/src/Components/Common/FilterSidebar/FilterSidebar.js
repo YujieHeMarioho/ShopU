@@ -78,11 +78,10 @@ const FilterSidebar = ({ onFilterChange, initialFilters }) => {
 
   return (
     <div className={styles.filterSidebar}>
-      <div className={styles.title}>
+      <div className={styles.title}  onClick={() => setIsOpen(!isOpen)}>
         Filters 
         <FaChevronDown 
           className={`${styles.arrow} ${isOpen ? styles.open : ''}`} 
-          onClick={() => setIsOpen(!isOpen)}
         />
       </div>
       <div className={`${styles.filterContent} ${isOpen ? styles.open : ''}`}>
