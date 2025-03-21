@@ -347,11 +347,12 @@
     position: absolute;
     top: 100%;
     left: 0;
-    background: var(--primary-color);
+    background: var(--background-variation);
     border: 1px solid var(--border-color);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     z-index: 1000;
     width: 200px;
+    border-radius: 8px;
 }
 
 .categoriesPopup ul {
@@ -373,10 +374,6 @@
     color: var(--primary-color);
 }
 
-/* Show categories popup */
-.showPopup .categoriesPopup {
-    display: block;
-}
 
 /* User Profile Image */
 .profileImage {
