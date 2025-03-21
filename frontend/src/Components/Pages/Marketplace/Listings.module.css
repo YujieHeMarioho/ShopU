@@ -24,6 +24,8 @@ p {
     max-width: 1600px;
     box-sizing: border-box;
     position: relative;
+    max-height: 90vh;  /* Set max height to prevent overflow */
+    overflow-y: auto;
 }
 
 .closeButton {
@@ -265,5 +267,12 @@ p {
     .carouselContainerImages,
     .content {
         max-width: 100%;
+    }
+
+    .modalContent {
+        width: 100%;  /* Allow modal content to take full width on smaller screens */
+        max-width: 100%;  /* Make sure it doesn't overflow */
+        padding: 15px;  /* Adjust padding for smaller devices */
+        max-height: 90vh;  /* Keep height responsive */
     }
 }
