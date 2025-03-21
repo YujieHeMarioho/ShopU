@@ -105,22 +105,19 @@ const FilterSidebar = ({ onFilterChange, initialFilters }) => {
           <Form.Label>Type</Form.Label>
           <ButtonGroup>
             <Button
-              variant="outline-primary"
-              active={selectedType === 'item'}
+              className={`${styles.typeButton} ${selectedType === 'item' ? styles.typeButtonActive : ''}`}
               onClick={() => handleTypeChange('item')}
             >
               Item
             </Button>
             <Button
-              variant="outline-primary"
-              active={selectedType === 'service'}
+              className={`${styles.typeButton} ${selectedType === 'service' ? styles.typeButtonActive : ''}`}
               onClick={() => handleTypeChange('service')}
             >
               Service
             </Button>
             <Button
-              variant="outline-primary"
-              active={selectedType === 'both'}
+              className={`${styles.typeButton} ${selectedType === 'both' ? styles.typeButtonActive : ''}`}
               onClick={() => handleTypeChange('both')}
             >
               Both

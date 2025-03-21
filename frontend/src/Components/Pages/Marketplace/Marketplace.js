@@ -243,8 +243,11 @@ export const Marketplace = () => {
         )}
 
         {/* Create New Listing Button */}
-        <div className="my-4">
-          <Button className="create-listing-button" onClick={handleCreateListing}>
+        <div className={styles.createListingButtonContainer}>
+          <Button
+            className={styles.createListingButton}
+            onClick={handleCreateListing}
+          >
             Create New Listing
           </Button>
         </div>
