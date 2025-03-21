@@ -151,7 +151,8 @@ export const Marketplace = () => {
           image: item.file_keys,  // or item.file_keys[0] if you only want one image
           author: item.author,
           profile: item.profile,
-          location: item.location
+          location: item.location,
+          services: item.services
         }));
 
         setListings(formattedData);

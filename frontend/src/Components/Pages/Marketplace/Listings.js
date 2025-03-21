@@ -19,7 +19,19 @@ export const ListingModal = ({ show, onHide, listing }) => {
    const [categoryListings, setCategoryListings] = useState([]);
    const [location, setLocation] = useState('');
    const isOwner = isAuthenticated && listing && listing.user_id === user?.sub;
+   const isServiceListing = listing.type == 'service';
+   const dropdownOptions = isServiceListing
+      ? listing.services.map(service => ({
+         label: `${service.service_name} - $${service.service_price}`,
+         value: service.service_id
+      }))
+      : [
+         { label: 'Drop Off Location', value: 'drop_off' },
+         { label: 'Pickup From Seller', value: 'pickup' },
+         { label: 'Shipped', value: 'shipped' }
+      ];
 
+   console.log(listing)
    useEffect(() => {
       if (isEditing) {
          setEditTitle(listing.title);
@@ -206,46 +218,46 @@ export const ListingModal = ({ show, onHide, listing }) => {
 
    return (
       <div className={styles.modalOverlay} onClick={handleCloseModal}>
-      <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-        {/* Modal Header */}
-        <div className={styles.modalHeader}>
-          <button className={styles.closeButton} onClick={handleCloseModal}>✕</button>
-          <div className={styles.modalTitle}>
-          {isEditing ? (
-               <Form.Control type="text" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
-            ) : (
-               listing?.title
-            )}
-          </div>
-          <div>
-          <FaMapPin size={20} color="red" className={styles.locationIcon} />
-            {/* Check if 'listing' exists before accessing 'location' */}
-            <span className={styles.location}>
-            {location} 
-            </span>
-          </div>
-        </div>
-
-        {/* Modal Body */}
-        <div className={styles.modalBody}>
-            {/* Image Section */}
-            <div className={styles.carouselContainerImages}>
-               {listing ? (
-                  listing.image.length > 1 ? (
-                  <Carousel>
-                     {listing.image.map((img, index) => (
-                        <Carousel.Item key={index}>
-                        <img src={img} alt={`Slide ${index}`} />
-                        </Carousel.Item>
-                     ))}
-                  </Carousel>
+         <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            {/* Modal Header */}
+            <div className={styles.modalHeader}>
+               <button className={styles.closeButton} onClick={handleCloseModal}>✕</button>
+               <div className={styles.modalTitle}>
+                  {isEditing ? (
+                     <Form.Control type="text" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} />
                   ) : (
-                  <img src={listing.image[0]} alt={listing.title} className={styles.img} />
-                  )
-               ) : (
-                  <p>Loading...</p>
-               )}
+                     listing?.title
+                  )}
+               </div>
+               <div>
+                  <FaMapPin size={20} color="red" className={styles.locationIcon} />
+                  {/* Check if 'listing' exists before accessing 'location' */}
+                  <span className={styles.location}>
+                     {location}
+                  </span>
+               </div>
             </div>
+
+            {/* Modal Body */}
+            <div className={styles.modalBody}>
+               {/* Image Section */}
+               <div className={styles.carouselContainerImages}>
+                  {listing ? (
+                     listing.image.length > 1 ? (
+                        <Carousel>
+                           {listing.image.map((img, index) => (
+                              <Carousel.Item key={index}>
+                                 <img src={img} alt={`Slide ${index}`} />
+                              </Carousel.Item>
+                           ))}
+                        </Carousel>
+                     ) : (
+                        <img src={listing.image[0]} alt={listing.title} className={styles.img} />
+                     )
+                  ) : (
+                     <p>Loading...</p>
+                  )}
+               </div>
 
             {/* Content Section */}
             <div className={styles.content}>
@@ -286,82 +298,84 @@ export const ListingModal = ({ show, onHide, listing }) => {
 
 
 
-               {/* Product Options */}
-               <div className={styles.productOptions}>
-               <label htmlFor="product-options-dropdown">Product Options</label>
-               <Dropdown>
-                  {/* Apply custom class for the toggle button */}
-                  <Dropdown.Toggle variant="outline-light" className={styles.dropdownToggle}>
-                     {dropDownTitle}
-                  </Dropdown.Toggle>
-                  
-                  {/* Apply custom class for the menu */}
-                  <Dropdown.Menu className={styles.dropdownMenu}>
-                     <Dropdown.Item onClick={() => handleDropDownClick('Drop Off Location')}>Drop Off Location</Dropdown.Item>
-                     <Dropdown.Item onClick={() => handleDropDownClick('Pickup From Seller')}>Pickup From Seller</Dropdown.Item>
-                     <Dropdown.Item onClick={() => handleDropDownClick('Shipped')}>Shipped</Dropdown.Item>
-                  </Dropdown.Menu>
-               </Dropdown>
-               </div>
+                  {/* Product/Service Options Dropdown */}
+                  <div className={styles.productOptions}>
+                     <label htmlFor="product-options-dropdown">
+                        {isServiceListing ? 'Service Options' : 'Product Options'}
+                     </label>
+                     <Dropdown>
+                        <Dropdown.Toggle variant="outline-light" className={styles.dropdownToggle}>
+                           {dropDownTitle}
+                        </Dropdown.Toggle>
 
-
-
-               {/* Offer Seller Button */}
-               <div className={styles.offerSellerButton}>
-                  <Button variant="dark" className="mb-2">Offer Seller!</Button>
-               </div>
-
-               {/* Message Seller Button */}
-               <div className={styles.messageSellerButton}>
-                  <Button variant="dark" onClick={handleMessageSeller}>Message Seller!</Button>
-               </div>
-
-               {/* Description */}
-               <p className={styles.cardText}>
-                  {isEditing ? (
-                  <Form.Control
-                     as="textarea"
-                     rows={3}
-                     value={editDescription}
-                     onChange={(e) => setEditDescription(e.target.value)}
-                  />
-                  ) : (
-                  listing.description
-                  )}
-               </p>
-            </div>
-            </div>
-
-
-        {/* Modal Footer */}
-        <div className={styles.modalFooter}>
-          <div className={styles.listingCardGrid}>
-                     {categoryListings.slice(0, 5).map((listing) => (
-                        <CardComponent
-                           className={styles.listingCard}
-                           key={listing.id}
-                           image={listing.image}
-                           title={listing.title}
-                           description={listing.description}
-                           price={listing.price}
-                           onListingClick={() => handleCardClick(listing)}
-                           listingId={listing.id}
-                        />
-                     ))}
+                        <Dropdown.Menu className={styles.dropdownMenu}>
+                           {dropdownOptions.map(option => (
+                              <Dropdown.Item key={option.value} onClick={() => handleDropDownClick(option.label)}>
+                                 {option.label}
+                              </Dropdown.Item>
+                           ))}
+                        </Dropdown.Menu>
+                     </Dropdown>
                   </div>
-        </div>
 
-        {/* Confirmation Popup */}
-        <div className={`${styles.confirmationPopup} ${showConfirm ? styles.show : ''}`}>
-          <div className={styles.confirmationContent}>
-            <p>You have unsaved changes. Are you sure you want to exit?</p>
-            <Button variant="secondary" onClick={() => setShowConfirm(false)}>No, Stay</Button>
-            <Button variant="danger" onClick={confirmExit}>Yes, Exit</Button>
-          </div>
-        </div>
+                  {/* Offer Seller / Schedule Appointment Button */}
+                  <div className={styles.offerSellerButton}>
+                     <Button variant="dark" className="mb-2">
+                        {isServiceListing ? 'Schedule an Appointment' : 'Offer Seller!'}
+                     </Button>
+                  </div>
+
+                  {/* Message Seller Button */}
+                  <div className={styles.messageSellerButton}>
+                     <Button variant="dark" onClick={handleMessageSeller}>Message Seller!</Button>
+                  </div>
+
+                  {/* Description */}
+                  <p className={styles.cardText}>
+                     {isEditing ? (
+                        <Form.Control
+                           as="textarea"
+                           rows={3}
+                           value={editDescription}
+                           onChange={(e) => setEditDescription(e.target.value)}
+                        />
+                     ) : (
+                        listing.description
+                     )}
+                  </p>
+               </div>
+            </div>
+
+
+            {/* Modal Footer */}
+            <div className={styles.modalFooter}>
+               <div className={styles.listingCardGrid}>
+                  {categoryListings.slice(0, 5).map((listing) => (
+                     <CardComponent
+                        className={styles.listingCard}
+                        key={listing.id}
+                        image={listing.image}
+                        title={listing.title}
+                        description={listing.description}
+                        price={listing.price}
+                        onListingClick={() => handleCardClick(listing)}
+                        listingId={listing.id}
+                     />
+                  ))}
+               </div>
+            </div>
+
+            {/* Confirmation Popup */}
+            <div className={`${styles.confirmationPopup} ${showConfirm ? styles.show : ''}`}>
+               <div className={styles.confirmationContent}>
+                  <p>You have unsaved changes. Are you sure you want to exit?</p>
+                  <Button variant="secondary" onClick={() => setShowConfirm(false)}>No, Stay</Button>
+                  <Button variant="danger" onClick={confirmExit}>Yes, Exit</Button>
+               </div>
+            </div>
+         </div>
       </div>
-    </div>
-  );
+   );
 };
 
 export default ListingModal;

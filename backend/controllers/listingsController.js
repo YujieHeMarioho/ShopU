@@ -37,24 +37,30 @@ export const getAllListings = async (req, res) => {
       l.user_id,
       l.title,
       l.description,
-      c.name AS category,  -- Get the category name
+      c.name AS category,
       l.item_type,
       l.price,
       l.location,
-      ARRAY_AGG(li.file_key) AS file_keys,
-      u.name AS author,     
-      u.profile_image AS profile   
-    FROM
-      listings l
-    JOIN
-      categories c ON l.category_id = c.category_id
-    JOIN
-      users u ON l.user_id = u.user_id
-    INNER JOIN
-      listing_images li ON l.listing_id = li.listing_id
+      ARRAY_AGG(DISTINCT li.file_key) AS file_keys,
+      u.name AS author,
+      u.profile_image AS profile,
+      COALESCE(
+        JSON_AGG(
+          DISTINCT JSONB_BUILD_OBJECT(
+            'service_id', ls.service_id,
+            'service_name', ls.service_name,
+            'service_price', ls.service_price
+          )
+        ) FILTER (WHERE ls.service_id IS NOT NULL), '[]'::JSON
+      ) AS services
+    FROM listings l
+    JOIN categories c ON l.category_id = c.category_id
+    JOIN users u ON l.user_id = u.user_id
+    LEFT JOIN listing_images li ON l.listing_id = li.listing_id
+    LEFT JOIN listing_services ls ON l.listing_id = ls.listing_id
     GROUP BY
       l.listing_id, 
-      l.user_id,          -- Group by seller's ID
+      l.user_id,          
       l.title, 
       l.description, 
       c.name, 
@@ -62,9 +68,9 @@ export const getAllListings = async (req, res) => {
       l.price,
       l.location,
       u.name,               
-      u.profile_image;      
-      `;
-
+      u.profile_image;
+  `;
+  
   try {
     const result = await pool.query(query);
     // Loop through each listing and generate signed URLs
@@ -375,7 +381,7 @@ export const getFavoritedListings = async (req, res) => {
 };
 
 //Endpoint for create a listing
-export const createListing = async (req, res) => {
+export const createItemListing = async (req, res) => {
   try {
     const { title, description, category, type, price, condition, location, images } = req.body;
     const parsedImages = images ? JSON.parse(images) : [];
@@ -411,6 +417,65 @@ export const createListing = async (req, res) => {
 
       // Execute image insertion query
       await pool.query(imageQuery, imageValues);
+    }
+
+    res.status(201).json(listingResult.rows[0]);
+  } catch (err) {
+    console.error('Error creating listing:', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+};
+
+//Endpoint for create a listing
+export const createServiceListing = async (req, res) => {
+  try {
+    const { title, description, category, type, price, condition, location, images, services } = req.body;
+
+    let userId;
+    const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+    try {
+      const decodedToken = jwtDecode(token); // Decode the token
+      userId = decodedToken.sub;
+    } catch (err) {
+      console.error('Error decoding token:', err);
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+
+    // Database call to create listing in listings table
+    const listingQuery = `
+      INSERT INTO public.listings (title, description, category_id, item_type, price, condition, date_posted, user_id, location)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING *;
+    `;
+    const listingValues = [title, description, category, type, price, condition, new Date().toISOString(), userId, location];
+
+    // Execute listings table query
+    const listingResult = await pool.query(listingQuery, listingValues);
+
+    // Insert images into the listing_images table
+    for (const imageKey of images) {
+      const imageQuery = `
+        INSERT INTO public.listing_images (listing_id, file_key)
+        VALUES ($1, $2)
+      `;
+      const imageValues = [listingResult.rows[0].listing_id, imageKey];
+
+      await pool.query(imageQuery, imageValues);
+    }
+
+    for (const service of services) {
+      const serviceQuery = `
+        INSERT INTO public.listing_services (listing_id, service_name, estimated_time, service_price)
+        VALUES ($1, $2, $3, $4);
+      `;
+      const serviceValues = [
+        listingResult.rows[0].listing_id, 
+        service.name, 
+        service.estimatedTime || 0, 
+        service.price
+      ];
+
+      await pool.query(serviceQuery, serviceValues);
     }
 
     res.status(201).json(listingResult.rows[0]);
@@ -506,50 +571,13 @@ export const deleteListing = async (req, res) => {
   }
 };
 
-
-// //Endpoint for create a listing
-// export const createServiceListing = async (req, res) => {
-//   try {
-//       const { title, description, category, type, rating, price, condition} = req.body;
-
-//       let userId;
-//       const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
-//       try {
-//           const decodedToken = jwtDecode(token); // Decode the token
-//           userId = decodedToken.sub;
-//       } catch (err) {
-//           console.error('Error decoding token:', err);
-//           return res.status(401).json({ message: 'Invalid token' });
-//       }
-
-//       //database call to create listing in listing table
-//       const listingQuery = `
-//           INSERT INTO public.listings (title, description, category_id, item_type, star_rating, price, condition, date_posted, user_id)
-//           VALUES ($1, $2, 1, $3, $4, $5, $1, $6, $7, $8)
-//           RETURNING *;
-//       `;
-//       const listingValues = [title, description, type, rating || 0, price, condition, new Date().toISOString(), userId];
-
-//       // Execute listings table query
-//       const listingResult = await pool.query(listingQuery, listingValues);
-
-//       const imageQuery = `INSERT INTO public.listings`;
-
-//       const imageValues = [];
-
-//       res.status(201).json(listingQuery.rows[0]);
-//   } catch (err) {
-//       console.error('Error creating listing:', err);
-//       res.status(500).json({ error: 'Database error' });
-//   }
-// };
-
 export const uploadImages = async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ message: "No files uploaded" });
     }
 
+    console.log('did it hit the try')
     const uploadedFiles = [];
 
     for (const file of req.files) {
@@ -621,7 +649,6 @@ export const getSimilarListings = async ( req, res ) => {
     // Loop through each listing and generate signed URLs
     const categoryListings = await Promise.all(
       result.rows.map(async (listing) => {
-        console.log("Listing user_id:", listing.user_id); // Debug: Check each seller's user_id
         // Generate pre-signed URLs for file_keys
         const signedUrls = await Promise.all(
           (listing.file_keys || []).map(async (fileKey) => {
