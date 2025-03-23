@@ -111,6 +111,44 @@ export const getAllFeedPosts = async (req, res) => {
   }
 };
 
+export const getPostLikes = async (req, res) => {
+  try {
+    const { postId } = req.params; // Extract postId from request parameters
+    const userId = extractUserIdFromToken(req); // Extract user ID from token
+
+    if (!postId) {
+      return res.status(400).json({ error: "Post ID is required" });
+    }
+
+    const query = `
+      SELECT 
+        f.likes_count,
+        EXISTS (
+          SELECT 1
+          FROM post_likes pl
+          WHERE pl.post_id = $1 AND pl.user_id = $2
+        ) AS isLiked
+      FROM feed_posts f
+      WHERE f.post_id = $1;
+    `;
+
+    // Execute query with postId and userId
+    const result = await pool.query(query, [postId, userId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    const { likes_count, isliked } = result.rows[0];
+
+    res.status(200).json({ likesCount: likes_count, isLiked: isliked });
+  } catch (err) {
+    console.error("Error fetching post likes:", err.message);
+    res.status(500).json({ error: "Database error" });
+  }
+};
+
+
 //Endpoint to get the total number of active posts in the feed
 export const getFeedPostCount = async (req, res) => {
   const query = `SELECT COUNT(*) AS total_feed_posts FROM feed_posts;`;
@@ -181,14 +219,15 @@ export const getCommunityFeedPosts = async (req, res) => {
 
 
     const query = `
-      SELECT
+       SELECT
         f.post_id,
         f.title,
         f.content,
-        f.image_url as profile,
+        u.profile_image as profile,
         fi.file_key as image,
         f.date_created,
-        u.user_id AS author,
+        u.name AS author,
+        u.user_id AS author_id,
         f.likes_count,
         ARRAY_AGG(t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL) AS tags, -- Aggregate tags into an array
         COUNT(cp.post_id) AS sharedBy  -- Count the number of shared by for the post in the community
@@ -227,14 +266,24 @@ export const getCommunityFeedPosts = async (req, res) => {
               // Generate the signed URL
               feed.image = await getSignedUrl(s3, command, { expiresIn: 86400 });
           }
+
+          if (feed.profile) {
+            const command = new GetObjectCommand({
+                Bucket: profileBucketName,
+                Key: feed.profile,
+            });
+
+            // Generate the signed URL
+            feed.profile = await getSignedUrl(s3, command, { expiresIn: 86400 });
+        }
   
           // Return the modified row
           return feed;
        })
     );
 
-    if (feedWithUrls.length === 0) {
-      console.log('No posts found for this community.');
+    if (feedWithUrls.rowCount === 0) {
+      console.log('No feed posts found.');
     }
 
     // Respond with the results
@@ -372,7 +421,7 @@ export const createFeedPost = async (req, res) => {
       RETURNING post_id;
     `;
 
-    let postListingId = req.body.listingId && req.body.listingId !== "" ? listingId : null;
+    let postListingId = req.body.listingId && req.body.listingId !== "" ? req.bodylistingId : null;
 
     //will need to replace the placeholder with profile image, will get to that later 
     const postResult = await pool.query(postQuery, [title, content, 'https://via.placeholder.com/300x200', userId, postListingId]);
@@ -754,5 +803,120 @@ export const getPostCommentCount = async (req, res) => {
   } catch (error) {
     console.error("Error fetching comment count:", error);
     res.status(500).json({ error: "Failed to fetch comment count" });
+  }
+};
+export const getFavorites = async (req, res) => {
+  const userId = extractUserIdFromToken(req); // Get userId from the token
+
+  try {
+    // Query to get the post details for the favorited posts of the user
+    const query = `
+      SELECT
+        f.post_id,
+        f.title,
+        f.content,
+        u.profile_image as profile,
+        fi.file_key as image,
+        f.date_created,
+        u.NAME AS author,
+        u.user_id AS author_id,
+        f.likes_count,
+        f.listing_id,
+        COALESCE(ARRAY_AGG(t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL), ARRAY[]::TEXT[]) AS tags,
+        EXISTS (
+            SELECT 1
+            FROM post_likes pl
+            WHERE pl.post_id = f.post_id AND pl.user_id = $1
+        ) AS isLiked -- Check if the current user liked the post
+      FROM
+          feed_posts f
+      JOIN
+          users u ON f.user_id = u.user_id
+      JOIN
+          post_images fi ON f.post_id = fi.post_id
+      LEFT JOIN
+          post_tags pt ON f.post_id = pt.post_id -- Join with post_tags
+      LEFT JOIN
+          tags t ON pt.tag_id = t.tag_id -- Join with tags
+      WHERE
+          f.post_id IN (SELECT post_id FROM favoritedPosts WHERE user_id = $1) -- Filter to only the user's favorited posts
+      GROUP BY
+          f.post_id, u.user_id, fi.file_key -- Group by post and user to aggregate tags
+      ORDER BY
+          f.date_created DESC;
+    `;
+
+    // Execute the query to get the favorite posts
+    const result = await pool.query(query, [userId]);
+
+    const feedWithUrls = await Promise.all(
+      result.rows.map(async (feed) => {
+        // Generate a pre-signed URL for the image file_key (if it exists)
+        if (feed.image) {
+          const command = new GetObjectCommand({
+            Bucket: bucketName,
+            Key: feed.image,
+          });
+
+          // Generate the signed URL
+          feed.image = await getSignedUrl(s3, command, { expiresIn: 86400 });
+        }
+
+        if (feed.profile) {
+          const command = new GetObjectCommand({
+            Bucket: profileBucketName,
+            Key: feed.profile,
+          });
+
+          // Generate the signed URL
+          feed.profile = await getSignedUrl(s3, command, { expiresIn: 86400 });
+        }
+
+        // Return the modified row with signed URLs
+        return feed;
+      })
+    );
+
+    if (feedWithUrls.length === 0) {
+      console.log('No favorite feed posts found.');
+    }
+
+    // Respond with the full feed posts for the favorited posts
+    res.status(200).json(feedWithUrls);
+  } catch (err) {
+    console.error('Error fetching favorite feed posts:', err.message);
+    res.status(500).json({ error: err.message || 'Database error' });
+  }
+};
+
+
+
+export const handleFavoriteAction = async (req, res) => {
+  const { postId } = req.params;
+  const { action } = req.body;
+  const userId = extractUserIdFromToken(req); // Get userId from the token
+
+  try {
+    if (action === 'add') {
+      await pool.query(
+        `INSERT INTO favoritedPosts (post_id, user_id) 
+         VALUES ($1, $2) 
+         ON CONFLICT DO NOTHING`,
+        [postId, userId]
+      );
+      res.json({ success: true, message: 'Added to favorites' });
+    } else if (action === 'remove') {
+      await pool.query(
+        `DELETE FROM favoritedPosts 
+         WHERE post_id = $1 AND user_id = $2`,
+        [postId, userId]
+      );
+      res.json({ success: true, message: 'Removed from favorites' });
+    } else {
+      res.status(400).json({ error: 'Invalid action' });
+    }
+  } catch (error) {
+    console.error('Error handling favorite:', error);
+    res.status(500).json({ error: 'Failed to update favorite' });
   }
 };

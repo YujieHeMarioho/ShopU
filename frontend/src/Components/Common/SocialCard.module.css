@@ -101,6 +101,7 @@
   align-items: center;
   justify-content: space-between;
   margin-top: 16px;
+  flex-wrap: wrap;
 }
 
 .button {
@@ -291,6 +292,11 @@
   margin-top: 5px;
   font-size: 14px;
   color: #333;
+  text-overflow: ellipsis; /* Adds '...' if text is too long */
+  overflow: hidden; /* Hides the overflow text */
+  white-space: nowrap; /* Prevents the text from wrapping to the next line */
+  max-width: 100%; /* Ensures the name does not exceed the container */
+  display: block; /* Ensures the span behaves like a block element */
 }
 
 
@@ -323,4 +329,67 @@
 .viewItemButton {
   width: 100%;
   max-width: 200px;
+}
+
+@media (max-width: 768px) {
+  .footer {
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-items: center;
+  }
+
+  .button {
+    padding: 10px;
+
+  }
+
+  .viewItemButton {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .media {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .tagsContainer {
+    gap: 6px;
+  }
+
+  .tag {
+    font-size: 12px;
+    padding: 4px 10px;
+  }
+
+  .modalContent {
+    padding: 15px;
+  }
+}
+
+/* Edit Button - Icon Only on Mobile */
+.editButton {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 22px;
+}
+
+.editButton .editText {
+  display: inline-block;
+}
+
+.editButton .fa-edit {
+  font-size: 24px; /* Adjust the icon size */
+}
+
+/* Hide text on mobile */
+@media (max-width: 768px) {
+  .editButton .editText {
+    display: none; /* Hide the text on small screens */
+  }
+  
+  .editButton i {
+    font-size: 24px; /* Ensure icon stays appropriately sized */
+  }
 }

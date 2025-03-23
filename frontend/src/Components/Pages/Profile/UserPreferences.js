@@ -4,47 +4,88 @@ import styles from './UserPreferences.module.css';
 
 const UserPreferences = () => {
   const { getAccessTokenSilently } = useAuth0();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
 
   // Load theme from localStorage or default to 'light'
-  const [isDarkMode, setIsDarkMode] = useState(
-    localStorage.getItem("theme") === "dark"
-  );
+  const [themeMode, setThemeMode] = useState(localStorage.getItem("theme") || "light");
+  const [settingsThemeMode, setSettingsThemeMode] = useState("light");
 
   const [preferences, setPreferences] = useState({
-    theme: isDarkMode ? "dark" : "light",
+    theme: themeMode,
     language: 'English',
     timezone: 'UTC',
     dateFormat: 'MM/DD/YYYY',
-    emailNotifications: true,
-    pushNotifications: true,
+    email_notifications: true,
+    push_notifications: true,
     marketingEmails: false,
     activityAlerts: true,
-    profileVisibility: 'Public',
+    privacy_level: 'Public',
     messagePrivacy: 'Everyone',
     twoFactorAuth: false,
     postCustomization: 'Trending',
-    preferredCategories: [],
+    user_interests: [],
+    follow_privacy: 'public'
   });
 
-  const [message, setMessage] = useState('');
+  // Function to detect system theme
+  const detectSystemTheme = () => {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  };
 
-  // Apply the theme on initial load
+  // Apply the theme only when the "Save Preferences" button is clicked
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", isDarkMode ? "dark" : "light");
-  }, [isDarkMode]);
+    if (themeMode === "system") {
+      const systemTheme = detectSystemTheme();
+      document.documentElement.setAttribute("data-theme", systemTheme);
+    } else {
+      document.documentElement.setAttribute("data-theme", themeMode);
+    }
+  }, [themeMode]); // Apply theme when themeMode is updated
 
-  const handleThemeToggle = () => {
-    const newTheme = isDarkMode ? "light" : "dark";
-    setIsDarkMode(!isDarkMode);
-    localStorage.setItem("theme", newTheme);
-    document.documentElement.setAttribute("data-theme", newTheme);
+  // Fetch user preferences from the backend on mount
+  useEffect(() => {
+    const fetchPreferences = async () => {
+      try {
+        const token = await getAccessTokenSilently();
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/userPreferences/settings`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
 
+        if (!response.ok) {
+          throw new Error('Failed to load preferences');
+        }
+
+        const data = await response.json();
+        setPreferences(data);
+        setSettingsThemeMode(data.theme || "light");
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching user preferences:", error);
+        setError("Failed to load preferences.");
+        setLoading(false);
+      }
+    };
+
+    fetchPreferences();
+  }, [getAccessTokenSilently]);
+
+  // Handle theme selection
+  const handleThemeToggle = (e) => {
+    const newTheme = e.target.value;
+    setSettingsThemeMode(newTheme);
     setPreferences((prev) => ({
       ...prev,
       theme: newTheme
     }));
   };
 
+  // Handle input changes
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setPreferences((prev) => ({
@@ -53,83 +94,91 @@ const UserPreferences = () => {
     }));
   };
 
+  // Handle saving preferences
   const handleSavePreferences = async () => {
     try {
       const token = await getAccessTokenSilently();
-
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/preferences`, {
-        method: 'PATCH',
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/userPreferences/settings`, {
+        method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify(preferences),
+        body: JSON.stringify(preferences) // Send preferences as JSON
       });
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || 'Failed to save preferences');
+      if (!response.ok) {
+        throw new Error('Failed to save preferences');
+      }
 
-      setMessage('Preferences updated successfully!');
+      // Update the theme after saving preferences
+      setThemeMode(preferences.theme); // Apply the theme from preferences
+      setSettingsThemeMode(preferences.theme);
+      localStorage.setItem('theme', preferences.theme); // Store in localStorage
+      setMessage('Preferences saved successfully!');
     } catch (error) {
-      setMessage('Error saving preferences: ' + error.message);
+      console.error('Error saving preferences:', error);
+      setMessage('Failed to save preferences.');
     }
   };
+
+  if (loading) return <p>Loading user preferences...</p>;
+  if (error) return <p className={styles.error}>{error}</p>;
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>User Preferences</div>
 
-      {/* Theme Toggle */}
+      {/* Theme Selection */}
       <div className={styles.section}>
         <label className={styles.label}>Theme</label>
         <div className={styles.themeToggle}>
-          <span>Light</span>
-          <label className={styles.toggleContainer}>
-            <input
-              type="checkbox"
-              checked={isDarkMode}
-              onChange={handleThemeToggle}
-              className={styles.toggleInput}
-            />
-            <span className={styles.toggleSlider}></span>
-          </label>
-          <span>Dark</span>
+          {["light", "dark", "system"].map((theme) => (
+            <div key={theme} className={styles.radioOption}>
+              <input
+                type="radio"
+                id={theme}
+                name="theme"
+                value={theme}
+                checked={settingsThemeMode === theme}
+                onChange={handleThemeToggle}
+                className={styles.radioInput}
+              />
+              <label htmlFor={theme} className={styles.radioLabel}>
+                {theme.charAt(0).toUpperCase() + theme.slice(1)}
+              </label>
+            </div>
+          ))}
         </div>
       </div>
 
+      {/* Time Zone */}
       <div className={styles.section}>
         <label className={styles.label}>Time Zone</label>
         <input type="text" name="timezone" value={preferences.timezone} onChange={handleChange} className={styles.input} />
       </div>
 
-      <div className={styles.section}>
-        <label className={styles.label}>Date Format</label>
-        <select name="dateFormat" value={preferences.dateFormat} onChange={handleChange} className={styles.select}>
-          <option value="MM/DD/YYYY">MM/DD/YYYY</option>
-          <option value="DD/MM/YYYY">DD/MM/YYYY</option>
-        </select>
-      </div>
-
+      {/* Notifications */}
       <div className={styles.section}>
         <h5>Notifications</h5>
-        <label className={styles.checkbox}>
-          <input type="checkbox" name="emailNotifications" checked={preferences.emailNotifications} onChange={handleChange} /> Email Notifications
-        </label>
-        <label className={styles.checkbox}>
-          <input type="checkbox" name="pushNotifications" checked={preferences.pushNotifications} onChange={handleChange} /> Push Notifications
-        </label>
-        <label className={styles.checkbox}>
-          <input type="checkbox" name="marketingEmails" checked={preferences.marketingEmails} onChange={handleChange} /> Marketing Emails
-        </label>
-        <label className={styles.checkbox}>
-          <input type="checkbox" name="activityAlerts" checked={preferences.activityAlerts} onChange={handleChange} /> Activity Alerts
-        </label>
+        {["email_notifications", "push_notifications", "marketingEmails", "activityAlerts"].map((notif) => (
+          <label key={notif} className={styles.checkbox}>
+            <input
+              type="checkbox"
+              name={notif}
+              checked={preferences[notif]}
+              onChange={handleChange}
+            />
+            {notif.replace(/_/g, " ")}
+          </label>
+        ))}
       </div>
 
+      {/* Privacy */}
       <div className={styles.section}>
         <h5>Privacy</h5>
         <label className={styles.label}>Profile Visibility</label>
-        <select name="profileVisibility" value={preferences.profileVisibility} onChange={handleChange} className={styles.select}>
+        <select name="privacy_level" value={preferences.privacy_level} onChange={handleChange} className={styles.select}>
           <option value="Public">Public</option>
           <option value="Friends Only">Friends Only</option>
           <option value="Private">Private</option>
@@ -142,40 +191,32 @@ const UserPreferences = () => {
           <option value="No One">No One</option>
         </select>
 
-        <label className={styles.checkbox}>
-          <input type="checkbox" name="twoFactorAuth" checked={preferences.twoFactorAuth} onChange={handleChange} /> Enable Two-Factor Authentication
-        </label>
-      </div>
-
-      <div className={styles.section}>
-        <h5>Content Preferences</h5>
-        <label className={styles.label}>Post/Feed Customization</label>
-        <select name="postCustomization" value={preferences.postCustomization} onChange={handleChange} className={styles.select}>
-          <option value="Trending">Trending</option>
-          <option value="Recent">Recent</option>
-          <option value="Personalized">Personalized</option>
+        <label className={styles.label}>Who Can Follow You?</label>
+        <select name="follow_privacy" value={preferences.follow_privacy} onChange={handleChange} className={styles.select}>
+          <option value="public">Anyone</option>
+          <option value="private">Request Only</option>
         </select>
       </div>
 
+      {/* Preferred Categories */}
       <div className={styles.section}>
         <label className={styles.label}>Preferred Categories</label>
         <input
           type="text"
           placeholder="Enter categories separated by commas"
-          name="preferredCategories"
-          value={preferences.preferredCategories.join(', ')}
-          onChange={(e) => setPreferences({ ...preferences, preferredCategories: e.target.value.split(', ') })}
+          name="user_interests"
+          value={preferences.user_interests.join(', ')}
+          onChange={(e) => setPreferences({ ...preferences, user_interests: e.target.value.split(', ') })}
           className={styles.input}
         />
       </div>
 
-      <div className={styles.buttonGroup}>
-        <button className={`${styles.primaryButton} ${styles.warningButton}`}>Download My Data</button>
-        <button className={`${styles.primaryButton} ${styles.dangerButton}`}>Deactivate/Delete Account</button>
-      </div>
+      {/* Save Button */}
+      <button className={styles.primaryButton} onClick={handleSavePreferences}>
+        Save Preferences
+      </button>
 
-      <button className={styles.primaryButton} onClick={handleSavePreferences}>Save Preferences</button>
-
+      {/* Message Display */}
       {message && <p className={`${styles.message} ${message.includes('Error') ? styles.error : styles.success}`}>{message}</p>}
     </div>
   );

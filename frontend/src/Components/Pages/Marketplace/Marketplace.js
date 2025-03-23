@@ -151,7 +151,8 @@ export const Marketplace = () => {
           image: item.file_keys,  // or item.file_keys[0] if you only want one image
           author: item.author,
           profile: item.profile,
-          location: item.location
+          location: item.location,
+          services: item.services
         }));
 
         setListings(formattedData);
@@ -176,6 +177,7 @@ export const Marketplace = () => {
     setActiveFilters(prevState => ({
       ...prevState,
       ...filter,
+      listingId: "none",
     }));
   };
 
@@ -215,6 +217,7 @@ export const Marketplace = () => {
 
 
   return (
+    <div>
     <div className={styles.marketplaceContainer}>
       {/* Search Bar */}
       <div className="my-4">
@@ -242,8 +245,11 @@ export const Marketplace = () => {
         )}
 
         {/* Create New Listing Button */}
-        <div className="my-4">
-          <Button className="create-listing-button" onClick={handleCreateListing}>
+        <div className={styles.createListingButtonContainer}>
+          <Button
+            className={styles.createListingButton}
+            onClick={handleCreateListing}
+          >
             Create New Listing
           </Button>
         </div>
@@ -273,7 +279,6 @@ export const Marketplace = () => {
           <FilterSidebar
             onFilterChange={handleFilterChange}
             initialFilters={activeFilters}
-            className={styles.filterSidebar}
           />
         </div>
 
@@ -283,7 +288,10 @@ export const Marketplace = () => {
         </div>
       </div>
 
-      <ListingModal show={showListingModal} onHide={handleCloseListingModal} listing={selectedListing} />
+    </div>
+    {showListingModal && (
+        <ListingModal show={showListingModal} onHide={handleCloseListingModal} listing={selectedListing} />
+      )}
     </div>
   );
 

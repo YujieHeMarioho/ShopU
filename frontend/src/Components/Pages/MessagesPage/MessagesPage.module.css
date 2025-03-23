@@ -1,13 +1,13 @@
-/* MessagesPage.css */
+/* MessagesPage.module.css */
 
 /* General Layout */
-.messages-page {
+.messagesPage {
     display: flex;
     height: calc(100vh - 120px); /* Subtract header (60px) and footer (60px) */
     padding-top: 60px; /* Header height */
     padding-bottom: 60px; /* Footer height */
     overflow: hidden;
-    background-color: #f9f9f9;
+    background-color: var(--background-color);
 }
 
 /* Left Half: Conversation History */
@@ -51,7 +51,7 @@
 }
 
 .history li.active {
-    background-color: #2563eb; /* Active conversation background */
+    background-color: var(--primary-color); /* Active conversation background */
     color: #ffffff; /* White text for active conversations */
 }
 
@@ -70,7 +70,7 @@
 /* Spinner Styling */
 .spinner {
     border: 4px solid #f3f3f3;
-    border-top: 4px solid #2563eb;
+    border-top: 4px solid var(--primary-color);
     border-radius: 50%;
     width: 24px;
     height: 24px;
@@ -84,13 +84,13 @@
 }
 
 /* Style for the conversation-info container to align avatar and text */
-.conversation-info {
+.conversationInfo {
     display: flex;
     align-items: center;
 }
 
 /* Style for conversation avatars */
-.conversation-avatar {
+.conversationAvatar {
     width: 40px;               /* Set the desired width */
     height: 40px;              /* Set the desired height */
     border-radius: 50%;        /* Make the avatar circular */
@@ -103,25 +103,25 @@
 }
 
 /* Hover effect for avatars */
-.conversation-avatar:hover {
+.conversationAvatar:hover {
     transform: scale(1.05);              /* Slightly enlarge the avatar */
 }
 
 /* Active state styling for avatars */
-.history li.active .conversation-avatar {
+.history li.active .conversationAvatar {
     border: 2px solid #ffffff;        /* White border for contrast */
-    box-shadow: 0 0 0 2px #2563eb;     /* Blue glow effect */
+    box-shadow: 0 0 0 2px var(--primary-color);  
 }
 
 /* Improve text alignment within conversation-info */
-.conversation-info div {
+.conversationInfo div {
     display: flex;
     flex-direction: column;
     justify-content: center;
 }
 
 /* Right Half: Chat Content */
-.main-content {
+.mainContent {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -131,7 +131,7 @@
     border: 2px solid var(--background-color);
 }
 
-.main-content h3 {
+.mainContent h3 {
     margin-bottom: 1rem;
     font-size: 1.25rem;
     color: #111827;
@@ -160,7 +160,7 @@
 }
 
 /* Sent Messages - Message Content */
-.messages .sent .message-content {
+.messages .sent .messageContent {
     background-color: #28a745; /* Green background */
     color: #000000; /* Black text */
     padding: 0.5rem 1rem; /* Adequate spacing within the bubble */
@@ -173,7 +173,7 @@
 }
 
 /* Sent Messages - Timestamp */
-.messages .sent .message-time {
+.messages .sent .messageTime {
     font-size: 0.75rem;
     color: black;
     text-align: right; /* Align timestamp to the right */
@@ -189,7 +189,7 @@
 }
 
 /* Received Messages - Message Content */
-.messages .received .message-content {
+.messages .received .messageContent {
     background-color: #e5e7eb; /* Light grey background */
     color: #000000; /* Black text */
     padding: 0.5rem 1rem; /* Adequate spacing within the bubble */
@@ -202,20 +202,20 @@
 }
 
 /* Received Messages - Timestamp */
-.messages .received .message-time {
+.messages .received .messageTime {
     font-size: 0.75rem;
     color: black;
     text-align: left; /* Align timestamp to the left */
 }
 
 /* Message Input Section */
-.message-input {
+.messageInput {
     display: flex;
     align-items: center;
     gap: 1rem;
 }
 
-.message-input input {
+.messageInput input {
     flex: 1;
     padding: 0.75rem;
     border: 1px solid #ddd;
@@ -225,7 +225,7 @@
     background-color: #ffffff; /* White background for input */
 }
 
-.message-input button {
+.messageInput button {
     padding: 0.75rem 1.5rem;
     background-color: #28a745; /* Green background for send button */
     color: #000000; /* Black text */
@@ -236,13 +236,13 @@
     transition: background-color 0.2s ease;
 }
 
-.message-input button:hover {
+.messageInput button:hover {
     background-color: #218838; /* Darker green on hover */
 }
 
 /* Responsive adjustments for smaller screens */
 @media (max-width: 768px) {
-    .messages-page {
+    .messagesPage {
         flex-direction: column;
     }
 
@@ -253,24 +253,59 @@
         height: 200px;
     }
 
-    .main-content {
+    .mainContent {
         height: calc(100vh - 200px);
     }
 
     /* Adjust avatar sizes on smaller screens */
-    .conversation-avatar {
+    .conversationAvatar {
         width: 30px;
         height: 30px;
     }
 
     /* Adjust message bubble max-width for better readability */
-    .messages .sent .message-content,
-    .messages .received .message-content {
+    .messages .sent .messageContent,
+    .messages .received .messageContent {
         max-width: 90ch; /* Increased for smaller screens */
+    }
+
+    /* Message input adjustment */
+    .messageInput input {
+        font-size: 0.875rem; /* Smaller font size for mobile */
+        padding: 0.5rem;
+    }
+
+    .messageInput button {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    .messages {
+        padding: 0.5rem;
     }
 }
 
-.unread-badge {
+@media (max-width: 480px) {
+    .messagesPage {
+        padding-top: 40px; /* Reduced padding for small screens */
+    }
+
+    .history {
+        height: 150px; /* Adjusted height for smaller screens */
+    }
+
+    .mainContent {
+        height: calc(100vh - 150px); /* Adjust based on history height */
+    }
+
+    /* Adjust message bubble max-width even further on small screens */
+    .messages .sent .messageContent,
+    .messages .received .messageContent {
+        max-width: 80ch; /* Further increased for small screens */
+    }
+}
+
+.unreadBadge {
     display: inline-block;
     background-color: red;
     color: white;
@@ -278,7 +313,69 @@
     padding: 0.3em 0.6em;
     font-size: 0.8em;
     margin-left: 8px;
-  }
-  
-  
-  
+}
+
+/* Sent Messages - Message Bubble */
+.messages .sent .messageBubble {
+    background-color: var(--primary-color); /* Blue background for sent messages */
+    color: white; /* White text */
+    padding: 0.5rem 1rem; /* Reduced padding for a more compact bubble */
+    border-radius: 15px; /* Slightly smaller rounded corners */
+    max-width: 75%; /* Limit the width to 75% */
+    word-wrap: break-word; /* Break long words */
+    white-space: pre-wrap; /* Allow wrapping */
+    display: inline-block; /* Shrink to fit content */
+    margin-bottom: 0.25rem; /* Smaller space between message and timestamp */
+    position: relative;
+    margin-left: auto; /* Align the bubble to the right */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Received Messages - Message Bubble */
+.messages .received .messageBubble {
+    background-color: #e5e7eb; /* Light grey background for received messages */
+    color: black; /* Black text */
+    padding: 0.5rem 1rem; /* Reduced padding for a more compact bubble */
+    border-radius: 15px; /* Slightly smaller rounded corners */
+    max-width: 75%; /* Limit the width to 75% */
+    word-wrap: break-word; /* Break long words */
+    white-space: pre-wrap; /* Allow wrapping */
+    display: inline-block; /* Shrink to fit content */
+    margin-bottom: 0.25rem; /* Smaller space between message and timestamp */
+    position: relative;
+    margin-right: auto; /* Align the bubble to the left */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Sent Messages - Timestamp */
+.messages .sent .messageTime {
+    font-size: 0.75rem;
+    color: #ffffff;
+    text-align: right;
+    margin-top: 0.25rem;
+}
+
+/* Received Messages - Timestamp */
+.messages .received .messageTime {
+    font-size: 0.75rem;
+    color: #6b7280;
+    text-align: left;
+    margin-top: 0.25rem;
+}
+
+/* Hover Effect for message bubbles */
+.messages .sent .messageBubble:hover,
+.messages .received .messageBubble:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Slightly stronger shadow on hover */
+    transform: scale(1.02); /* Slight enlargement */
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .messages .sent .messageBubble,
+    .messages .received .messageBubble {
+        max-width: 90%; /* Use more space on smaller screens */
+    }
+}

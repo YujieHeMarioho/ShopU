@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Form, Button } from "react-bootstrap";
 import { useAuth0 } from "@auth0/auth0-react";
+import styles from './PostDetails.module.css';  // Import CSS Module
 
 function PostDetails() {
   const [title, setTitle] = useState("");
@@ -12,6 +13,7 @@ function PostDetails() {
   const location = useLocation();
   const { user, isAuthenticated, getAccessTokenSilently, isLoading: authLoading } = useAuth0();
   const [listings, setListings] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   // Retrieve the edited image from the previous step
   const { image } = location.state || {};
@@ -42,20 +44,14 @@ function PostDetails() {
     return new File([u8arr], fileName, { type: mime });
   };
 
-
   const uploadImage = async () => {
-    // Multer only works on form data
     const imageForm = new FormData();
-
-    //Encoded URL does not include the mimetype so adding it back so browsers render correctly
     let mimeType = image.match(/[^:/]\w+(?=;|,)/)[0];
     let fileName = title + '.' + mimeType;
-
     const convertedImage = convertToImage(image, fileName.replace(/\s+/g, ''));
     imageForm.append('postImage', convertedImage);
 
     const token = await getAccessTokenSilently();
-
     const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/upload`, {
       method: 'POST',
       headers: {
@@ -64,12 +60,10 @@ function PostDetails() {
       body: imageForm,
     });
     const data = await response.json();
-
     return data.fileKey;
   };
 
   const getListings = async () => {
-    //imageForm.append('postImage', convertedImage);
     const token = await getAccessTokenSilently();
     const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings/user`, {
       method: 'GET',
@@ -78,7 +72,6 @@ function PostDetails() {
       }
     });
     const data = await response.json();
-    // Extract only the listing_id and title from each listing
     return data.map(listing => ({
       listing_id: listing.listing_id,
       title: listing.title
@@ -86,34 +79,31 @@ function PostDetails() {
   };
 
   const handleSubmit = async () => {
-    // Prepare the data to send
     const postData = {
       title,
       content,
       listingId,
       tags,
-      image, // Include the image URL or base64 string
+      image,
     };
 
     try {
+      setLoading(true);
       postData.image = await uploadImage();
     } catch {
-
+      // Handle upload failure
+      setLoading(false);
     }
+
     try {
       const token = await getAccessTokenSilently();
-
-      // This will return a filekey not a URL, want to fetch URL's based off the file key so s3 bucket remains private
-
-
-      // Send the post data to the backend using fetch
       const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(postData), // Convert the post data to JSON
+        body: JSON.stringify(postData),
       });
 
       if (!response.ok) {
@@ -121,56 +111,55 @@ function PostDetails() {
       }
 
       alert("Post created successfully!");
-      navigate("/Feed"); // Navigate to the feed page after success
+      navigate("/Feed");
     } catch (err) {
       console.error("Error creating post:", err);
       alert("Error creating post. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div>
+    <div className={styles.bg}>
+    <div className={styles.container}>
       <h1>Create Post Details</h1>
       {image && (
-        <div style={{ textAlign: "center", marginBottom: "20px" }}>
+        <div className={styles.imagePreview}>
           <h3>Edited Image Preview</h3>
           <img
             src={image}
             alt="Edited Preview"
-            style={{
-              maxWidth: "100%",
-              maxHeight: "300px",
-              borderRadius: "8px",
-              border: "1px solid #ccc",
-              marginBottom: "10px",
-            }}
           />
         </div>
       )}
       <Form>
-        <Form.Group className="mb-3">
+        <Form.Group className={styles.formGroup}>
           <Form.Label>Title</Form.Label>
           <Form.Control
             type="text"
             placeholder="Enter title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            className={styles.formControl}
           />
         </Form.Group>
-        <Form.Group className="mb-3">
+        <Form.Group className={styles.formGroup}>
           <Form.Label>Description</Form.Label>
           <Form.Control
             as="textarea"
             rows={3}
             value={content}
             onChange={(e) => setContent(e.target.value)}
+            className={`${styles.formControl} ${styles.textarea}`}
           />
         </Form.Group>
-        <Form.Group className="mb-3">
+        <Form.Group className={styles.formGroup}>
           <Form.Label>Link to Existing Listing</Form.Label>
           <Form.Select
             value={listingId}
             onChange={(e) => setListingId(e.target.value)}
+            className={styles.selectField}
           >
             <option value="">Select Listing Item</option>
             {listings.map((listing) => (
@@ -180,22 +169,26 @@ function PostDetails() {
             ))}
           </Form.Select>
         </Form.Group>
-        <Form.Group className="mb-3">
+        <Form.Group className={styles.formGroup}>
           <Form.Label>Tags</Form.Label>
           <Form.Control
             type="text"
             placeholder="Add tags"
             value={tags}
             onChange={(e) => setTags(e.target.value)}
+            className={styles.formControl}
           />
         </Form.Group>
-        <Button className="me-2" onClick={() => navigate(-1)}>
-          Back
-        </Button>
-        <Button variant="primary" onClick={handleSubmit}>
-          Confirm
-        </Button>
+        <div className={styles.buttonGroup}>
+          <Button className="me-2" onClick={() => navigate(-1)} variant="primary">
+            Back
+          </Button>
+          <Button variant="primary" onClick={handleSubmit} disabled={loading}>
+            {loading ? "Creating..." : "Confirm"}
+          </Button>
+        </div>
       </Form>
+    </div>
     </div>
   );
 }

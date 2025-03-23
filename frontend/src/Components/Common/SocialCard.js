@@ -4,7 +4,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { FaThumbsUp, FaShare, FaHeart, FaRegHeart, FaComment } from 'react-icons/fa';
 import styles from './SocialCard.module.css';
 import axios from 'axios';
-import {Link} from "react-router-dom";
+import {Link, useNavigate} from "react-router-dom";
 
 export const SocialCard = ({
   post_id,
@@ -18,20 +18,21 @@ export const SocialCard = ({
   initialLikes = 0,
   initialShares = 0,
   isLikedAlready,
+  isFavoritedAlready,
   tags = [],
   listingId,
   reloadFeed,
   onShowComments,
   allFriends = [],
   friendsLoading = true,
+  selected = false
 }) => {
   const { user, getAccessTokenSilently } = useAuth0();
-
   const [likes, setLikes] = useState(initialLikes);
   const [shares, setShares] = useState(initialShares);
   const [isLiked, setIsLiked] = useState(isLikedAlready);
   const [isShared, setIsShared] = useState(false);
-  const [isFavorited, setIsFavorited] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(isFavoritedAlready);
   const [isCommentMode, setIsComment] = useState(false);
   const [alertMessage, setAlertMessage] = useState(null);
   const [showShareModal, setShowShareModal] = useState(false);
@@ -48,6 +49,136 @@ export const SocialCard = ({
   const [loading, setLoading] = useState(false);
   const [communities, setCommunities] = useState([]);
   const [numComments, setNumComments] = useState(0);
+
+  const [followStatus, setFollowStatus] = useState(null);
+  const [showFollowButton, setShowFollowButton] = useState(false);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkFollowStatus = async () => {
+      if (allFriends.length > 0) {
+        if (allFriends.some(friend => friend.friend_id === authorId)) {
+          setFollowStatus('Followed');
+          setShowFollowButton(false);
+        } else {
+          setFollowStatus('Follow');
+          setShowFollowButton(true);
+        }
+      }
+  
+      // Check if there is a follow request for this user (requester/receiver check)
+      try {
+        const token = await getAccessTokenSilently();
+        const response = await fetch(
+          `${process.env.REACT_APP_BACKEND_URL}/api/follow/status/${authorId}`, // API endpoint to check follow request status
+          {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${token}` },
+          }
+        );
+  
+        if (!response.ok) throw new Error('Failed to fetch follow request status');
+        const data = await response.json();
+  
+        // Check if the user has a pending request
+        if (data.status === 'requested') {
+          setFollowStatus('Requested');
+          setShowFollowButton(true);
+          
+        } else if (data.status === 'followed') {
+          setFollowStatus('Followed');
+          setShowFollowButton(false);
+        }
+      } catch (error) {
+        console.error('Error checking follow request status:', error);
+      }
+    };
+  
+    checkFollowStatus();
+  }, [allFriends]);// Now runs when allFriends updates
+  
+
+  const handleFollowClick = async (e) => {
+    e.stopPropagation();
+  
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await axios.post(
+        `${process.env.REACT_APP_BACKEND_URL}/api/follow`,
+        { friend_id: authorId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+  
+      // Ensure response contains status
+      if (response.data.status) {
+        if (response.data.status === 'requested') {
+          setFollowStatus('Requested');
+        } else if (response.data.status === 'followed') {
+          setFollowStatus('Followed');
+          setShowFollowButton(false);
+        }
+      } else {
+        console.warn('No status received from server');
+      }
+  
+      reloadFeed();
+    } catch (error) {
+      console.error('Error following user:', error);
+    }
+  };
+  
+  const handleUnfollowClick = async (e) => {
+    e.stopPropagation(); // Prevent event propagation
+  
+    try {
+      const token = await getAccessTokenSilently(); 
+      const response = await axios.delete(
+        `${process.env.REACT_APP_BACKEND_URL}/api/unfollow/${authorId}`, // Passing authorId as friend_id in the URL
+        { headers: { Authorization: `Bearer ${token}` } } 
+      );
+  
+      // Update UI states after successful unfollow
+      setFollowStatus('Follow'); // Reset the follow status
+      setShowFollowButton(true); // Show follow button again after unfollowing
+  
+      reloadFeed(); // Reload feed (or refresh data) after the unfollow action
+  
+      console.log('Unfollow successful:', response.data);
+  
+    } catch (error) {
+      // Handle errors during the API call
+      console.error('Error unfollowing user:', error);
+    }
+  };
+
+  const fetchPostLikes = async (postId) => {
+    if (!postId) return;
+  
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/api/feed/${postId}/likes`,
+        {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+  
+      if (!response.ok) {
+        throw new Error(`Failed to fetch likes: ${response.statusText}`);
+      }
+  
+      const data = await response.json();
+  
+      // Ensure likes is a number, not an object
+      setLikes(data.likesCount ?? 0); // Just store the number of likes
+      setIsLiked(data.isLiked ?? false); // Set the liked status
+  
+    } catch (error) {
+      console.error("Error fetching post likes:", error);
+    }
+  };
 
   const fetchNumComments = async (postId) => {
     try {
@@ -88,15 +219,44 @@ export const SocialCard = ({
       console.error("Error fetching communities:", error);
     }
   };
+
+  const fetchFavorites = async () => {
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/favorites`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
   
+      if (!response.ok) throw new Error('Failed to fetch favorites');
+  
+      const data = await response.json();
+  
+      // Assuming the data returned contains all the post details.
+      // Now check if the current post is favorited based on the returned data
+      const isCurrentlyFavorited = data.some(fav => fav.post_id === post_id);
+      
+      setIsFavorited(isCurrentlyFavorited);  // Update the favorite status based on post_id
+    } catch (error) {
+      console.error('Error fetching favorites:', error);
+    }
+  };
   
   
   useEffect(() => {
+    fetchFavorites();
     if (post_id) {
       fetchNumComments(post_id);
+      fetchPostLikes(post_id);
     }
     fetchCommunities();
   }, [post_id]);
+
+  useEffect(() => {
+    if (selected && post_id) {
+      fetchPostLikes(post_id);  // Re-fetch likes when selected
+    }
+  }, [selected, post_id]);
+
 
   const handleLikeClick = async (e) => {
     e.stopPropagation();
@@ -197,11 +357,12 @@ export const SocialCard = ({
     e.stopPropagation();
     try {
       const token = await getAccessTokenSilently();
-      const action = isFavorited ? 'remove' : 'add';
-      const success = await favoriteAPICall(listingId, action, token);
+      const newFavoriteStatus = !isFavorited;
+      const success = await favoriteAPICall(post_id, newFavoriteStatus, token);
+  
       if (success) {
-        setIsFavorited(!isFavorited);
-        setAlertMessage(isFavorited ? 'Removed from favorites' : 'Added to favorites');
+        setIsFavorited(newFavoriteStatus);
+        setAlertMessage(newFavoriteStatus ? 'Added to favorites' : 'Removed from favorites');
         setTimeout(() => setAlertMessage(null), 3000);
       }
     } catch (error) {
@@ -210,6 +371,7 @@ export const SocialCard = ({
       setTimeout(() => setAlertMessage(null), 3000);
     }
   };
+  
 
   const handleSave = async () => {
     setLoading(true);
@@ -231,7 +393,8 @@ export const SocialCard = ({
       });
       if (response.ok) {
         setIsEditing(false);
-        reloadFeed();
+        console.log("Post updated successfully, reloading feed...");
+        reloadFeed(); // Make sure this runs
       } else {
         console.error('Failed to update post:', await response.text());
       }
@@ -256,6 +419,7 @@ export const SocialCard = ({
       if (!response.ok) throw new Error('Failed to delete post');
       reloadFeed();
       setIsEditing(false);
+      navigate("/feed");
     } catch (error) {
       console.error('Error deleting post:', error);
     } finally {
@@ -284,6 +448,15 @@ export const SocialCard = ({
         <img src={profilePic} alt={'Profile'} className={styles.profilePic} />
       </Link>
       <span className={styles.author}>{author}</span>
+      {authorId !== user?.sub && showFollowButton && (
+          <Button
+            variant="outline-primary"
+            size="sm"
+            onClick={followStatus === 'Follow' ? handleFollowClick : handleUnfollowClick}
+          >
+            {followStatus}
+          </Button>
+        )}
     </div>
 
 
@@ -359,13 +532,16 @@ export const SocialCard = ({
           {shares}
         </Button>
         {user?.sub === authorId && (
-          <Button
+            <Button
             variant="outline-warning"
             size="sm"
             onClick={(e) => { e.stopPropagation(); setIsEditing(true); }}
+            className="editButton"
           >
-            ✏️ Edit
+            <i className="fa fa-edit">✏️</i>
+            <span className="editText">Edit</span>
           </Button>
+       
         )}
       </div>
 
@@ -542,18 +718,19 @@ const likeAPICall = async (post_id, isLiked, token, userId) => {
   }
 };
 
-const favoriteAPICall = async (listingId, action, token) => {
+const favoriteAPICall = async (post_id, isFavoriting, token) => {
   try {
-    const URL = `${process.env.REACT_APP_BACKEND_URL}/api/favorite/${listingId}`;
-    const method = action === 'add' ? 'POST' : 'DELETE';
-    const response = await fetch(URL, {
-      method,
+    const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/feed/favorites/${post_id}`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
+      body: JSON.stringify({ action: isFavoriting ? 'add' : 'remove' }), // Send action to backend
     });
+
     if (response.ok) return true;
+    
     const errorData = await response.json();
     throw new Error(errorData.error || 'Something went wrong');
   } catch (error) {
@@ -561,5 +738,7 @@ const favoriteAPICall = async (listingId, action, token) => {
     throw error;
   }
 };
+
+
 
 export default SocialCard;
