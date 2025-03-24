@@ -4,7 +4,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { useNavigate } from 'react-router-dom';
 const OfferModal = ({ show, onHide, listing }) => {
     const [offerPrice, setOfferPrice] = useState("");
-    const { getAccessTokenSilently, user, isAuthenticated } = useAuth0();
+    const { getAccessTokenSilently, user} = useAuth0();
     const navigate = useNavigate();
 
     const handleOfferSubmit = async () => {
@@ -24,7 +24,7 @@ const OfferModal = ({ show, onHide, listing }) => {
             });
 
             const conversationData = await conversationResponse.json(); 
-            console.log('this is the conversation data', conversationData);
+            
             if (!conversationResponse.ok) {
                 throw new Error(conversationData.message || 'Failed to create conversation');
             }
