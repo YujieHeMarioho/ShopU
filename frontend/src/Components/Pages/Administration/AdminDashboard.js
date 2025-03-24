@@ -4,62 +4,123 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { LineChart, Line } from 'recharts';
 import styles from './AdminDashboard.module.css';
 import { Typeahead } from 'react-bootstrap-typeahead';
+import axios from 'axios';
+import { useAuth0 } from '@auth0/auth0-react';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("reports");
-  const [users, setUsers] = useState([]);
-  const [selectedUser, setSelectedUser] = useState('');
+  const [selectedUser, setSelectedUser] = useState([]);
+  const [userOptions, setUserOptions] = useState([]);
   const [selectedRole, setSelectedRole] = useState('');
+  const [currentRoles, setCurrentRoles] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const { user, getAccessTokenSilently, isLoading: authLoading } = useAuth0();
 
-  useEffect(() => {
-    // Fetch users from your API
-    const fetchUsers = async () => {
+  const handleUserSelect = async (selected) => {
+    setSelectedUser(selected);
+    if (selected && selected.length > 0) {
+      const selectedUser = selected[0];
       setIsLoading(true);
       try {
-        // Replace this with your actual API call
-        const response = await fetch('/api/users');
-        const data = await response.json();
-        setUsers(data);
+        // Trigger the search with the selected user's name
+        await searchUsers(selectedUser.name);
+        // Fetch the user's roles
+        await fetchUserRoles(selectedUser.id);
       } catch (error) {
-        console.error('Error fetching users:', error);
+        console.error('Error handling user selection:', error);
       } finally {
         setIsLoading(false);
       }
-    };
+    } else {
+      setCurrentRoles([]);
+    }
+  };
 
-    fetchUsers();
-  }, []);
+  const searchUsers = async (query) => {
+    if (query.length < 2) return;
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/users/search`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { query },
+      });
+      console.log('search users Response:', response.data);
+      setUserOptions(
+        response.data.map((u) => ({
+          id: u.id,
+          name: u.name,
+        }))
+      );
+    } catch (error) {
+      console.error('Error searching users:', error);
+    }
+  };
+  
+  const fetchUserRoles = async (id) => {
+    try {
+      //const userId;
+      const token = await getAccessTokenSilently();
+      // Fetch users roles
+      const rolesResponse = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/user/${id}/roles`, { 
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (rolesResponse.data && rolesResponse.data.roles) {
+        setCurrentRoles(rolesResponse.data.roles);
+      } else {
+        console.log('No roles found for user');
+        setCurrentRoles([]);
+      }
+    } catch (error) {
+      console.error('Error searching users:', error);
+    }
+  };
 
   const handleAssignRole = async () => {
     if (selectedUser.length > 0 && selectedRole) {
-      // Replace this with your actual API call to assign role
-      try {
-        const response = await fetch('/api/assign-role', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ userId: selectedUser[0].id, role: selectedRole }),
-        });
-        if (response.ok) {
+      try {      
+        const token = await getAccessTokenSilently();
+        const response = await axios.post(
+          `${process.env.REACT_APP_BACKEND_URL}/api/user/${selectedUser[0].id}/roles`,
+          { role_name: selectedRole },
+          {
+            headers: { 
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
+
+        console.log('Assign Role Response:', response.data);
+        console.log('Response status:', response.status);
+        if (response.status === 200) {
+          console.log('Role assigned successfully');
           alert('Role assigned successfully');
-          //Todo, refresh the user list with the new role
-        } else {
+        } 
+        else if (response.status === 409) {
+          alert('Role already assigned for user');
+        }else {
+          console.log('Role assigned failed');
           alert('Failed to assign role');
         }
+        // Clear the selection
+        clearAccessFields();
       } catch (error) {
         console.error('Error assigning role:', error);
         alert('An error occurred while assigning the role');
+        clearAccessFields();
       }
     } else {
       alert('Please select both a user and a role');
     }
   };
+  
+  const clearAccessFields = () => {
+    setSelectedUser([]);
+    setSelectedRole('');
+    setCurrentRoles([]);
+  };
 
   const deleteAssignRole = async () => {
     if (selectedUser.length > 0 && selectedRole) {
-      // Replace this with your actual API call to assign role
       try {
         const response = await fetch('/api/assign-role', {
           method: 'POST',
@@ -68,9 +129,11 @@ const AdminDashboard = () => {
           },
           body: JSON.stringify({ userId: selectedUser[0].id, role: selectedRole }),
         });
+          // Clear the selection
+          setSelectedUser([]);
         if (response.ok) {
           alert('Role assigned successfully');
-          //Todo, refresh the user list with the new role
+          //Todo, refresh the user list with the new role instead of clearing 
         } else {
           alert('Failed to assign role');
         }
@@ -167,17 +230,23 @@ const AdminDashboard = () => {
                     <Typeahead
                       id="user-typeahead"
                       labelKey="name"
-                      onChange={setSelectedUser}
-                      options={users}
+                      onChange={handleUserSelect}
                       placeholder="Search for a user..."
                       selected={selectedUser}
+                      options={userOptions}
+                      minLength={2}
                       isLoading={isLoading}
+                      onInputChange={(text) => {
+                        if (text.length >= 2) {
+                          searchUsers(text);
+                        }
+                      }}
                     />
                   </Form.Group>
 
                   <Form.Group controlId="userRoles">
                     <Form.Label>Current Users Roles</Form.Label>
-                    <Form.Control as="textarea" rows={1} value={selectedUser.roles} readOnly />
+                    <Form.Control as="textarea" rows={1} value={currentRoles.join(', ')} readOnly />
                   </Form.Group>
 
                   <Form.Group controlId="roleSelect">
@@ -188,9 +257,9 @@ const AdminDashboard = () => {
                       onChange={(e) => setSelectedRole(e.target.value)}
                     >
                       <option value="">Choose...</option>
-                      <option value="admin">Admin</option>
-                      <option value="moderator">Moderator</option>
-                      <option value="user">User</option>
+                      <option value="Admin">Admin</option>
+                      <option value="Moderator">Moderator</option>
+                      <option value="User">User</option>
                     </Form.Control>
                   </Form.Group>
 

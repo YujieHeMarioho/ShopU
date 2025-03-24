@@ -195,6 +195,101 @@ export const getCurrentUserInfo = async (req, res) => {
   }
 };
 
+// Get User roles
+export const getUserRoles = async (req, res) => {
+  const { user_id } = req.params;
+
+  const query = `
+  SELECT r.role_name
+  FROM users u
+  JOIN user_roles ur ON u.user_id = ur.user_id
+  JOIN roles r ON ur.role_id = r.role_id
+  WHERE u.user_id = $1;`;
+
+  try {
+    const result = await pool.query(query, [user_id]);
+    if (result.rowCount > 0) {
+      const roles = result.rows.map(row => row.role_name);
+      return res.status(200).json({ roles: roles });
+    }
+    res.status(404).json({ message: 'User roles not found' });
+  } catch (error) {
+      console.error('Error running query:', err);
+    res.status(500).json({ message: 'Error getting user roles', error: error.message });
+  }
+};
+
+// add User roles
+export const addUserRole = async (req, res) => {
+  const { user_id } = req.params;
+  const { role_name } = req.body;
+  console.log(user_id, role_name);
+  //verify user calling api is admin
+  let isAdmin = false;
+
+  const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
+
+  try {
+      const decodedToken = jwtDecode(token); // Decode the token
+      console.log('Decoded token:', decodedToken);
+      isAdmin = decodedToken.permissions.includes('admin:access');
+  } catch (err) {
+      console.error('Error decoding token:', err);
+      return res.status(401).json({ message: 'Invalid token' });
+  }
+  console.log('Is admin', isAdmin);
+
+  if (!isAdmin) {
+    return res.status(403).json({ message: 'Unauthorized' });
+  }
+
+  const query = `
+    INSERT INTO user_roles (user_id, role_id) 
+    VALUES ($1, (SELECT role_id FROM roles WHERE role_name = $2))
+    RETURNING *;`;
+
+  try {
+    const result = await pool.query(query, [user_id, role_name]);
+    console.log('returned from db:', result);
+
+    if (result.rows.length > 0) {
+      return res.status(200).json({ message: 'User role added', role: role_name });
+    } else {
+      return res.status(400).json({ message: 'Failed to add user role' });
+    }
+  } catch (error) {
+    console.error('Error running query:', error);
+    if (error.code === '23505') {  // Unique violation error code
+      return res.status(409).json({ message: 'User already has this role' });
+    }
+    res.status(500).json({ message: 'Error adding user role', error: error.message });
+  }
+};
+
+// Delete User roles
+export const deleteUserRole = async (req, res) => {
+  const { user_id } = req.params;
+
+  const query = `
+  SELECT r.role_name
+  FROM users u
+  JOIN user_roles ur ON u.user_id = ur.user_id
+  JOIN roles r ON ur.role_id = r.role_id
+  WHERE u.user_id = $1;`;
+
+  try {
+    const result = await pool.query(query, [user_id]);
+    if (result.rowCount > 0) {
+      const roles = result.rows.map(row => row.role_name);
+      return res.status(200).json({ roles: roles });
+    }
+    res.status(404).json({ message: 'User roles not found' });
+  } catch (error) {
+      console.error('Error running query:', err);
+    res.status(500).json({ message: 'Error fetching user details', error: error.message });
+  }
+};
+
 // Update User
 export const updateUser = async (req, res) => {
   const { email, name, picture } = req.body;
@@ -408,4 +503,4 @@ const extractUserIdFromToken = (req) => {
   return user_id;
 };
 
-export default { updateUser, getAllAuth0Users, createUser, getUserInfo, getUserSearch, getCurrentUserInfo };
+export default { updateUser, getAllAuth0Users, createUser, getUserInfo, getUserSearch, getCurrentUserInfo, getUserRoles, addUserRole, deleteUserRole };
