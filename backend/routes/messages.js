@@ -5,6 +5,7 @@ import {
   getMessages,
   sendMessage,
   markConversationMessagesRead,
+  sendOffer,
 } from '../controllers/messagesController.js';
 
 const router = express.Router();
@@ -23,5 +24,9 @@ router.post('/:conversationId/messages', sendMessage);
 
 // NEW: Route to mark all messages in a conversation as read
 router.post('/:conversationId/mark-read', markConversationMessagesRead);
+
+// Route to offer 
+router.post('/:listing_id/offer', sendOffer);
+
 
 export default router;

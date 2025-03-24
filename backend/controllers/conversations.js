@@ -61,3 +61,39 @@ export const getConversations = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+export const conversationBetweenUsers = async (req, res) => {
+  const { firstID, secondID } = req.params;
+
+  console.log("Checking for conversation between users:", firstID, secondID);
+
+  try {
+    // Check if a conversation already exists between the two users
+    const result = await pool.query(
+      `
+      SELECT * FROM conversations
+      WHERE (user1_id = $1 AND user2_id = $2) OR (user1_id = $2 AND user2_id = $1)
+      `,
+      [firstID, secondID]
+    );
+
+    if (result.rows.length > 0) {
+      return res.json({ conversation_id: result.rows[0].conversation_id });
+    }
+
+    // If no conversation exists, create a new one
+    const newConversationResult = await pool.query(
+      `
+      INSERT INTO conversations (user1_id, user2_id, created_at)
+      VALUES ($1, $2, NOW()) RETURNING *`,
+      [firstID, secondID]
+    );
+
+    // Return the ID of the new conversation
+    return res.status(201).json({ conversation_id: newConversationResult.rows[0].conversation_id });
+  } catch (error) {
+    console.error('Error checking or creating conversation:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
