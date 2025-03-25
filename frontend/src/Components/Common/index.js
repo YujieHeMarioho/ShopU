@@ -7,5 +7,6 @@ export {SocialCard} from './SocialCard';
 export { CardComponent } from './Card';
 export {CommentSection} from './CommentSection'
 export {CustomModal} from './CustomModal'
+export {Recommendations} from './Recommendations'
 //export {NavBar} from './NavBar';
 // Export other components if needed

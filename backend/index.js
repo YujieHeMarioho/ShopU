@@ -18,6 +18,7 @@ import messagesRoutes from './routes/messages.js';
 import conversationsRoutes from './routes/conversations.js';
 import userPreferenceRoutes from './routes/userPreferences.js';
 import serviceRoutes from './routes/services.js';
+import mlserviceRoutes from './routes/MLserviceroutes.js';
 
 dotenv.config();
 
@@ -84,6 +85,7 @@ app.use('/api', listings);
 app.use('/api', filters);
 app.use('/api', userPreferenceRoutes);
 app.use('/api', serviceRoutes);
+app.use('/api', mlserviceRoutes);
 
 app.use('/api/messages', messagesRoutes);
 
