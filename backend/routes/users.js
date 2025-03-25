@@ -15,7 +15,7 @@ router.get('/user/:user_id', getUserInfo);
 router.get('/users/search', getUserSearch);
 router.get('/user/:user_id/roles', getUserRoles);
 router.post('/user/:user_id/roles', addUserRole);
-router.delete('/user/:user_id/roles/:role_id', deleteUserRole);
+router.delete('/user/:user_id/roles/:role_name', deleteUserRole);
 
 // upload a new profile image
 router.post('/users/upload',  upload.single('picture'), uploadProfileImage);

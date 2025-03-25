@@ -1,4 +1,4 @@
-import React, { useState, useEffect  } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tab, Nav, Container, Row, Col, Button, Table, Form } from 'react-bootstrap';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { LineChart, Line } from 'recharts';
@@ -6,6 +6,7 @@ import styles from './AdminDashboard.module.css';
 import { Typeahead } from 'react-bootstrap-typeahead';
 import axios from 'axios';
 import { useAuth0 } from '@auth0/auth0-react';
+import { jwtDecode } from "jwt-decode";
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("reports");
@@ -14,7 +15,24 @@ const AdminDashboard = () => {
   const [selectedRole, setSelectedRole] = useState('');
   const [currentRoles, setCurrentRoles] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const { user, getAccessTokenSilently, isLoading: authLoading } = useAuth0();
+  const { getAccessTokenSilently} = useAuth0();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        const token = await getAccessTokenSilently();
+        const decodedToken = jwtDecode(token);
+        const userPermissions = decodedToken.permissions || [];
+        setIsAdmin(userPermissions.includes("admin:access"));
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+      }
+    };
+
+    checkAdminStatus();
+  }, [getAccessTokenSilently]);
 
   const handleUserSelect = async (selected) => {
     setSelectedUser(selected);
@@ -44,7 +62,6 @@ const AdminDashboard = () => {
         headers: { Authorization: `Bearer ${token}` },
         params: { query },
       });
-      console.log('search users Response:', response.data);
       setUserOptions(
         response.data.map((u) => ({
           id: u.id,
@@ -67,7 +84,6 @@ const AdminDashboard = () => {
       if (rolesResponse.data && rolesResponse.data.roles) {
         setCurrentRoles(rolesResponse.data.roles);
       } else {
-        console.log('No roles found for user');
         setCurrentRoles([]);
       }
     } catch (error) {
@@ -89,16 +105,15 @@ const AdminDashboard = () => {
           }
         );
 
-        console.log('Assign Role Response:', response.data);
-        console.log('Response status:', response.status);
         if (response.status === 200) {
-          console.log('Role assigned successfully');
           alert('Role assigned successfully');
         } 
+        else if (response.status === 403) {
+          alert('You are not authorized to assign this role');
+        }
         else if (response.status === 409) {
           alert('Role already assigned for user');
         }else {
-          console.log('Role assigned failed');
           alert('Failed to assign role');
         }
         // Clear the selection
@@ -122,24 +137,33 @@ const AdminDashboard = () => {
   const deleteAssignRole = async () => {
     if (selectedUser.length > 0 && selectedRole) {
       try {
-        const response = await fetch('/api/assign-role', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ userId: selectedUser[0].id, role: selectedRole }),
-        });
+        const token = await getAccessTokenSilently();
+        const response = await axios.delete(
+          `${process.env.REACT_APP_BACKEND_URL}/api/user/${selectedUser[0].id}/roles/${selectedRole}`,
+          {
+            headers: { 
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
           // Clear the selection
           setSelectedUser([]);
-        if (response.ok) {
-          alert('Role assigned successfully');
-          //Todo, refresh the user list with the new role instead of clearing 
-        } else {
+        if (response.status === 200) {
+          alert('Role removed successfully');
+        } 
+        else if (response.status === 403) {
+          alert('You are not authorized to remove this role');
+        }
+        else if (response.status === 404) {
+          alert('Role not found for user');
+        }else {
           alert('Failed to assign role');
         }
+        clearAccessFields();
       } catch (error) {
         console.error('Error assigning role:', error);
         alert('An error occurred while assigning the role');
+        clearAccessFields();
       }
     } else {
       alert('Please select both a user and a role');
@@ -222,6 +246,7 @@ const AdminDashboard = () => {
           <Col sm={9}>
             <Tab.Content className="mb-4">
               {/* User Access Control Tab */}
+              {isAdmin && (
               <Tab.Pane eventKey="userAccessControl">
                 <h4>User Access Control</h4>
                 <Form>
@@ -271,7 +296,9 @@ const AdminDashboard = () => {
                   </Button>
                 </Form>
               </Tab.Pane>
+              )}
 
+              
               {/* Reports Tab (Merged View & Handle Reports) */}
               <Tab.Pane eventKey="reports">
                 <h4>User Reports</h4>

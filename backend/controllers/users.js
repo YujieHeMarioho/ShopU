@@ -223,21 +223,16 @@ export const getUserRoles = async (req, res) => {
 export const addUserRole = async (req, res) => {
   const { user_id } = req.params;
   const { role_name } = req.body;
-  console.log(user_id, role_name);
-  //verify user calling api is admin
   let isAdmin = false;
-
   const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
 
   try {
       const decodedToken = jwtDecode(token); // Decode the token
-      console.log('Decoded token:', decodedToken);
       isAdmin = decodedToken.permissions.includes('admin:access');
   } catch (err) {
       console.error('Error decoding token:', err);
       return res.status(401).json({ message: 'Invalid token' });
   }
-  console.log('Is admin', isAdmin);
 
   if (!isAdmin) {
     return res.status(403).json({ message: 'Unauthorized' });
@@ -250,11 +245,48 @@ export const addUserRole = async (req, res) => {
 
   try {
     const result = await pool.query(query, [user_id, role_name]);
-    console.log('returned from db:', result);
 
     if (result.rows.length > 0) {
-      return res.status(200).json({ message: 'User role added', role: role_name });
-    } else {
+      const accessToken = await getManagementApiAccessToken();
+
+      // Get the Auth0 role ID for the given role_name
+      const roleResponse = await axios.get(
+        `${audience}roles?name_filter=${encodeURIComponent(role_name)}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (roleResponse.data.length === 0) {
+        throw new Error('Role not found in Auth0');
+      }
+
+      const auth0RoleId = roleResponse.data[0].id;
+
+      // Add the role to the user in Auth0
+      const response = await axios.post(
+        `${audience}users/${user_id}/roles`,
+        {
+          roles: [auth0RoleId]
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+     
+      if (response.status === 204) {
+        return res.status(200).json({ message: 'User role added in database and Auth0', role: role_name });
+      } else {
+        throw new Error('Failed to add role in Auth0');
+      }
+    }
+    else {
       return res.status(400).json({ message: 'Failed to add user role' });
     }
   } catch (error) {
@@ -268,25 +300,84 @@ export const addUserRole = async (req, res) => {
 
 // Delete User roles
 export const deleteUserRole = async (req, res) => {
-  const { user_id } = req.params;
-
-  const query = `
-  SELECT r.role_name
-  FROM users u
-  JOIN user_roles ur ON u.user_id = ur.user_id
-  JOIN roles r ON ur.role_id = r.role_id
-  WHERE u.user_id = $1;`;
+  const { user_id, role_name } = req.params;
+  // Verify user calling API is admin
+  let isAdmin = false;
+  const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
 
   try {
-    const result = await pool.query(query, [user_id]);
+    const decodedToken = jwtDecode(token);
+    isAdmin = decodedToken.permissions.includes('admin:access');
+  } catch (err) {
+    console.error('Error decoding token:', err);
+    return res.status(401).json({ message: 'Invalid token' });
+  }
+
+  if (!isAdmin) {
+    return res.status(403).json({ message: 'Unauthorized' });
+  }
+
+  try {
+    const query = `
+      DELETE FROM user_roles 
+      WHERE user_id = $1 AND role_id = (SELECT role_id FROM roles WHERE role_name = $2)
+      RETURNING *;`;
+    const result = await pool.query(query, [user_id, role_name]);
+
     if (result.rowCount > 0) {
-      const roles = result.rows.map(row => row.role_name);
-      return res.status(200).json({ roles: roles });
+      // Delete role from Auth0 user
+      const accessToken = await getManagementApiAccessToken();
+      const auth0UserId = user_id; // Assuming user_id is the Auth0 user ID
+
+      // Get the role name from your database
+      const roleNameQuery = `SELECT role_name FROM roles WHERE role_id = (SELECT role_id FROM roles WHERE role_name = $1);`;
+      const roleNameResult = await pool.query(roleNameQuery, [role_name]);
+      
+      if (roleNameResult.rows.length === 0) {
+        throw new Error('Role not found in database');
+      }
+
+      const roleName = roleNameResult.rows[0].role_name;
+
+      // Get the Auth0 role ID for the given role_name
+      const roleResponse = await axios.get(
+        `${audience}roles?name_filter=${encodeURIComponent(roleName)}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (roleResponse.data.length === 0) {
+        throw new Error('Role not found in Auth0');
+      }
+      const auth0RoleId = roleResponse.data[0].id;
+
+      // Remove the role from the user in Auth0
+      const response = await axios.delete(
+        `${audience}users/${auth0UserId}/roles`,
+        {
+          data: { roles: [auth0RoleId] },
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.status === 204) {
+        return res.status(200).json({ message: 'User role removed from database and Auth0', role: roleName });
+      } else {
+        throw new Error('Failed to remove role in Auth0');
+      }
+    } else {
+      return res.status(404).json({ message: 'User role not found in database' });
     }
-    res.status(404).json({ message: 'User roles not found' });
   } catch (error) {
-      console.error('Error running query:', err);
-    res.status(500).json({ message: 'Error fetching user details', error: error.message });
+    console.error('Error removing user role:', error);
+    res.status(500).json({ message: 'Error removing user role', error: error.message });
   }
 };
 
