@@ -5,6 +5,7 @@ import styles from './Listings.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FaMapMarkerAlt, FaMapPin, FaFlag } from 'react-icons/fa';
+import OfferModal from "./OfferModal";
 import axios from 'axios';
 import ReportModal from '../../Common/ReportModal';
 
@@ -19,6 +20,7 @@ export const ListingModal = ({ show, onHide, listing }) => {
    const [showConfirm, setShowConfirm] = useState(false); // Confirmation Modal
    const [categoryListings, setCategoryListings] = useState([]);
    const [location, setLocation] = useState('');
+   const [showOfferModal, setShowOfferModal] = useState(false);
    const isOwner = isAuthenticated && listing && listing.user_id === user?.sub;
    const isServiceListing = listing.type == 'service';
    const dropdownOptions = isServiceListing
@@ -31,10 +33,9 @@ export const ListingModal = ({ show, onHide, listing }) => {
          { label: 'Pickup From Seller', value: 'pickup' },
          { label: 'Shipped', value: 'shipped' }
       ];
-   const [showReportModal, setShowReportModal] = useState(false);
-   const [reportingItemId, setReportingItemId] = useState(null);
+      const [showReportModal, setShowReportModal] = useState(false);
+      const [reportingItemId, setReportingItemId] = useState(null);
 
-   console.log(listing)
    useEffect(() => {
       if (isEditing) {
          setEditTitle(listing.title);
@@ -70,17 +71,24 @@ export const ListingModal = ({ show, onHide, listing }) => {
       }
    }, [listing]);
 
+   const handleCardClick = (listing) => {
+      navigate(`/marketplace?listingId=${listing.id}`);
+   };
 
    const handleDropDownClick = (option) => {
       setDropDownTitle(option);
    };
 
+   const handleOfferSeller = () => {
+      setShowOfferModal(true)
+   }
+
+   const handleScheduleAppointment = () => {
+
+   }
+
    const handleEditClick = () => {
       setIsEditing(true); // Enable edit mode
-   };
-
-   const handleCardClick = (listing) => {
-      navigate(`/marketplace?listingId=${listing.id}`);
    };
 
    const handleSaveClick = async () => {
@@ -152,9 +160,6 @@ export const ListingModal = ({ show, onHide, listing }) => {
 
    // NEW: Function to handle messaging the seller using listing.user_id
    const handleMessageSeller = async () => {
-      // Log the keys and full listing object for debugging
-      console.log("Listing object keys:", Object.keys(listing));
-      console.log("Listing object:", listing);
 
       // Use user_id or seller_id from the listing (whichever exists)
       const sellerId = listing.user_id || listing.seller_id;
@@ -297,42 +302,42 @@ export const ListingModal = ({ show, onHide, listing }) => {
                   )}
                </div>
 
-            {/* Content Section */}
-            <div className={styles.content}>
-               <div className={styles.priceAndButtons}>
-                  <h5>
-                     {isEditing ? (
-                        <Form.Control 
-                           type="number" 
-                           value={editPrice} 
-                           onChange={(e) => setEditPrice(e.target.value)} 
-                        />
-                     ) : (
-                        `$${listing?.price}`
-                     )}
-                  </h5>
-                  {console.log(listing)}
-                  {isOwner ? (
-                     <div className={styles.editButtons}>
+               {/* Content Section */}
+               <div className={styles.content}>
+                  <div className={styles.priceAndButtons}>
+                     <h5>
                         {isEditing ? (
-                           <>
-                              <Button variant="success" onClick={handleSaveClick}>Save</Button>
-                              <Button variant="warning" onClick={handleCancelClick}>Cancel</Button>
-                           </>
+                           <Form.Control
+                              type="number"
+                              value={editPrice}
+                              onChange={(e) => setEditPrice(e.target.value)}
+                           />
                         ) : (
-                           <Button variant="secondary" onClick={handleEditClick}>Edit</Button>
+                           `$${listing?.price}`
                         )}
-                        <Button variant="danger" onClick={handleDeleteClick}>Delete</Button>
-                     </div>
-                  ) : (
-                     <div className={styles.profileInfo}>
-                        <span>{listing?.author}</span>
-                        <Link to={`/profile/${listing?.user_id}`}>
-                           <img src={listing?.profile} alt="Profile" className={styles.profilePic} />
-                        </Link>
-                     </div>
-                  )}
-               </div>
+                     </h5>
+                     {console.log(listing)}
+                     {isOwner ? (
+                        <div className={styles.editButtons}>
+                           {isEditing ? (
+                              <>
+                                 <Button variant="success" onClick={handleSaveClick}>Save</Button>
+                                 <Button variant="warning" onClick={handleCancelClick}>Cancel</Button>
+                              </>
+                           ) : (
+                              <Button variant="secondary" onClick={handleEditClick}>Edit</Button>
+                           )}
+                           <Button variant="danger" onClick={handleDeleteClick}>Delete</Button>
+                        </div>
+                     ) : (
+                        <div className={styles.profileInfo}>
+                           <span>{listing?.author}</span>
+                           <Link to={`/profile/${listing?.user_id}`}>
+                              <img src={listing?.profile} alt="Profile" className={styles.profilePic} />
+                           </Link>
+                        </div>
+                     )}
+                  </div>
 
                <div className="row">
                   <div className="col-md-6">
@@ -381,9 +386,14 @@ export const ListingModal = ({ show, onHide, listing }) => {
 
                   {/* Offer Seller / Schedule Appointment Button */}
                   <div className={styles.offerSellerButton}>
-                     <Button variant="dark" className="mb-2">
+                     <Button variant="dark" className="mb-2" onClick={isServiceListing ? handleScheduleAppointment : handleOfferSeller}>
                         {isServiceListing ? 'Schedule an Appointment' : 'Offer Seller!'}
                      </Button>
+                     <OfferModal
+                        show={showOfferModal}
+                        onHide={() => setShowOfferModal(false)}
+                        listing={listing}
+                     />
                   </div>
 
                   {/* Message Seller Button */}

@@ -1,5 +1,5 @@
 import express from 'express';
-import { createConversation, getConversations } from '../controllers/conversations.js';
+import { createConversation, getConversations, conversationBetweenUsers } from '../controllers/conversations.js';
 
 const router = express.Router();
 
@@ -15,5 +15,8 @@ router.get('/:userId', (req, res, next) => {
     console.log('Conversations GET route hit for user:', req.params.userId);
     next();
   }, getConversations);
+
+// Route to find conversation between two ID's 
+router.get('/:firstID/:secondID/find', conversationBetweenUsers);
 
 export default router;

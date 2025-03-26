@@ -1,4 +1,4 @@
-import { pool } from '../pool.js'; 
+import { pool } from '../pool.js';
 
 // Get all conversations for a user
 export const getConversations = async (req, res) => {
@@ -39,15 +39,13 @@ export const getConversations = async (req, res) => {
 // Get all messages for a specific conversation
 export const getMessages = async (req, res) => {
   const { conversationId } = req.params;
-  console.log('Fetching messages for conversation ID:', conversationId); // Debug log
 
   try {
     const result = await pool.query(
-        `SELECT * FROM messages WHERE conversation_id = $1 ORDER BY created_at ASC`, // Use created_at instead of timestamp
-        [conversationId]
+      `SELECT * FROM messages WHERE conversation_id = $1 ORDER BY created_at ASC`, // Use created_at instead of timestamp
+      [conversationId]
     );
-      
-    console.log('Messages fetched:', result.rows); // Debug log
+
     res.json(result.rows);
   } catch (error) {
     console.error('Error fetching messages:', error);
@@ -110,7 +108,7 @@ export const markConversationMessagesRead = async (req, res) => {
   const { userId } = req.body; // The user reading the conversation
 
   console.log("markConversationMessagesRead called with:", { conversationId, userId });
-  
+
   try {
     const result = await pool.query(
       `UPDATE messages
@@ -125,6 +123,34 @@ export const markConversationMessagesRead = async (req, res) => {
     res.status(200).json({ success: true, updated: result.rows.length });
   } catch (error) {
     console.error('Error marking messages as read:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const sendOffer = async (req, res) => {
+  try {
+    const { offer_price, buyer_id, conversation_id } = req.body;
+    const { listing_id } = req.params;
+    const buyer = await pool.query('SELECT name FROM users WHERE user_id = $1', [buyer_id]);
+    const listing = await pool.query('SELECT title FROM listings WHERE listing_id = $1', [listing_id]);
+    
+    // Ensure buyer and listing exist
+    if (!buyer.rows.length || !listing.rows.length) {
+      return res.status(400).json({ error: 'Buyer or listing not found' });
+    }
+
+    // Construct the offer message content
+    const content = `Offer from ${buyer.rows[0].name}: $${offer_price} for ${listing.rows[0].title}`;
+
+    // Insert the offer into the messages table
+    const query = `INSERT INTO messages (conversation_id, sender_id, content, offer_price) VALUES ($1, $2, $3, $4)`;
+    const offerValues = [conversation_id, buyer_id, content, offer_price];
+    const result = await pool.query(query, offerValues);  
+
+    // Send back the conversation_id in the response
+    res.status(201).json({ conversation_id: conversation_id });
+  } catch (error) {
+    console.error('Error Sending Offer to Seller:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
