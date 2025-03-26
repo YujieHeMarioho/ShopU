@@ -10,3 +10,16 @@
   .adminTitle{
     color: white;
   }
+
+  .customNav :global(.nav-link) {
+    color: var(--primary-color); 
+  }
+  
+  .customNav :global(.nav-link.active) {
+    background-color: var(--primary-color);
+    color: #ffffff; 
+  }
+  
+  .customNav :global(.nav-link:hover) {
+    color: grey 
+  }

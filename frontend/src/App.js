@@ -95,7 +95,7 @@ function App() {
             <Route path="/edit-image" element={<AuthenticationGuard component={EditImage} />} />
             <Route path="/post-details" element={<AuthenticationGuard component={PostDetails} />} />
             <Route path="/Become A Seller" element={<BecomeASeller />} />
-            <Route path="/admin-dashboard" element={<AuthenticationGuard component={() => (<ProtectedRoute requiredPermissions={['admin:access', 'moderator:access']}><AdminDashboard /></ProtectedRoute>)} />} />
+            <Route path="/admin" element={<AuthenticationGuard component={() => (<ProtectedRoute requiredPermissions={['admin:access', 'moderator:access']}><AdminDashboard /></ProtectedRoute>)} />} />
             <Route path="/seller-dashboard" element={<AuthenticationGuard component={SellerDashboard} />} />
             {/* New Checkout Page */}
             <Route path="/cart" element={<AuthenticationGuard component={CheckOut} />} />

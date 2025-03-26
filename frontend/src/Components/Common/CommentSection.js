@@ -3,6 +3,7 @@ import { Button } from 'react-bootstrap';
 import { FaHeart, FaRegHeart, FaEllipsisH, FaTrash, FaExclamationTriangle, FaUserTimes } from 'react-icons/fa';
 import styles from './CommentSection.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
+import ReportModal from './ReportModal';
 
 export const CommentSection = ({ selectedPostId, userId }) => {
   const [comments, setComments] = useState([]);
@@ -10,6 +11,8 @@ export const CommentSection = ({ selectedPostId, userId }) => {
   const [isLiked, setIsLiked] = useState({});
   const [likeCount, setLikeCount] = useState({});
   const textAreaRef = useRef(null);
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportingItemId, setReportingItemId] = useState(null);
 
   const { user, isAuthenticated, getAccessTokenSilently, isLoading: authLoading } = useAuth0();
   const username = user?.name || 'Anonymous';
@@ -45,8 +48,6 @@ export const CommentSection = ({ selectedPostId, userId }) => {
     textarea.style.height = "auto"; // Reset height
     textarea.style.height = `${textarea.scrollHeight}px`; // Set new height based on content
   };
-
-  
 
   useEffect(() => {
     if (!selectedPostId) return;
@@ -208,9 +209,43 @@ export const CommentSection = ({ selectedPostId, userId }) => {
     }
   };
 
-  const handleReport = (commentId) => {
-    console.log(`Reported comment: ${commentId}`);
-    setActiveMenu(null); // Close menu after action
+  const handleReportClick = async (commentId) => {
+    setReportingItemId(commentId);
+    setShowReportModal(true);
+
+    //REMOVE THIS LATER ONCE YOU IMPLEMENT THE MODAL FIX
+    submitReport('spam', 'Message was created by a bot.', commentId);
+  }
+
+  const submitReport = async (reason, description, reportingItemId) => {
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/reports`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          type: 'post-comment',
+          reportedItemId: reportingItemId,
+          reason,
+          description
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit report');
+      }
+
+      setShowReportModal(false);
+      setReportingItemId(null);
+      alert('Report submitted successfully');
+      setActiveMenu(null); 
+    } catch (error) {
+      console.error('Error reporting comment:', error);
+      alert('Failed to submit report');
+    }
   };
 
   const handleBlockUser = (userId) => {
@@ -279,12 +314,19 @@ export const CommentSection = ({ selectedPostId, userId }) => {
                       )}
                       {comment.user_id !== userId && (
                         <>
-                          <div className={styles.dropdownItem} onClick={() => handleReport(comment.comment_id)}>
+                          <div className={styles.dropdownItem} onClick={() => handleReportClick(comment.comment_id)}>
                             <FaExclamationTriangle /> Report
                           </div>
                           <div className={styles.dropdownItem} onClick={() => handleBlockUser(comment.user_id)}>
                             <FaUserTimes /> Block User
                           </div>
+
+                          <ReportModal 
+                            show={showReportModal}
+                            onHide={() => setShowReportModal(false)}
+                            onSubmit={submitReport}
+                            itemType="Comment"
+                          />
                         </>
                       )}
                     </div>
