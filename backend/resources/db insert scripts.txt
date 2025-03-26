@@ -1,3 +1,6 @@
+-- Insert into roles
+INSERT INTO roles (role_name) VALUES ('admin'), ('moderator'), ('user');
+
 -- Insert into categories
 
 -- First, insert the top-level categories
