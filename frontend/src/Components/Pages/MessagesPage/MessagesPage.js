@@ -40,8 +40,8 @@ const MessagesPage = () => {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isUserNearBottom, setIsUserNearBottom] = useState(true);
   const [postCache, setPostCache] = useState({});
+  const [latestMessageTimestamps, setLatestMessageTimestamps] = useState({});
 
-  const conversationOrderRef = useRef(new Map());
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
   const userCache = useRef({});
   const userCachePromise = useRef({});
@@ -130,6 +130,25 @@ const MessagesPage = () => {
     }
   };
 
+  const fetchLatestMessageTimestamp = async (conversationId, token) => {
+    try {
+      const response = await axios.get(
+        `${BACKEND_URL}/api/messages/${conversationId}/messages`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const messages = response.data;
+      if (messages.length > 0) {
+        // Sort messages by created_at and get the latest
+        const latestMessage = messages.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+        return latestMessage.created_at;
+      }
+      return null; // No messages yet
+    } catch (error) {
+      console.error(`Error fetching messages for conversation ${conversationId}:`, error);
+      return null;
+    }
+  };
+
   const fetchConversationsDebounced = useRef(
     debounce(async (isPolling = false) => {
       if (!isPolling) setIsLoadingConversations(true);
@@ -152,6 +171,19 @@ const MessagesPage = () => {
           userIdToDetailsMap[id] = userDetailsList[idx];
         });
 
+        // Fetch latest message timestamps for all conversations
+        const timestampPromises = data.map(async (conv) => {
+          const timestamp = await fetchLatestMessageTimestamp(conv.conversation_id, token);
+          return { conversation_id: conv.conversation_id, timestamp };
+        });
+        const timestamps = await Promise.all(timestampPromises);
+        const timestampMap = timestamps.reduce((acc, { conversation_id, timestamp }) => {
+          acc[conversation_id] = timestamp;
+          return acc;
+        }, {});
+
+        setLatestMessageTimestamps((prev) => ({ ...prev, ...timestampMap }));
+
         const enhancedConvs = data.map((conv) => {
           const otherId =
             conv.user1_id.toLowerCase() === user.sub.toLowerCase() ? conv.user2_id : conv.user1_id;
@@ -167,25 +199,16 @@ const MessagesPage = () => {
               selectedConversation && conv.conversation_id === selectedConversation.conversation_id
                 ? 0
                 : conv.unread_count || 0,
+            last_message_timestamp: timestampMap[conv.conversation_id] || null,
           };
         });
 
-        if (
-          enhancedConvs.some((conv) => conv.unread_count > 0) ||
-          conversationOrderRef.current.size === 0
-        ) {
-          enhancedConvs.sort((a, b) => b.unread_count - a.unread_count);
-          conversationOrderRef.current.clear();
-          enhancedConvs.forEach((conv, index) => {
-            conversationOrderRef.current.set(conv.conversation_id, index);
-          });
-        } else {
-          enhancedConvs.sort((a, b) => {
-            const orderA = conversationOrderRef.current.get(a.conversation_id) ?? Infinity;
-            const orderB = conversationOrderRef.current.get(b.conversation_id) ?? Infinity;
-            return orderA - orderB;
-          });
-        }
+        // Sort by last_message_timestamp (newest first)
+        enhancedConvs.sort((a, b) => {
+          const timeA = a.last_message_timestamp ? new Date(a.last_message_timestamp).getTime() : 0;
+          const timeB = b.last_message_timestamp ? new Date(b.last_message_timestamp).getTime() : 0;
+          return timeB - timeA; // Descending order (newest first)
+        });
 
         setConversations(enhancedConvs);
         setError(null);
@@ -295,6 +318,13 @@ const MessagesPage = () => {
       if (isUserNearBottom) {
         forceScrollToBottom();
       }
+      // Update the timestamp for this conversation immediately
+      setLatestMessageTimestamps((prev) => ({
+        ...prev,
+        [selectedConversation.conversation_id]: response.data.created_at,
+      }));
+      // Trigger a fetch to update conversation order
+      fetchConversationsDebounced();
     } catch (err) {
       console.error('Error sending message:', err);
       setError('Failed to send message. Please try again.');
