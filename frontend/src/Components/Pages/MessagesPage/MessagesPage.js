@@ -335,14 +335,13 @@ const MessagesPage = () => {
       setError(null);
       if (isUserNearBottom) forceScrollToBottom();
 
-      // Update the conversation locally instead of re-fetching
       setConversations((prev) =>
         prev.map((conv) =>
           conv.conversation_id === selectedConversation.conversation_id
             ? {
                 ...conv,
                 last_message_timestamp: response.data.created_at,
-                unread_count: 0, // Reset unread count for the selected conversation
+                unread_count: 0,
               }
             : conv
         ).sort((a, b) => {
@@ -356,7 +355,6 @@ const MessagesPage = () => {
         ...prev,
         [selectedConversation.conversation_id]: response.data.created_at,
       }));
-      // Removed fetchConversationsDebounced() to prevent refresh
     } catch (err) {
       console.error('Error sending message:', err);
       setError('Failed to send message. Please try again.');
@@ -443,7 +441,7 @@ const MessagesPage = () => {
         <h3>Conversations</h3>
         {error && <p className="error-message">{error}</p>}
         {isLoadingConversations ? (
-          <div className={styles.spinner}>Loading conversations...</div>
+          <></> // Replace spinner with empty fragment for conversations
         ) : conversations.length === 0 ? (
           <p>No conversations found. Start chatting!</p>
         ) : (
@@ -483,7 +481,7 @@ const MessagesPage = () => {
           <>
             <h3>Chat with {selectedConversation.otherUsername}</h3>
             {isLoadingMessages ? (
-              <div className={styles.spinner}>Loading messages...</div>
+              <></> // Replace spinner with empty fragment for messages
             ) : (
               <div
                 className={styles.messages}
