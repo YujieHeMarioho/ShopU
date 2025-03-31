@@ -272,9 +272,6 @@ const ChatContent = () => {
         .map((msg) => msg.content.match(/http:\/\/localhost:3000\/marketplace\?listingId=(\d+)/)?.[1])
         .filter(Boolean);
 
-      console.log('Extracted post IDs:', postIds);
-      console.log('Extracted listing IDs:', listingIds);
-
       if (postIds.length > 0) {
         postIds.forEach((postId) => {
           if (!postCache[postId]) {
