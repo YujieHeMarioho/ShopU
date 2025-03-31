@@ -5,6 +5,7 @@ import styles from './Header.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
 import { PageLoader } from '../Pages/Loading/PageLoader';
 import axios from 'axios';
+import { jwtDecode } from 'jwt-decode';
 
 const Header = () => {
     const [showCategoriesPopup, setShowCategoriesPopup] = useState(false);
@@ -15,7 +16,7 @@ const Header = () => {
     const [unreadTotal, setUnreadTotal] = useState(0);
     const [showMobileLinks, setShowMobileLinks] = useState(false);
     const [themeMode, setTheme] = useState(localStorage.getItem('theme') || 'light'); // Default theme is light
-
+    const [userRoles, setUserRoles] = useState([]);
     const location = useLocation();
     const navigate = useNavigate();
     const { loginWithRedirect, logout, getAccessTokenSilently, isAuthenticated, user, isLoading } = useAuth0();
@@ -25,11 +26,35 @@ const Header = () => {
         email: user?.email || '',
         picture: user?.picture || ''
     });
-    
+
+    const links = [
+        'Home',
+        'Marketplace',
+        'Feed',
+        'Community',
+        'Become A Seller',
+        'Friends',
+      ];
+
     useEffect(() => {
             fetchUserInfo();
     }, [currUserId]);
     
+    useEffect(() => {
+        const getUserRoles = async () => {
+          if (isAuthenticated) {
+            try {
+              const token = await getAccessTokenSilently();
+              const decodedToken = jwtDecode(token);
+              setUserRoles(decodedToken.permissions || []);
+            } catch (error) {
+              console.error('Error getting token:', error);
+            }
+          }
+        };
+    
+        getUserRoles();
+      }, [isAuthenticated, getAccessTokenSilently]);
     
     // Update screen size on mount and resize
     useEffect(() => {
@@ -48,6 +73,10 @@ const Header = () => {
         setShowProfileSidebar(false);
         setShowMobileLinks(false);
     }, [location.pathname]);
+
+    const hasAdminAccess = () => {
+        return userRoles.some(role => ['admin:access', 'moderator:access'].includes(role));
+    };
 
     const handleNavClick = (path) => {
     if (location.pathname !== path) {
@@ -179,7 +208,11 @@ const Header = () => {
     if (isLoading) {
         return <div>{PageLoader}</div>;
     }
-
+    
+    // Add 'Admin' link if user has access
+    if (hasAdminAccess()) {
+        links.push('Admin');
+    }
 
     return (
         <div className={styles.headerWrapper}>
@@ -377,14 +410,7 @@ const Header = () => {
 
                 {/* Links */}
                 <div className={`${styles.linksContainer} ${isMobile && showMobileLinks ? styles.active : ""}`}>
-                    {[
-                        'Home',
-                        'Marketplace',
-                        'Feed',
-                        'Community',
-                        'Become A Seller',
-                        'Friends',
-                    ].map((link) => (
+                    {links.map((link) => (
                         <a
                             key={link}
                             href={`/${link}`}

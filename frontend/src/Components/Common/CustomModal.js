@@ -5,8 +5,9 @@ import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "react-bootstrap";
 import CommentSection from "./CommentSection";
-import { FaThumbsUp, FaShare, FaHeart, FaRegHeart } from 'react-icons/fa';
+import { FaThumbsUp, FaShare, FaHeart, FaRegHeart, FaFlag } from 'react-icons/fa';
 import { Modal, Form } from "react-bootstrap";
+import ReportModal from "./ReportModal";
 
 export const CustomModal = ({ 
   video,
@@ -39,6 +40,9 @@ export const CustomModal = ({
   const [communities, setCommunities] = useState([]);
 
   const navigate = useNavigate();
+
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportingItemId, setReportingItemId] = useState(null);
 
   useEffect(() => {
     if (selectedCard?.post_id) {
@@ -415,6 +419,41 @@ export const CustomModal = ({
     }
   };
 
+  const handleReportClick = () => {
+    // setReportingItemId(currUserId);
+     setShowReportModal(true);
+ };
+
+  const submitReport = async (reason, description) => {
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/reports`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          type: 'post',
+          reportedItemId: post_id,
+          reason,
+          description
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit report');
+      }
+
+      setShowReportModal(false);
+      setReportingItemId(null);
+      alert('Report submitted successfully');
+    } catch (error) {
+      console.error('Error reporting comment:', error);
+      alert('Failed to submit report');
+    }
+  };
+
   return (
     <div className={styles.modalOverlay} onClick={onHide}>
       <div className={`${styles.modalContent}`} onClick={(e) => e.stopPropagation()}>
@@ -448,6 +487,24 @@ export const CustomModal = ({
                       ✏️ Edit
                     </Button>
                   )}
+                    {user?.sub != authorId && (                     
+                      <>
+                        <Button
+                            variant="light"
+                            className={`${styles.button}`} style={{ color: isShared ? 'green' : 'gray' }}
+                            onClick={handleReportClick}>
+
+                            <FaFlag style={{ marginRight: '5px' }} />
+                            Report Post
+                        </Button>
+                    </>
+                  )}
+                      <ReportModal 
+                        show={showReportModal}
+                        onHide={() => setShowReportModal(false)}
+                        onSubmit={submitReport}
+                        itemType="User"
+                      />
                 </div>
                 <div className={styles.CommentSection}>
                   <CommentSection selectedPostId={selectedCard.post_id} userId={user?.sub} />
