@@ -2,8 +2,30 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { debounce } from 'lodash'; // Import debounce from lodash
+import { debounce } from 'lodash';
 import styles from './MessagesPage.module.css';
+
+// PostPreview component using CSS classes from MessagesPage.module.css
+const PostPreview = ({ post, onClick }) => (
+  <div className={styles.postPreview} onClick={onClick}>
+    {post.image && (
+      <img src={post.image} alt={post.title || 'Post'} />
+    )}
+    <div style={{ textAlign: 'left' }}>
+      <div className={styles.authorContainer}>
+        {post.profile && (
+          <img
+            src={post.profile}
+            alt={post.author || 'Author'}
+          />
+        )}
+        <span>{post.author || 'Unknown Author'}</span>
+      </div>
+      <h4>{post.title || 'Untitled Post'}</h4>
+      <p>{post.content ? post.content.substring(0, 70) + '...' : 'No description'}</p>
+    </div>
+  </div>
+);
 
 const MessagesPage = () => {
   const { user, getAccessTokenSilently, isLoading: authLoading } = useAuth0();
@@ -17,6 +39,7 @@ const MessagesPage = () => {
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isUserNearBottom, setIsUserNearBottom] = useState(true);
+  const [postCache, setPostCache] = useState({});
 
   const conversationOrderRef = useRef(new Map());
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -86,6 +109,27 @@ const MessagesPage = () => {
     return await Promise.all(promises);
   };
 
+  const fetchPostMetadata = async (postId) => {
+    if (postCache[postId]) {
+      console.log(`Cache hit for post ${postId}:`, postCache[postId]);
+      return postCache[postId];
+    }
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await axios.get(
+        `${BACKEND_URL}/api/feed/post/${postId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const postData = response.data;
+      console.log(`Fetched post ${postId}:`, postData);
+      setPostCache((prev) => ({ ...prev, [postId]: postData }));
+      return postData;
+    } catch (error) {
+      console.error(`Error fetching post metadata for post_id ${postId}:`, error);
+      return null;
+    }
+  };
+
   const fetchConversationsDebounced = useRef(
     debounce(async (isPolling = false) => {
       if (!isPolling) setIsLoadingConversations(true);
@@ -151,7 +195,7 @@ const MessagesPage = () => {
       } finally {
         if (!isPolling) setIsLoadingConversations(false);
       }
-    }, 500) // Debounce with 500ms delay
+    }, 500)
   ).current;
 
   useEffect(() => {
@@ -220,8 +264,19 @@ const MessagesPage = () => {
   };
 
   useEffect(() => {
-    if (messages.length > 0 && isUserNearBottom) {
-      forceScrollToBottom();
+    if (messages.length > 0) {
+      const postIds = messages
+        .map((msg) => msg.content.match(/\/feed\?post_id=(\d+)/)?.[1])
+        .filter(Boolean);
+      console.log('Extracted post IDs:', postIds);
+      postIds.forEach((postId) => {
+        if (!postCache[postId]) {
+          fetchPostMetadata(postId);
+        }
+      });
+      if (isUserNearBottom) {
+        forceScrollToBottom();
+      }
     }
   }, [messages, isUserNearBottom]);
 
@@ -254,27 +309,50 @@ const MessagesPage = () => {
   };
 
   const renderMessageContent = (content) => {
-    console.log('Rendering content:', content);
-    const pathRegex = /(\/feed\?post_id=\d+)/g;
-    const parts = content.split(pathRegex);
-    console.log('Split parts:', parts);
-    return parts.map((part, index) => {
-      if (pathRegex.test(part)) {
-        return (
-          <span
-            key={index}
-            style={{ color: 'blue', textDecoration: 'underline', cursor: 'pointer' }}
-            onClick={() => {
-              console.log('Navigating to:', part);
-              navigate(part);
-            }}
-          >
-            {part}
-          </span>
-        );
+    const pathRegex = /\/feed\?post_id=(\d+)/g;
+    console.log('Content:', content);
+
+    const matches = [...content.matchAll(pathRegex)];
+    console.log('Matches:', matches);
+
+    if (!matches.length) {
+      return <span>{content}</span>;
+    }
+
+    let lastIndex = 0;
+    const elements = [];
+
+    matches.forEach((match, i) => {
+      const fullMatch = match[0];
+      const postId = match[1];
+      const startIndex = match.index;
+
+      if (startIndex > lastIndex) {
+        elements.push(<span key={`text-${i}`}>{content.slice(lastIndex, startIndex)}</span>);
       }
-      return <span key={index}>{part}</span>;
+
+      const postData = postCache[postId];
+      console.log('Post ID:', postId, 'Post Data:', postData);
+      elements.push(
+        postData ? (
+          <PostPreview
+            key={`preview-${i}`}
+            post={postData}
+            onClick={() => navigate(`/feed?post_id=${postId}`)}
+          />
+        ) : (
+          <span key={`loading-${i}`}>Loading preview...</span>
+        )
+      );
+
+      lastIndex = startIndex + fullMatch.length;
     });
+
+    if (lastIndex < content.length) {
+      elements.push(<span key="text-end">{content.slice(lastIndex)}</span>);
+    }
+
+    return elements;
   };
 
   return (
