@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAllListings, createItemListing, createServiceListing, getFavoritedListings, getCommunityListings, uploadImages, getAllCategories, editListing, deleteListing, getListingCount, getAllUserListings, getUserListingsCount, getSimilarListings, getAUsersListings } from '../controllers/listingsController.js';
+import { getAllListings, getListingById, createItemListing, createServiceListing, getFavoritedListings, getCommunityListings, uploadImages, getAllCategories, editListing, deleteListing, getListingCount, getAllUserListings, getUserListingsCount, getSimilarListings, getAUsersListings } from '../controllers/listingsController.js';
 import upload from '../middleware/multer.js';
 
 const router = express.Router();
@@ -43,6 +43,9 @@ router.put('/listings/:id/edit', editListing);
 
 // route to delete a listing 
 router.delete('/listings/:id/delete', deleteListing);
+
+//geting list by id 
+router.get('/listings/:listingId', getListingById);
 
 export default router;
 

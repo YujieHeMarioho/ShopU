@@ -19,7 +19,7 @@ const PostPreview = ({ post, onClick }) => (
       maxWidth: '400px',
       width: '100%',
       display: 'flex',
-      flexDirection: 'column', // Vertical layout
+      flexDirection: 'column',
       transition: 'transform 0.2s ease, box-shadow 0.2s ease',
     }}
   >
@@ -28,12 +28,12 @@ const PostPreview = ({ post, onClick }) => (
         src={post.image}
         alt={post.title || 'Post'}
         style={{
-          width: '100%', // Full width of the card
-          maxHeight: '200px', // Larger image height
+          width: '100%',
+          maxHeight: '200px',
           objectFit: 'cover',
-          borderRadius: '8px 8px 0 0', // Rounded only at the top
+          borderRadius: '8px 8px 0 0',
           boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)',
-          marginBottom: '15px', // Space below image
+          marginBottom: '15px',
         }}
       />
     )}
@@ -87,6 +87,89 @@ const PostPreview = ({ post, onClick }) => (
   </div>
 );
 
+const OfferCard = ({ listing, offerPrice, onClick }) => (
+  <div
+    className="post-preview"
+    onClick={onClick}
+    style={{
+      border: 'none',
+      borderRadius: '12px',
+      padding: '15px',
+      margin: '10px 0',
+      background: 'linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%)',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+      cursor: 'pointer',
+      maxWidth: '400px',
+      width: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+    }}
+  >
+    {listing.file_keys && listing.file_keys[0] && (
+      <img
+        src={listing.file_keys[0]}
+        alt={listing.title || 'Listing'}
+        style={{
+          width: '100%',
+          maxHeight: '200px',
+          objectFit: 'cover',
+          borderRadius: '8px 8px 0 0',
+          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)',
+          marginBottom: '15px',
+        }}
+      />
+    )}
+    <div style={{ textAlign: 'left' }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+        {listing.profile && (
+          <img
+            src={listing.profile}
+            alt={listing.author || 'Seller'}
+            style={{
+              width: '30px',
+              height: '30px',
+              borderRadius: '50%',
+              marginRight: '10px',
+              border: '2px solid #3498db',
+            }}
+          />
+        )}
+        <span
+          style={{
+            fontSize: '14px',
+            fontWeight: '500',
+            color: '#2980b9',
+          }}
+        >
+          {listing.author || 'Unknown Seller'}
+        </span>
+      </div>
+      <h4
+        style={{
+          margin: '0 0 5px 0',
+          fontSize: '18px',
+          fontWeight: '600',
+          color: '#2c3e50',
+          textShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+        }}
+      >
+        {listing.title || 'Untitled Listing'}
+      </h4>
+      <p
+        style={{
+          margin: '0',
+          fontSize: '14px',
+          color: '#7f8c8d',
+          lineHeight: '1.4',
+        }}
+      >
+        Offered Price: ${offerPrice}
+      </p>
+    </div>
+  </div>
+);
+
 const ChatContent = () => {
   const { conversation_id } = useParams();
   const { user, getAccessTokenSilently } = useAuth0();
@@ -97,6 +180,7 @@ const ChatContent = () => {
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [isUserNearBottom, setIsUserNearBottom] = useState(true);
   const [postCache, setPostCache] = useState({});
+  const [listingCache, setListingCache] = useState({});
   const messagesContainerRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -120,6 +204,7 @@ const ChatContent = () => {
         `${process.env.REACT_APP_BACKEND_URL}/api/messages/${conversation_id}/messages`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      console.log('Fetched messages full response:', response.data);
       setMessages(response.data);
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -147,6 +232,27 @@ const ChatContent = () => {
     }
   };
 
+  const fetchListingMetadata = async (listingId) => {
+    if (listingCache[listingId]) {
+      console.log(`Cache hit for listing ${listingId}:`, listingCache[listingId]);
+      return listingCache[listingId];
+    }
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await axios.get(
+        `${process.env.REACT_APP_BACKEND_URL}/api/listings/${listingId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const listingData = response.data;
+      console.log(`Fetched listing ${listingId}:`, listingData);
+      setListingCache((prev) => ({ ...prev, [listingId]: listingData }));
+      return listingData;
+    } catch (error) {
+      console.error(`Error fetching listing metadata for listing_id ${listingId}:`, error);
+      return null;
+    }
+  };
+
   useEffect(() => {
     setIsFirstLoad(true);
     const initialFetch = async () => {
@@ -155,19 +261,38 @@ const ChatContent = () => {
     initialFetch();
     const intervalId = setInterval(fetchMessages, 2000);
     return () => clearInterval(intervalId);
-  }, [conversation_id, getAccessTokenSilently]);
+  }, [conversation_id]);
 
   useEffect(() => {
     if (messages.length > 0) {
       const postIds = messages
         .map((msg) => msg.content.match(/\/feed\?post_id=(\d+)/)?.[1])
         .filter(Boolean);
+      const listingIds = messages
+        .map((msg) => msg.content.match(/http:\/\/localhost:3000\/marketplace\?listingId=(\d+)/)?.[1])
+        .filter(Boolean);
+
       console.log('Extracted post IDs:', postIds);
-      postIds.forEach((postId) => {
-        if (!postCache[postId]) {
-          fetchPostMetadata(postId);
-        }
-      });
+      console.log('Extracted listing IDs:', listingIds);
+
+      if (postIds.length > 0) {
+        postIds.forEach((postId) => {
+          if (!postCache[postId]) {
+            fetchPostMetadata(postId);
+          }
+        });
+      }
+
+      if (listingIds.length > 0) {
+        console.log('Fetching listings for IDs:', listingIds);
+        listingIds.forEach((listingId) => {
+          if (!listingCache[listingId]) {
+            console.log('Calling fetchListingMetadata for:', listingId);
+            fetchListingMetadata(listingId);
+          }
+        });
+      }
+
       if (isFirstLoad) {
         scrollToBottom();
         setIsFirstLoad(false);
@@ -186,7 +311,7 @@ const ChatContent = () => {
         { senderId: user.sub, content: newMessage },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setMessages((prev) => [...prev, response.data]); // Fixed syntax
+      setMessages((prev) => [...prev, response.data]);
       if (isUserNearBottom) scrollToBottom();
       setNewMessage('');
     } catch (error) {
@@ -201,20 +326,48 @@ const ChatContent = () => {
     }
   };
 
-  const renderMessageContent = (content) => {
-    const pathRegex = /\/feed\?post_id=(\d+)/g;
-    console.log('Content:', content);
+  const renderMessageContent = (message) => {
+    const { content, offer_price } = message;
+    console.log('Rendering content:', content);
 
-    const matches = [...content.matchAll(pathRegex)];
-    console.log('Matches:', matches);
+    const feedRegex = /\/feed\?post_id=(\d+)/g;
+    const marketplaceRegex = /http:\/\/localhost:3000\/marketplace\?listingId=(\d+)/g;
 
+    const marketplaceMatch = content.match(marketplaceRegex);
+    console.log('Marketplace match:', marketplaceMatch);
+    if (marketplaceMatch) {
+      const fullUrl = marketplaceMatch[0]; // Capture full URL
+      const listingId = fullUrl.match(/listingId=(\d+)/)[1];
+      const listing = listingCache[listingId] || {};
+      console.log('Listing data for card:', listing);
+      const parts = content.split(fullUrl); // Split by full URL
+      console.log('Content parts:', parts);
+      return parts.map((part, index) => {
+        if (index === parts.length - 1 && part === '') {
+          return null; // Skip empty trailing part
+        }
+        return (
+          <React.Fragment key={index}>
+            <span>{part}</span>
+            {index === 0 && (
+              <OfferCard
+                listing={listing}
+                offerPrice={offer_price || 'N/A'}
+                onClick={() => navigate(`/marketplace?listingId=${listingId}`)}
+              />
+            )}
+          </React.Fragment>
+        );
+      });
+    }
+
+    const matches = [...content.matchAll(feedRegex)];
     if (!matches.length) {
       return <span>{content}</span>;
     }
 
     let lastIndex = 0;
     const elements = [];
-
     matches.forEach((match, i) => {
       const fullMatch = match[0];
       const postId = match[1];
@@ -225,7 +378,6 @@ const ChatContent = () => {
       }
 
       const postData = postCache[postId];
-      console.log('Post ID:', postId, 'Post Data:', postData);
       elements.push(
         postData ? (
           <PostPreview
@@ -262,7 +414,7 @@ const ChatContent = () => {
           return (
             <div key={message.message_id} className={isSent ? 'sent' : 'received'}>
               <div className="message-bubble">
-                <p>{renderMessageContent(message.content)}</p>
+                <p>{renderMessageContent(message)}</p>
                 <span className="message-time">
                   {new Date(message.created_at).toLocaleTimeString([], {
                     hour: '2-digit',

@@ -5,7 +5,7 @@ import axios from 'axios';
 import { debounce } from 'lodash';
 import styles from './MessagesPage.module.css';
 
-// PostPreview component using CSS classes from MessagesPage.module.css
+// PostPreview component for shared posts from feed
 const PostPreview = ({ post, onClick }) => (
   <div className={styles.postPreview} onClick={onClick}>
     {post.image && (
@@ -14,10 +14,7 @@ const PostPreview = ({ post, onClick }) => (
     <div style={{ textAlign: 'left' }}>
       <div className={styles.authorContainer}>
         {post.profile && (
-          <img
-            src={post.profile}
-            alt={post.author || 'Author'}
-          />
+          <img src={post.profile} alt={post.author || 'Author'} />
         )}
         <span>{post.author || 'Unknown Author'}</span>
       </div>
@@ -50,9 +47,7 @@ const MessagesPage = () => {
 
   const forceScrollToBottom = () => {
     const container = messagesContainerRef.current;
-    if (container) {
-      container.scrollTop = container.scrollHeight;
-    }
+    if (container) container.scrollTop = container.scrollHeight;
   };
 
   const handleScroll = () => {
@@ -73,28 +68,16 @@ const MessagesPage = () => {
       })
       .then((response) => {
         const pictureFromAPI = response.data.picture;
-        const validPicture =
-          pictureFromAPI && pictureFromAPI.trim() !== ''
-            ? pictureFromAPI
-            : 'https://via.placeholder.com/40';
-        const name =
-          response.data.name && response.data.name.trim() !== ''
-            ? response.data.name
-            : userId;
-        const userData = {
-          username: name,
-          picture: validPicture,
-        };
+        const validPicture = pictureFromAPI && pictureFromAPI.trim() !== '' ? pictureFromAPI : 'https://via.placeholder.com/40';
+        const name = response.data.name && response.data.name.trim() !== '' ? response.data.name : userId;
+        const userData = { username: name, picture: validPicture };
         userCache.current[userId] = userData;
         delete userCachePromise.current[userId];
         return userData;
       })
       .catch((error) => {
         console.error(`Failed to fetch details for user ${userId}:`, error);
-        const fallback = {
-          username: userId,
-          picture: 'https://via.placeholder.com/40',
-        };
+        const fallback = { username: userId, picture: 'https://via.placeholder.com/40' };
         userCache.current[userId] = fallback;
         delete userCachePromise.current[userId];
         return fallback;
@@ -110,10 +93,7 @@ const MessagesPage = () => {
   };
 
   const fetchPostMetadata = async (postId) => {
-    if (postCache[postId]) {
-      console.log(`Cache hit for post ${postId}:`, postCache[postId]);
-      return postCache[postId];
-    }
+    if (postCache[postId]) return postCache[postId];
     try {
       const token = await getAccessTokenSilently();
       const response = await axios.get(
@@ -138,11 +118,10 @@ const MessagesPage = () => {
       );
       const messages = response.data;
       if (messages.length > 0) {
-        // Sort messages by created_at and get the latest
         const latestMessage = messages.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
         return latestMessage.created_at;
       }
-      return null; // No messages yet
+      return null;
     } catch (error) {
       console.error(`Error fetching messages for conversation ${conversationId}:`, error);
       return null;
@@ -171,7 +150,6 @@ const MessagesPage = () => {
           userIdToDetailsMap[id] = userDetailsList[idx];
         });
 
-        // Fetch latest message timestamps for all conversations
         const timestampPromises = data.map(async (conv) => {
           const timestamp = await fetchLatestMessageTimestamp(conv.conversation_id, token);
           return { conversation_id: conv.conversation_id, timestamp };
@@ -203,11 +181,10 @@ const MessagesPage = () => {
           };
         });
 
-        // Sort by last_message_timestamp (newest first)
         enhancedConvs.sort((a, b) => {
           const timeA = a.last_message_timestamp ? new Date(a.last_message_timestamp).getTime() : 0;
           const timeB = b.last_message_timestamp ? new Date(b.last_message_timestamp).getTime() : 0;
-          return timeB - timeA; // Descending order (newest first)
+          return timeB - timeA;
         });
 
         setConversations(enhancedConvs);
@@ -225,7 +202,7 @@ const MessagesPage = () => {
     if (!authLoading && user && user.sub) {
       fetchConversationsDebounced();
     }
-  }, [authLoading, user, getAccessTokenSilently, BACKEND_URL]);
+  }, [authLoading, user]);
 
   useEffect(() => {
     if (!authLoading && user && user.sub) {
@@ -234,7 +211,7 @@ const MessagesPage = () => {
       }, 2000);
       return () => clearInterval(intervalId);
     }
-  }, [authLoading, user, getAccessTokenSilently, BACKEND_URL, selectedConversation]);
+  }, [authLoading, user]);
 
   const fetchMessagesForConversation = async (conversationId, isPolling = false) => {
     if (!isPolling) setIsLoadingMessages(true);
@@ -245,6 +222,14 @@ const MessagesPage = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setMessages(response.data);
+
+      const postIds = response.data
+        .map((msg) => msg.content.match(/\/feed\?post_id=(\d+)/)?.[1])
+        .filter(Boolean);
+      if (postIds.length > 0) {
+        await Promise.all(postIds.map((id) => fetchPostMetadata(id)));
+      }
+
       setError(null);
     } catch (err) {
       console.error('Error fetching messages:', err);
@@ -257,14 +242,11 @@ const MessagesPage = () => {
   const markConversationAsRead = async (conversationId) => {
     try {
       const token = await getAccessTokenSilently();
-      const url = `${BACKEND_URL}/api/messages/${conversationId}/mark-read`;
-      console.log('Marking conversation as read at:', url, 'for user', user.sub);
-      const response = await axios.post(
-        url,
+      await axios.post(
+        `${BACKEND_URL}/api/messages/${conversationId}/mark-read`,
         { userId: user.sub },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      console.log('Mark conversation as read response:', response.data);
     } catch (err) {
       console.error('Error marking messages as read:', err);
     }
@@ -287,19 +269,8 @@ const MessagesPage = () => {
   };
 
   useEffect(() => {
-    if (messages.length > 0) {
-      const postIds = messages
-        .map((msg) => msg.content.match(/\/feed\?post_id=(\d+)/)?.[1])
-        .filter(Boolean);
-      console.log('Extracted post IDs:', postIds);
-      postIds.forEach((postId) => {
-        if (!postCache[postId]) {
-          fetchPostMetadata(postId);
-        }
-      });
-      if (isUserNearBottom) {
-        forceScrollToBottom();
-      }
+    if (messages.length > 0 && isUserNearBottom) {
+      forceScrollToBottom();
     }
   }, [messages, isUserNearBottom]);
 
@@ -315,15 +286,11 @@ const MessagesPage = () => {
       setMessages((prev) => [...prev, response.data]);
       setNewMessage('');
       setError(null);
-      if (isUserNearBottom) {
-        forceScrollToBottom();
-      }
-      // Update the timestamp for this conversation immediately
+      if (isUserNearBottom) forceScrollToBottom();
       setLatestMessageTimestamps((prev) => ({
         ...prev,
         [selectedConversation.conversation_id]: response.data.created_at,
       }));
-      // Trigger a fetch to update conversation order
       fetchConversationsDebounced();
     } catch (err) {
       console.error('Error sending message:', err);
@@ -338,51 +305,69 @@ const MessagesPage = () => {
     }
   };
 
-  const renderMessageContent = (content) => {
-    const pathRegex = /\/feed\?post_id=(\d+)/g;
-    console.log('Content:', content);
+  const renderMessageContent = (message) => {
+    const { content } = message;
+    const urlRegex = /(http:\/\/localhost:3000\/marketplace\?listingId=\d+)/g;
 
-    const matches = [...content.matchAll(pathRegex)];
-    console.log('Matches:', matches);
-
-    if (!matches.length) {
-      return <span>{content}</span>;
-    }
-
-    let lastIndex = 0;
-    const elements = [];
-
-    matches.forEach((match, i) => {
-      const fullMatch = match[0];
-      const postId = match[1];
-      const startIndex = match.index;
-
-      if (startIndex > lastIndex) {
-        elements.push(<span key={`text-${i}`}>{content.slice(lastIndex, startIndex)}</span>);
+    const parts = content.split(urlRegex);
+    if (parts.length === 1) {
+      const feedMatches = [...content.matchAll(/\/feed\?post_id=(\d+)/g)];
+      if (!feedMatches.length) {
+        return <span>{content}</span>;
       }
 
-      const postData = postCache[postId];
-      console.log('Post ID:', postId, 'Post Data:', postData);
-      elements.push(
-        postData ? (
-          <PostPreview
-            key={`preview-${i}`}
-            post={postData}
-            onClick={() => navigate(`/feed?post_id=${postId}`)}
-          />
-        ) : (
-          <span key={`loading-${i}`}>Loading preview...</span>
-        )
-      );
+      let lastIndex = 0;
+      const elements = [];
+      feedMatches.forEach((match, i) => {
+        const fullMatch = match[0];
+        const postId = match[1];
+        const startIndex = match.index;
 
-      lastIndex = startIndex + fullMatch.length;
-    });
+        if (startIndex > lastIndex) {
+          elements.push(<span key={`text-${i}`}>{content.slice(lastIndex, startIndex)}</span>);
+        }
 
-    if (lastIndex < content.length) {
-      elements.push(<span key="text-end">{content.slice(lastIndex)}</span>);
+        const postData = postCache[postId];
+        elements.push(
+          postData ? (
+            <PostPreview
+              key={`preview-${i}`}
+              post={postData}
+              onClick={() => navigate(`/feed?post_id=${postId}`)}
+            />
+          ) : (
+            <span key={`loading-${i}`}>Loading preview...</span>
+          )
+        );
+
+        lastIndex = startIndex + fullMatch.length;
+      });
+
+      if (lastIndex < content.length) {
+        elements.push(<span key="text-end">{content.slice(lastIndex)}</span>);
+      }
+      return elements;
     }
 
-    return elements;
+    return parts.map((part, index) => {
+      if (urlRegex.test(part)) {
+        const listingId = part.match(/listingId=(\d+)/)?.[1];
+        return (
+          <a
+            key={index}
+            href={part}
+            onClick={(e) => {
+              e.preventDefault();
+              navigate(`/marketplace?listingId=${listingId}`);
+            }}
+            style={{ color: '#007bff', textDecoration: 'underline', cursor: 'pointer' }}
+          >
+            {part}
+          </a>
+        );
+      }
+      return <span key={index}>{part}</span>;
+    });
   };
 
   return (
@@ -444,7 +429,7 @@ const MessagesPage = () => {
                   return (
                     <div key={message.message_id} className={isSent ? styles.sent : styles.received}>
                       <div className={styles.messageBubble}>
-                        <p>{renderMessageContent(message.content)}</p>
+                        <p>{renderMessageContent(message)}</p>
                         <span className={styles.messageTime}>
                           {new Date(message.created_at).toLocaleTimeString([], {
                             hour: '2-digit',
