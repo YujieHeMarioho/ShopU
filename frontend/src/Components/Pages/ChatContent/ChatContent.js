@@ -5,167 +5,37 @@ import axios from 'axios';
 import './ChatContent.css';
 
 const PostPreview = ({ post, onClick }) => (
-  <div
-    className="post-preview"
-    onClick={onClick}
-    style={{
-      border: 'none',
-      borderRadius: '12px',
-      padding: '15px',
-      margin: '10px 0',
-      background: 'linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%)',
-      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-      cursor: 'pointer',
-      maxWidth: '400px',
-      width: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-    }}
-  >
+  <div className="post-preview" onClick={onClick}>
     {post.image && (
-      <img
-        src={post.image}
-        alt={post.title || 'Post'}
-        style={{
-          width: '100%',
-          maxHeight: '200px',
-          objectFit: 'cover',
-          borderRadius: '8px 8px 0 0',
-          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)',
-          marginBottom: '15px',
-        }}
-      />
+      <img src={post.image} alt={post.title || 'Post'} />
     )}
     <div style={{ textAlign: 'left' }}>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+      <div className="author-container">
         {post.profile && (
-          <img
-            src={post.profile}
-            alt={post.author || 'Author'}
-            style={{
-              width: '30px',
-              height: '30px',
-              borderRadius: '50%',
-              marginRight: '10px',
-              border: '2px solid #3498db',
-            }}
-          />
+          <img src={post.profile} alt={post.author || 'Author'} />
         )}
-        <span
-          style={{
-            fontSize: '14px',
-            fontWeight: '500',
-            color: '#2980b9',
-          }}
-        >
-          {post.author || 'Unknown Author'}
-        </span>
+        <span>{post.author || 'Unknown Author'}</span>
       </div>
-      <h4
-        style={{
-          margin: '0 0 5px 0',
-          fontSize: '18px',
-          fontWeight: '600',
-          color: '#2c3e50',
-          textShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
-        }}
-      >
-        {post.title || 'Untitled Post'}
-      </h4>
-      <p
-        style={{
-          margin: '0',
-          fontSize: '14px',
-          color: '#7f8c8d',
-          lineHeight: '1.4',
-        }}
-      >
-        {post.content ? post.content.substring(0, 70) + '...' : 'No description'}
-      </p>
+      <h4>{post.title || 'Untitled Post'}</h4>
+      <p>{post.content ? post.content.substring(0, 70) + '...' : 'No description'}</p>
     </div>
   </div>
 );
 
 const OfferCard = ({ listing, offerPrice, onClick }) => (
-  <div
-    className="post-preview"
-    onClick={onClick}
-    style={{
-      border: 'none',
-      borderRadius: '12px',
-      padding: '15px',
-      margin: '10px 0',
-      background: 'linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%)',
-      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-      cursor: 'pointer',
-      maxWidth: '400px',
-      width: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-    }}
-  >
+  <div className="post-preview" onClick={onClick}>
     {listing.file_keys && listing.file_keys[0] && (
-      <img
-        src={listing.file_keys[0]}
-        alt={listing.title || 'Listing'}
-        style={{
-          width: '100%',
-          maxHeight: '200px',
-          objectFit: 'cover',
-          borderRadius: '8px 8px 0 0',
-          boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)',
-          marginBottom: '15px',
-        }}
-      />
+      <img src={listing.file_keys[0]} alt={listing.title || 'Listing'} />
     )}
     <div style={{ textAlign: 'left' }}>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+      <div className="author-container">
         {listing.profile && (
-          <img
-            src={listing.profile}
-            alt={listing.author || 'Seller'}
-            style={{
-              width: '30px',
-              height: '30px',
-              borderRadius: '50%',
-              marginRight: '10px',
-              border: '2px solid #3498db',
-            }}
-          />
+          <img src={listing.profile} alt={listing.author || 'Seller'} />
         )}
-        <span
-          style={{
-            fontSize: '14px',
-            fontWeight: '500',
-            color: '#2980b9',
-          }}
-        >
-          {listing.author || 'Unknown Seller'}
-        </span>
+        <span>{listing.author || 'Unknown Seller'}</span>
       </div>
-      <h4
-        style={{
-          margin: '0 0 5px 0',
-          fontSize: '18px',
-          fontWeight: '600',
-          color: '#2c3e50',
-          textShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
-        }}
-      >
-        {listing.title || 'Untitled Listing'}
-      </h4>
-      <p
-        style={{
-          margin: '0',
-          fontSize: '14px',
-          color: '#7f8c8d',
-          lineHeight: '1.4',
-        }}
-      >
-        Offered Price: ${offerPrice}
-      </p>
+      <h4>{listing.title || 'Untitled Listing'}</h4>
+      <p>Offered Price: ${offerPrice}</p>
     </div>
   </div>
 );
@@ -290,11 +160,11 @@ const ChatContent = () => {
         });
       }
 
+      if (isFirstLoad || isUserNearBottom) {
+        scrollToBottom();
+      }
       if (isFirstLoad) {
-        scrollToBottom();
         setIsFirstLoad(false);
-      } else if (isUserNearBottom) {
-        scrollToBottom();
       }
     }
   }, [messages, isFirstLoad, isUserNearBottom]);
@@ -309,8 +179,8 @@ const ChatContent = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setMessages((prev) => [...prev, response.data]);
-      if (isUserNearBottom) scrollToBottom();
       setNewMessage('');
+      scrollToBottom(); // Always scroll to bottom after sending
     } catch (error) {
       console.error('Error sending message:', error);
     }
@@ -331,17 +201,14 @@ const ChatContent = () => {
     const marketplaceRegex = /http:\/\/localhost:3000\/marketplace\?listingId=(\d+)/g;
 
     const marketplaceMatch = content.match(marketplaceRegex);
-    console.log('Marketplace match:', marketplaceMatch);
     if (marketplaceMatch) {
-      const fullUrl = marketplaceMatch[0]; // Capture full URL
+      const fullUrl = marketplaceMatch[0];
       const listingId = fullUrl.match(/listingId=(\d+)/)[1];
       const listing = listingCache[listingId] || {};
-      console.log('Listing data for card:', listing);
-      const parts = content.split(fullUrl); // Split by full URL
-      console.log('Content parts:', parts);
+      const parts = content.split(fullUrl);
       return parts.map((part, index) => {
         if (index === parts.length - 1 && part === '') {
-          return null; // Skip empty trailing part
+          return null;
         }
         return (
           <React.Fragment key={index}>
@@ -400,12 +267,7 @@ const ChatContent = () => {
   return (
     <div className="chat-content">
       <h3>Chat</h3>
-      <div
-        className="messages"
-        ref={messagesContainerRef}
-        onScroll={handleScroll}
-        style={{ height: '400px', overflowY: 'auto', border: '1px solid #ccc' }}
-      >
+      <div className="messages" ref={messagesContainerRef} onScroll={handleScroll}>
         {messages.map((message) => {
           const isSent = message.sender_id?.toLowerCase() === user.sub.toLowerCase();
           return (

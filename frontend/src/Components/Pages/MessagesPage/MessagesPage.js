@@ -113,10 +113,7 @@ const MessagesPage = () => {
   };
 
   const fetchPostMetadata = async (postId) => {
-    if (postCache[postId]) {
-      console.log(`Cache hit for post ${postId}:`, postCache[postId]);
-      return postCache[postId];
-    }
+    if (postCache[postId]) return postCache[postId];
     try {
       const token = await getAccessTokenSilently();
       const response = await axios.get(
@@ -182,7 +179,6 @@ const MessagesPage = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const data = response.data;
-        console.log('Conversations fetched:', data);
 
         const otherUserIds = data.map((conv) =>
           conv.user1_id.toLowerCase() === user.sub.toLowerCase() ? conv.user2_id : conv.user1_id
@@ -251,7 +247,7 @@ const MessagesPage = () => {
   useEffect(() => {
     if (!authLoading && user && user.sub) {
       const intervalId = setInterval(() => {
-        fetchConversationsDebounced(true);
+        fetchConversationsDebounced(true); // Background polling
       }, 2000);
       return () => clearInterval(intervalId);
     }
@@ -338,11 +334,29 @@ const MessagesPage = () => {
       setNewMessage('');
       setError(null);
       if (isUserNearBottom) forceScrollToBottom();
+
+      // Update the conversation locally instead of re-fetching
+      setConversations((prev) =>
+        prev.map((conv) =>
+          conv.conversation_id === selectedConversation.conversation_id
+            ? {
+                ...conv,
+                last_message_timestamp: response.data.created_at,
+                unread_count: 0, // Reset unread count for the selected conversation
+              }
+            : conv
+        ).sort((a, b) => {
+          const timeA = a.last_message_timestamp ? new Date(a.last_message_timestamp).getTime() : 0;
+          const timeB = b.last_message_timestamp ? new Date(b.last_message_timestamp).getTime() : 0;
+          return timeB - timeA;
+        })
+      );
+
       setLatestMessageTimestamps((prev) => ({
         ...prev,
         [selectedConversation.conversation_id]: response.data.created_at,
       }));
-      fetchConversationsDebounced();
+      // Removed fetchConversationsDebounced() to prevent refresh
     } catch (err) {
       console.error('Error sending message:', err);
       setError('Failed to send message. Please try again.');
@@ -369,9 +383,7 @@ const MessagesPage = () => {
       const listing = listingCache[listingId] || {};
       const parts = content.split(fullUrl);
       return parts.map((part, index) => {
-        if (index === parts.length - 1 && part === '') {
-          return null; // Skip empty trailing part
-        }
+        if (index === parts.length - 1 && part === '') return null;
         return (
           <React.Fragment key={index}>
             <span>{part}</span>

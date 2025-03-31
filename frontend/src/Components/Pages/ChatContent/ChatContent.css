@@ -2,108 +2,130 @@
 
 /* General Layout */
 .chat-content {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    height: 100vh;
     padding: 1rem;
-    background-color: #f9f9f9;
+    background-color: #ffffff;
+    overflow-y: hidden; /* Prevent double scrollbars */
+    border: 2px solid var(--background-color);
 }
 
-h3 {
-    text-align: center;
+.chat-content h3 {
     margin-bottom: 1rem;
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     color: #111827;
 }
 
-/* Messages Container */
 .messages {
-    flex: 1;
     overflow-y: auto;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    background-color: #f9fafb;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    padding: 1rem;
-    background-color: #ffffff;
-    border: 1px solid #ddd;
-    border-radius: 6px;
+    height: 800px; /* Fixed height to make it smaller, adjust as needed */
 }
 
-/* Container for each message */
-.sent,
-.received {
+/* Sent Messages - Container Alignment */
+.messages .sent {
     display: flex;
+    flex-direction: column;
+    align-items: flex-end; /* Aligns content to the right */
+    margin-bottom: 0.5rem;
+    padding: 0; /* Remove padding from container */
 }
 
-/* Align sent messages to the right */
-.sent {
-    justify-content: flex-end;
+/* Sent Messages - Message Bubble */
+.messages .sent .message-bubble {
+    background-color: var(--primary-color); /* Blue background for sent messages */
+    color: white; /* White text */
+    padding: 0.5rem 1rem; /* Reduced padding for a more compact bubble */
+    border-radius: 15px; /* Slightly smaller rounded corners */
+    max-width: 65%; /* Limit the width to 75% */
+    word-wrap: break-word; /* Break long words */
+    white-space: pre-wrap; /* Allow wrapping */
+    display: inline-block; /* Shrink to fit content */
+    margin-bottom: 0.25rem; /* Smaller space between message and timestamp */
+    position: relative;
+    margin-left: auto; /* Align the bubble to the right */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Align received messages to the left */
-.received {
-    justify-content: flex-start;
+/* Sent Messages - Timestamp */
+.messages .sent .message-time {
+    font-size: 0.75rem;
+    color: #ffffff;
+    text-align: right;
+    margin-top: 0.25rem;
 }
 
-/* Message bubble styling */
-.message-bubble {
-    display: inline-block; /* Allows bubble to size based on content */
-    max-width: 50ch; /* Approximately 50 characters */
-    padding: 0.75rem 1rem;
-    border-radius: 15px;
-    font-size: 1rem;
-    line-height: 1.5;
-    overflow-wrap: break-word; /* Wrap words only if necessary */
-    white-space: pre-wrap; /* Preserve whitespace and allow wrapping */
-    word-break: break-word; /* Prevents breaking words unnecessarily */
+/* Received Messages - Container Alignment */
+.messages .received {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Aligns content to the left */
+    margin-bottom: 0.5rem;
+    padding: 0; /* Remove padding from container */
 }
 
-/* Sent message bubble styling */
-.sent .message-bubble {
-    background-color: #2563eb; /* Blue background for sent messages */
-    color: #ffffff; /* White text */
-    border-radius: 15px 15px 0 15px; /* Rounded corners */
+/* Received Messages - Message Bubble */
+.messages .received .message-bubble {
+    background-color: #e5e7eb; /* Light grey background for received messages */
+    color: black; /* Black text */
+    padding: 0.5rem 1rem; /* Reduced padding for a more compact bubble */
+    border-radius: 15px; /* Slightly smaller rounded corners */
+    max-width: 75%; /* Limit the width to 75% */
+    word-wrap: break-word; /* Break long words */
+    white-space: pre-wrap; /* Allow wrapping */
+    display: inline-block; /* Shrink to fit content */
+    margin-bottom: 0.25rem; /* Smaller space between message and timestamp */
+    position: relative;
+    margin-right: auto; /* Align the bubble to the left */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Received message bubble styling */
-.received .message-bubble {
-    background-color: #d1d5db; /* Slightly darker grey for better contrast */
-    color: #000000; /* Black text */
-    border-radius: 15px 15px 15px 0; /* Rounded corners */
-}
-
-/* Timestamp styling */
-.message-time {
+/* Received Messages - Timestamp */
+.messages .received .message-time {
     font-size: 0.75rem;
     color: #6b7280;
+    text-align: left;
     margin-top: 0.25rem;
-    text-align: right; /* Align timestamp to the right inside the bubble */
 }
 
-/* Message input container */
+/* Hover Effect for message bubbles */
+.messages .sent .message-bubble:hover,
+.messages .received .message-bubble:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Slightly stronger shadow on hover */
+    transform: scale(1.02); /* Slight enlargement */
+}
+
+/* Message Input Section */
 .message-input {
     display: flex;
+    align-items: center;
     gap: 1rem;
-    margin-top: 1rem;
 }
 
-/* Input field styling */
 .message-input input {
     flex: 1;
     padding: 0.75rem;
     border: 1px solid #ddd;
     border-radius: 6px;
     font-size: 1rem;
-    resize: none; /* Prevent resizing */
     color: #000000; /* Ensure input text is black */
     background-color: #ffffff; /* White background for input */
 }
 
-/* Send button styling */
 .message-input button {
     padding: 0.75rem 1.5rem;
-    background-color: #2563eb;
-    color: #ffffff;
+    background-color: #28a745; /* Green background for send button */
+    color: #000000; /* Black text */
     border: none;
     border-radius: 6px;
     font-weight: bold;
@@ -111,20 +133,41 @@ h3 {
     transition: background-color 0.2s ease;
 }
 
-/* Send button hover effect */
 .message-input button:hover {
-    background-color: #1e40af;
+    background-color: #218838; /* Darker green on hover */
 }
 
-/* Responsive adjustments for smaller screens */
-@media (max-width: 600px) {
-    .message-bubble {
-        max-width: 90ch; /* Increase max-width on smaller screens */
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .chat-content {
+        height: calc(100vh - 200px);
+    }
+
+    .messages {
+        height: 300px; /* Smaller height on mobile */
+    }
+
+    .messages .sent .message-bubble,
+    .messages .received .message-bubble {
+        max-width: 90%; /* Use more space on smaller screens */
+    }
+
+    .message-input input {
+        font-size: 0.875rem; /* Smaller font size for mobile */
+        padding: 0.5rem;
+    }
+
+    .message-input button {
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    .messages {
+        padding: 0.5rem;
     }
 }
 
-/* the sharing post css */
-
+/* Shared Card Styles */
 .post-preview {
     border: none;
     border-radius: 12px;
@@ -138,53 +181,53 @@ h3 {
     display: flex;
     flex-direction: column;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-  
-  .post-preview:hover {
+}
+
+.post-preview:hover {
     transform: translateY(-3px);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-  }
-  
-  .post-preview img:first-child {
+}
+
+.post-preview img:first-child {
     width: 100%;
     max-height: 200px;
     object-fit: cover;
     border-radius: 8px 8px 0 0;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     margin-bottom: 15px;
-  }
-  
-  .post-preview .author-container {
+}
+
+.post-preview .author-container {
     display: flex;
     align-items: center;
     margin-bottom: 8px;
-  }
-  
-  .post-preview .author-container img {
+}
+
+.post-preview .author-container img {
     width: 30px;
     height: 30px;
     border-radius: 50%;
     margin-right: 10px;
     border: 2px solid #3498db;
-  }
-  
-  .post-preview .author-container span {
+}
+
+.post-preview .author-container span {
     font-size: 14px;
     font-weight: 500;
     color: #2980b9;
-  }
-  
-  .post-preview h4 {
+}
+
+.post-preview h4 {
     margin: 0 0 5px 0;
     font-size: 18px;
     font-weight: 600;
     color: #2c3e50;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  }
-  
-  .post-preview p {
+}
+
+.post-preview p {
     margin: 0;
     font-size: 14px;
     color: #7f8c8d;
     line-height: 1.4;
-  }
+}
