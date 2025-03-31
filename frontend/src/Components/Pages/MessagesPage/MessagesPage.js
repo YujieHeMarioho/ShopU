@@ -57,7 +57,7 @@ const MessagesPage = () => {
   const [isUserNearBottom, setIsUserNearBottom] = useState(true);
   const [postCache, setPostCache] = useState({});
   const [listingCache, setListingCache] = useState({});
-  const [latestMessageTimestamps, setLatestMessageTimestamps] = useState({});
+  const [initialScrollDone, setInitialScrollDone] = useState(false); // New state to control initial render
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
   const userCache = useRef({});
@@ -67,7 +67,10 @@ const MessagesPage = () => {
 
   const forceScrollToBottom = () => {
     const container = messagesContainerRef.current;
-    if (container) container.scrollTop = container.scrollHeight;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+      console.log('Scrolled to bottom, scrollTop:', container.scrollTop, 'scrollHeight:', container.scrollHeight);
+    }
   };
 
   const handleScroll = () => {
@@ -151,24 +154,6 @@ const MessagesPage = () => {
     }
   };
 
-  const fetchLatestMessageTimestamp = async (conversationId, token) => {
-    try {
-      const response = await axios.get(
-        `${BACKEND_URL}/api/messages/${conversationId}/messages`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      const messages = response.data;
-      if (messages.length > 0) {
-        const latestMessage = messages.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
-        return latestMessage.created_at;
-      }
-      return null;
-    } catch (error) {
-      console.error(`Error fetching messages for conversation ${conversationId}:`, error);
-      return null;
-    }
-  };
-
   const fetchConversationsDebounced = useRef(
     debounce(async (isPolling = false) => {
       if (!isPolling) setIsLoadingConversations(true);
@@ -190,17 +175,26 @@ const MessagesPage = () => {
           userIdToDetailsMap[id] = userDetailsList[idx];
         });
 
+        // Fetch latest message timestamps for sorting
         const timestampPromises = data.map(async (conv) => {
-          const timestamp = await fetchLatestMessageTimestamp(conv.conversation_id, token);
-          return { conversation_id: conv.conversation_id, timestamp };
+          const response = await axios.get(
+            `${BACKEND_URL}/api/messages/${conv.conversation_id}/messages`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          const messages = response.data;
+          const latestMessage = messages.length > 0
+            ? messages.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]
+            : null;
+          return {
+            conversation_id: conv.conversation_id,
+            timestamp: latestMessage ? latestMessage.created_at : null,
+          };
         });
         const timestamps = await Promise.all(timestampPromises);
         const timestampMap = timestamps.reduce((acc, { conversation_id, timestamp }) => {
           acc[conversation_id] = timestamp;
           return acc;
         }, {});
-
-        setLatestMessageTimestamps((prev) => ({ ...prev, ...timestampMap }));
 
         const enhancedConvs = data.map((conv) => {
           const otherId =
@@ -221,6 +215,7 @@ const MessagesPage = () => {
           };
         });
 
+        // Sort by last message timestamp (most recent first)
         enhancedConvs.sort((a, b) => {
           const timeA = a.last_message_timestamp ? new Date(a.last_message_timestamp).getTime() : 0;
           const timeB = b.last_message_timestamp ? new Date(b.last_message_timestamp).getTime() : 0;
@@ -247,7 +242,7 @@ const MessagesPage = () => {
   useEffect(() => {
     if (!authLoading && user && user.sub) {
       const intervalId = setInterval(() => {
-        fetchConversationsDebounced(true); // Background polling
+        fetchConversationsDebounced(true);
       }, 2000);
       return () => clearInterval(intervalId);
     }
@@ -262,7 +257,16 @@ const MessagesPage = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setMessages(response.data);
+      setError(null);
+      if (!isPolling) {
+        setInitialScrollDone(false); // Reset for initial load
+        setTimeout(() => {
+          forceScrollToBottom();
+          setInitialScrollDone(true);
+        }, 0); // Ensure scroll happens after render
+      }
 
+      // Fetch metadata for shared content
       const postIds = response.data
         .map((msg) => msg.content.match(/\/feed\?post_id=(\d+)/)?.[1])
         .filter(Boolean);
@@ -276,8 +280,6 @@ const MessagesPage = () => {
       if (listingIds.length > 0) {
         await Promise.all(listingIds.map((id) => fetchListingMetadata(id)));
       }
-
-      setError(null);
     } catch (err) {
       console.error('Error fetching messages:', err);
       setError('Failed to load messages. Please try again.');
@@ -301,6 +303,7 @@ const MessagesPage = () => {
 
   const handleSelectConversation = (conv) => {
     setMessages([]);
+    setInitialScrollDone(false); // Reset scroll state
     setConversations((prev) =>
       prev.map((c) =>
         c.conversation_id === conv.conversation_id ? { ...c, unread_count: 0 } : c
@@ -316,10 +319,10 @@ const MessagesPage = () => {
   };
 
   useEffect(() => {
-    if (messages.length > 0 && isUserNearBottom) {
+    if (messages.length > 0 && isUserNearBottom && !isLoadingMessages) {
       forceScrollToBottom();
     }
-  }, [messages, isUserNearBottom]);
+  }, [messages, isUserNearBottom, isLoadingMessages]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return;
@@ -335,26 +338,19 @@ const MessagesPage = () => {
       setError(null);
       if (isUserNearBottom) forceScrollToBottom();
 
-      setConversations((prev) =>
-        prev.map((conv) =>
-          conv.conversation_id === selectedConversation.conversation_id
-            ? {
-                ...conv,
-                last_message_timestamp: response.data.created_at,
-                unread_count: 0,
-              }
-            : conv
-        ).sort((a, b) => {
-          const timeA = a.last_message_timestamp ? new Date(a.last_message_timestamp).getTime() : 0;
-          const timeB = b.last_message_timestamp ? new Date(b.last_message_timestamp).getTime() : 0;
-          return timeB - timeA;
-        })
-      );
+      // Fetch metadata for shared content in the new message
+      const postIds = [newMessage.match(/\/feed\?post_id=(\d+)/)?.[1]].filter(Boolean);
+      const listingIds = [newMessage.match(/http:\/\/localhost:3000\/marketplace\?listingId=(\d+)/)?.[1]].filter(Boolean);
 
-      setLatestMessageTimestamps((prev) => ({
-        ...prev,
-        [selectedConversation.conversation_id]: response.data.created_at,
-      }));
+      if (postIds.length > 0) {
+        await Promise.all(postIds.map((id) => fetchPostMetadata(id)));
+      }
+      if (listingIds.length > 0) {
+        await Promise.all(listingIds.map((id) => fetchListingMetadata(id)));
+      }
+
+      // Update conversation order after sending a message
+      fetchConversationsDebounced();
     } catch (err) {
       console.error('Error sending message:', err);
       setError('Failed to send message. Please try again.');
@@ -441,7 +437,7 @@ const MessagesPage = () => {
         <h3>Conversations</h3>
         {error && <p className="error-message">{error}</p>}
         {isLoadingConversations ? (
-          <></> // Replace spinner with empty fragment for conversations
+          <></>
         ) : conversations.length === 0 ? (
           <p>No conversations found. Start chatting!</p>
         ) : (
@@ -481,8 +477,8 @@ const MessagesPage = () => {
           <>
             <h3>Chat with {selectedConversation.otherUsername}</h3>
             {isLoadingMessages ? (
-              <></> // Replace spinner with empty fragment for messages
-            ) : (
+              <></>
+            ) : initialScrollDone ? (
               <div
                 className={styles.messages}
                 ref={messagesContainerRef}
@@ -506,7 +502,7 @@ const MessagesPage = () => {
                   );
                 })}
               </div>
-            )}
+            ) : null}
             <div className={styles.messageInput}>
               <input
                 type="text"
