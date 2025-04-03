@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -47,7 +47,8 @@ const MessagesPage = () => {
   const { user, getAccessTokenSilently, isLoading: authLoading } = useAuth0();
   const navigate = useNavigate();
 
-  const [conversations, setConversations] = useState([]);
+  const [displayedConversations, setDisplayedConversations] = useState([]);
+  const [conversationsData, setConversationsData] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
@@ -55,9 +56,8 @@ const MessagesPage = () => {
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isUserNearBottom, setIsUserNearBottom] = useState(true);
-  const [postCache, setPostCache] = useState({});
-  const [listingCache, setListingCache] = useState({});
-  const [initialScrollDone, setInitialScrollDone] = useState(false); // New state to control initial render
+  const [postCache, setPostCache] = useState({}); // Reintroduced
+  const [listingCache, setListingCache] = useState({}); // Reintroduced
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
   const userCache = useRef({});
@@ -155,8 +155,7 @@ const MessagesPage = () => {
   };
 
   const fetchConversationsDebounced = useRef(
-    debounce(async (isPolling = false) => {
-      if (!isPolling) setIsLoadingConversations(true);
+    debounce(async (isInitialLoad = false) => {
       try {
         const token = await getAccessTokenSilently();
         const response = await axios.get(
@@ -175,7 +174,6 @@ const MessagesPage = () => {
           userIdToDetailsMap[id] = userDetailsList[idx];
         });
 
-        // Fetch latest message timestamps for sorting
         const timestampPromises = data.map(async (conv) => {
           const response = await axios.get(
             `${BACKEND_URL}/api/messages/${conv.conversation_id}/messages`,
@@ -215,34 +213,36 @@ const MessagesPage = () => {
           };
         });
 
-        // Sort by last message timestamp (most recent first)
         enhancedConvs.sort((a, b) => {
           const timeA = a.last_message_timestamp ? new Date(a.last_message_timestamp).getTime() : 0;
           const timeB = b.last_message_timestamp ? new Date(b.last_message_timestamp).getTime() : 0;
           return timeB - timeA;
         });
 
-        setConversations(enhancedConvs);
+        if (isInitialLoad) {
+          setDisplayedConversations(enhancedConvs);
+        }
+        setConversationsData(enhancedConvs);
         setError(null);
       } catch (err) {
         console.error('Error fetching conversations:', err);
         setError('Failed to load conversations. Please try again later.');
       } finally {
-        if (!isPolling) setIsLoadingConversations(false);
+        if (isInitialLoad) setIsLoadingConversations(false);
       }
     }, 500)
   ).current;
 
   useEffect(() => {
     if (!authLoading && user && user.sub) {
-      fetchConversationsDebounced();
+      fetchConversationsDebounced(true);
     }
   }, [authLoading, user]);
 
   useEffect(() => {
     if (!authLoading && user && user.sub) {
       const intervalId = setInterval(() => {
-        fetchConversationsDebounced(true);
+        fetchConversationsDebounced(false);
       }, 2000);
       return () => clearInterval(intervalId);
     }
@@ -258,15 +258,7 @@ const MessagesPage = () => {
       );
       setMessages(response.data);
       setError(null);
-      if (!isPolling) {
-        setInitialScrollDone(false); // Reset for initial load
-        setTimeout(() => {
-          forceScrollToBottom();
-          setInitialScrollDone(true);
-        }, 0); // Ensure scroll happens after render
-      }
 
-      // Fetch metadata for shared content
       const postIds = response.data
         .map((msg) => msg.content.match(/\/feed\?post_id=(\d+)/)?.[1])
         .filter(Boolean);
@@ -303,8 +295,12 @@ const MessagesPage = () => {
 
   const handleSelectConversation = (conv) => {
     setMessages([]);
-    setInitialScrollDone(false); // Reset scroll state
-    setConversations((prev) =>
+    setDisplayedConversations((prev) =>
+      prev.map((c) =>
+        c.conversation_id === conv.conversation_id ? { ...c, unread_count: 0 } : c
+      )
+    );
+    setConversationsData((prev) =>
       prev.map((c) =>
         c.conversation_id === conv.conversation_id ? { ...c, unread_count: 0 } : c
       )
@@ -319,10 +315,10 @@ const MessagesPage = () => {
   };
 
   useEffect(() => {
-    if (messages.length > 0 && isUserNearBottom && !isLoadingMessages) {
+    if (messages.length > 0 && isUserNearBottom) {
       forceScrollToBottom();
     }
-  }, [messages, isUserNearBottom, isLoadingMessages]);
+  }, [messages, isUserNearBottom]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedConversation) return;
@@ -338,7 +334,6 @@ const MessagesPage = () => {
       setError(null);
       if (isUserNearBottom) forceScrollToBottom();
 
-      // Fetch metadata for shared content in the new message
       const postIds = [newMessage.match(/\/feed\?post_id=(\d+)/)?.[1]].filter(Boolean);
       const listingIds = [newMessage.match(/http:\/\/localhost:3000\/marketplace\?listingId=(\d+)/)?.[1]].filter(Boolean);
 
@@ -349,8 +344,7 @@ const MessagesPage = () => {
         await Promise.all(listingIds.map((id) => fetchListingMetadata(id)));
       }
 
-      // Update conversation order after sending a message
-      fetchConversationsDebounced();
+      fetchConversationsDebounced(false);
     } catch (err) {
       console.error('Error sending message:', err);
       setError('Failed to send message. Please try again.');
@@ -431,44 +425,50 @@ const MessagesPage = () => {
     return elements;
   };
 
+  const conversationList = useMemo(() => {
+    return displayedConversations.length === 0 ? (
+      <p>No conversations found. Start chatting!</p>
+    ) : (
+      <ul>
+        {displayedConversations.map((conv) => (
+          <li
+            key={conv.conversation_id}
+            onClick={() => handleSelectConversation(conv)}
+            className={
+              selectedConversation?.conversation_id === conv.conversation_id ? styles.active : ''
+            }
+          >
+            <div className={styles.conversationInfo}>
+              <img
+                src={conv.otherProfilePicture || 'https://via.placeholder.com/40'}
+                alt={`Avatar of ${conv.otherUsername}`}
+                className={styles.conversationAvatar}
+              />
+              <div>
+                <p>
+                  {conv.otherUsername}
+                  {conv.unread_count > 0 && (
+                    <span className={styles.unreadBadge}>{conv.unread_count}</span>
+                  )}
+                </p>
+                <small>{conv.last_message}</small>
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
+    );
+  }, [displayedConversations, selectedConversation]);
+
   return (
     <div className={styles.messagesPage}>
       <div className={styles.history}>
         <h3>Conversations</h3>
         {error && <p className="error-message">{error}</p>}
         {isLoadingConversations ? (
-          <></>
-        ) : conversations.length === 0 ? (
-          <p>No conversations found. Start chatting!</p>
+          <div>Loading conversations...</div>
         ) : (
-          <ul>
-            {conversations.map((conv) => (
-              <li
-                key={conv.conversation_id}
-                onClick={() => handleSelectConversation(conv)}
-                className={
-                  selectedConversation?.conversation_id === conv.conversation_id ? styles.active : ''
-                }
-              >
-                <div className={styles.conversationInfo}>
-                  <img
-                    src={conv.otherProfilePicture || 'https://via.placeholder.com/40'}
-                    alt={`Avatar of ${conv.otherUsername}`}
-                    className={styles.conversationAvatar}
-                  />
-                  <div>
-                    <p>
-                      {conv.otherUsername}
-                      {conv.unread_count > 0 && (
-                        <span className={styles.unreadBadge}>{conv.unread_count}</span>
-                      )}
-                    </p>
-                    <small>{conv.last_message}</small>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
+          conversationList
         )}
       </div>
 
@@ -477,8 +477,8 @@ const MessagesPage = () => {
           <>
             <h3>Chat with {selectedConversation.otherUsername}</h3>
             {isLoadingMessages ? (
-              <></>
-            ) : initialScrollDone ? (
+              <div>Loading messages...</div>
+            ) : (
               <div
                 className={styles.messages}
                 ref={messagesContainerRef}
@@ -502,7 +502,7 @@ const MessagesPage = () => {
                   );
                 })}
               </div>
-            ) : null}
+            )}
             <div className={styles.messageInput}>
               <input
                 type="text"
