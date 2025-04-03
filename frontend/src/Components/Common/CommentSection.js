@@ -209,15 +209,13 @@ export const CommentSection = ({ selectedPostId, userId }) => {
     }
   };
 
-  const handleReportClick = async (commentId) => {
+  const handleReportClick = async (e, commentId) => {
+    e.stopPropagation();
     setReportingItemId(commentId);
     setShowReportModal(true);
-
-    //REMOVE THIS LATER ONCE YOU IMPLEMENT THE MODAL FIX
-    submitReport('spam', 'Message was created by a bot.', commentId);
   }
 
-  const submitReport = async (reason, description, reportingItemId) => {
+  const submitReport = async (reason, description) => {
     try {
       const token = await getAccessTokenSilently();
       const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/reports`, {
@@ -313,20 +311,13 @@ export const CommentSection = ({ selectedPostId, userId }) => {
                         </div>
                       )}
                       {comment.user_id !== userId && (
-                        <>
-                          <div className={styles.dropdownItem} onClick={() => handleReportClick(comment.comment_id)}>
+                        <>                        
+                          <div className={styles.dropdownItem} onClick={(e) => handleReportClick(e, comment.comment_id)}>
                             <FaExclamationTriangle /> Report
                           </div>
                           <div className={styles.dropdownItem} onClick={() => handleBlockUser(comment.user_id)}>
                             <FaUserTimes /> Block User
                           </div>
-
-                          <ReportModal 
-                            show={showReportModal}
-                            onHide={() => setShowReportModal(false)}
-                            onSubmit={submitReport}
-                            itemType="Comment"
-                          />
                         </>
                       )}
                     </div>
@@ -338,6 +329,17 @@ export const CommentSection = ({ selectedPostId, userId }) => {
         )}
       </div>
       <div className={styles.footer}></div>
+
+      {showReportModal && (
+        <div onClick={(e) => e.stopPropagation()}>
+          <ReportModal
+            show={showReportModal}
+            onHide={() => setShowReportModal(false)}
+            onSubmit={submitReport}
+            itemType="post-comment"
+          />
+        </div>
+      )}
     </div>
   );
 };

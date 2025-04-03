@@ -141,7 +141,7 @@ export const createReport = async (req, res) => {
     if (!type || !reportedItemId || !reason) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
-    const validTypes = ['listing', 'post','post-comment', 'user', 'message', 'comment', ];
+    const validTypes = ['listing', 'post','post-comment', 'user', 'message', 'comment', 'community' ];
     if (!validTypes.includes(type)) {
         return res.status(400).json({ error: 'Invalid report type' });
     }

@@ -8,6 +8,7 @@ import axios from 'axios';
 import { useAuth0 } from '@auth0/auth0-react';
 import { jwtDecode } from "jwt-decode";
 import { FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("reports");
@@ -273,6 +274,31 @@ const AdminDashboard = () => {
     // Add more months here...
   ];
 
+  const getItemUrl = (report) => {
+    switch(report.type) {
+      case 'comment':
+        return `/feed?post_id=${report.reported_item_id}`;
+      case 'post':
+        return `/feed?post_id=${report.reported_item_id}`;
+        case 'post-comment':
+          return `/feed`;
+      case 'user':
+        return `/profile/${urlEncode(report.reported_item_id)}`;
+      case 'listing':
+        return `/marketplace?listingId=${report.reported_item_id}`;
+      case 'community':
+        return `/community/${report.reported_item_id}`;
+      case 'messages':
+        return `/messages`;
+      default:
+        return `/admin`;
+    }
+  };
+
+  const urlEncode = (url) => {
+    return encodeURIComponent(url);
+  };
+
   return (
     <Container className={styles.adminDashboard}>
       <h1 className={styles.adminTitle}>Admin Dashboard</h1>
@@ -401,7 +427,10 @@ const AdminDashboard = () => {
                         <tr key={report.id}>
                           <td>{report.id}</td>
                           <td>{report.type}</td>
-                          <td>{report.reported_item_id}</td>
+                          <td>
+                            <Link to={getItemUrl(report)}>
+                              {report.reported_item_id}
+                            </Link></td>
                           <td>{report.reason}</td>
                           <td>{report.status}</td>
                           <td>{new Date(report.created_at).toLocaleString()}</td>
