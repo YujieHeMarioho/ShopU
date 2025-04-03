@@ -3,7 +3,7 @@ import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Container, Row, Col, Card, Button, InputGroup, Form, Tab, Tabs, Modal } from 'react-bootstrap';
-import { FaEnvelope, FaUser, FaEdit, FaRegHeart, FaHeart, FaTrash } from 'react-icons/fa';
+import { FaEnvelope, FaUser, FaEdit, FaRegHeart, FaHeart, FaTrash, FaFlag } from 'react-icons/fa';
 import './Profile.module.css'; // Optional: Custom CSS
 import UserPreferences from './UserPreferences';
 import styles from './Profile.module.css';
@@ -12,6 +12,7 @@ import {SocialCard, CommentSection} from '../../Common';
 import {CardGrid} from '../../Common';
 import leaveCommunity from '../Community/Community';
 import { useParams } from 'react-router-dom';
+import ReportModal from '../../Common/ReportModal';
 
 
 const Profile = () => {
@@ -22,6 +23,8 @@ const Profile = () => {
     const targetUserId = isOwnProfile ? user.sub : userId;
     const currUserId = isAuthenticated ? user?.sub : null;
     const navigate = useNavigate();
+    const [showReportModal, setShowReportModal] = useState(false);
+    const [reportingItemId, setReportingItemId] = useState(null);
 
     const [formData, setFormData] = useState({
         name: name || '',
@@ -453,6 +456,40 @@ const Profile = () => {
         handleSaveChanges();
     };
 
+    const handleReportClick = () => {
+       // setReportingItemId(currUserId);
+        setShowReportModal(true);
+    };
+
+    const submitReport = async (reason, description) => {
+        try {
+          const token = await getAccessTokenSilently();
+          const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/reports`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              type: 'user',
+              reportedItemId: currUserId,
+              reason,
+              description
+            })
+          });
+    
+          if (!response.ok) {
+            throw new Error('Failed to submit report');
+          }
+    
+          setShowReportModal(false);
+          setReportingItemId(null);
+          alert('Report submitted successfully');
+        } catch (error) {
+          console.error('Error reporting comment:', error);
+          alert('Failed to submit report');
+        }
+      };
 
     return (
         <div className={styles.profileContainer}>
@@ -501,6 +538,26 @@ const Profile = () => {
                                     readOnly={!isOwnProfile}
                                 />
                             </InputGroup>
+
+                            {!isOwnProfile && (
+                                <>
+                                    <Button
+                                        variant="outline-success"
+                                        className={`mt-3 ${styles.reportButton}`}
+                                        onClick={handleReportClick}
+                                    >
+                                        <FaFlag className="me-2" />
+                                        Report User
+                                    </Button>
+                                </>
+                            )}
+
+                            <ReportModal 
+                                show={showReportModal}
+                                onHide={() => setShowReportModal(false)}
+                                onSubmit={submitReport}
+                                itemType="User"
+                            />
 
                             {isOwnProfile && (
                                 <InputGroup className={`mb-3 ${styles.profilePictureGroup}`}>

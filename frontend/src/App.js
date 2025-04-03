@@ -14,7 +14,6 @@ import Home from './Components/Pages/Home/Home';
 import Resources from './Components/Pages/Resources/Resources';
 import Profile from './Components/Pages/Profile/Profile';
 import SocialFeed from './Components/Pages/Feed/SocialFeed';
-import PrivateRoute from './Components/Common/PrivateRoute';
 import CreateListingPage from './Components/Pages/CommonPages/CreateListingPage';
 import EditImage from './Components/Pages/Feed/EditImage';
 import PostDetails from './Components/Pages/Feed/PostDetails';
@@ -28,6 +27,7 @@ import ChatContent from './Components/Pages/ChatContent/ChatContent';
 import EmailVerificationRequired from './Components/Utilities/EmailVerificationRequired';
 import AdminDashboard from './Components/Pages/Administration/AdminDashboard';
 import SellerDashboard from './Components/Pages/SellerPage/SellerDashboard';
+import ProtectedRoute from './Components/Common/ProtectedRoutes';
 
 function App() {
   const { loginWithRedirect, logout, user, isAuthenticated } = useAuth0();
@@ -95,9 +95,8 @@ function App() {
             <Route path="/edit-image" element={<AuthenticationGuard component={EditImage} />} />
             <Route path="/post-details" element={<AuthenticationGuard component={PostDetails} />} />
             <Route path="/Become A Seller" element={<BecomeASeller />} />
-            <Route path="/admin-dashboard" element={<AuthenticationGuard component={AdminDashboard} />} />
+            <Route path="/admin" element={<AuthenticationGuard component={() => (<ProtectedRoute requiredPermissions={['admin:access', 'moderator:access']}><AdminDashboard /></ProtectedRoute>)} />} />
             <Route path="/seller-dashboard" element={<AuthenticationGuard component={SellerDashboard} />} />
-
             {/* New Checkout Page */}
             <Route path="/cart" element={<AuthenticationGuard component={CheckOut} />} />
             <Route path="/messages" element={<AuthenticationGuard component={MessagesPage} />} />

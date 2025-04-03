@@ -4,9 +4,10 @@ import { CardComponent } from '../../Common';
 import styles from './Listings.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate, Link } from 'react-router-dom';
-import { FaMapMarkerAlt, FaMapPin } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaMapPin, FaFlag } from 'react-icons/fa';
 import OfferModal from "./OfferModal";
 import axios from 'axios';
+import ReportModal from '../../Common/ReportModal';
 
 export const ListingModal = ({ show, onHide, listing }) => {
    const [dropDownTitle, setDropDownTitle] = useState('Select an Option');
@@ -32,7 +33,8 @@ export const ListingModal = ({ show, onHide, listing }) => {
          { label: 'Pickup From Seller', value: 'pickup' },
          { label: 'Shipped', value: 'shipped' }
       ];
-
+      const [showReportModal, setShowReportModal] = useState(false);
+      const [reportingItemId, setReportingItemId] = useState(null);
 
    useEffect(() => {
       if (isEditing) {
@@ -221,6 +223,41 @@ export const ListingModal = ({ show, onHide, listing }) => {
       }
    };
 
+   const handleReportClick = () => {
+      // setReportingItemId(currUserId);
+       setShowReportModal(true);
+   };
+  
+    const submitReport = async (reason, description) => {
+      try {
+        const token = await getAccessTokenSilently();
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/reports`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            type: 'post',
+            reportedItemId: listing.id,
+            reason,
+            description
+          })
+        });
+  
+        if (!response.ok) {
+          throw new Error('Failed to submit report');
+        }
+  
+        setShowReportModal(false);
+        setReportingItemId(null);
+        alert('Report submitted successfully');
+      } catch (error) {
+        console.error('Error reporting comment:', error);
+        alert('Failed to submit report');
+      }
+    };
+
 
    return (
       <div className={styles.modalOverlay} onClick={handleCloseModal}>
@@ -302,14 +339,13 @@ export const ListingModal = ({ show, onHide, listing }) => {
                      )}
                   </div>
 
-
-
-                  {/* Product/Service Options Dropdown */}
-                  <div className={styles.productOptions}>
-                     <label htmlFor="product-options-dropdown">
+               <div className="row">
+                  <div className="col-md-6">
+                     <div className={styles.productOptions}>
+                        <label htmlFor="product-options-dropdown">
                         {isServiceListing ? 'Service Options' : 'Product Options'}
-                     </label>
-                     <Dropdown>
+                        </label>
+                        <Dropdown>
                         <Dropdown.Toggle variant="outline-light" className={styles.dropdownToggle}>
                            {dropDownTitle}
                         </Dropdown.Toggle>
@@ -317,12 +353,36 @@ export const ListingModal = ({ show, onHide, listing }) => {
                         <Dropdown.Menu className={styles.dropdownMenu}>
                            {dropdownOptions.map(option => (
                               <Dropdown.Item key={option.value} onClick={() => handleDropDownClick(option.label)}>
-                                 {option.label}
+                              {option.label}
                               </Dropdown.Item>
                            ))}
                         </Dropdown.Menu>
-                     </Dropdown>
+                        </Dropdown>
+                     </div>
                   </div>
+
+                  <div className="col-md-6">
+                     <div className={styles.reportSection}>
+                        {!isOwner && (                     
+                        <>
+                           <Button
+                              variant="dark"
+                              className={`${styles.reportButton}`}
+                              onClick={handleReportClick}>
+                              <FaFlag className="me-2" />
+                              Report Listing
+                           </Button>
+                        </>
+                        )}
+                        <ReportModal 
+                        show={showReportModal}
+                        onHide={() => setShowReportModal(false)}
+                        onSubmit={submitReport}
+                        itemType="Listing"
+                        />
+                     </div>
+                  </div>
+               </div>
 
                   {/* Offer Seller / Schedule Appointment Button */}
                   <div className={styles.offerSellerButton}>

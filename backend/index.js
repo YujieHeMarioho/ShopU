@@ -19,6 +19,7 @@ import conversationsRoutes from './routes/conversations.js';
 import userPreferenceRoutes from './routes/userPreferences.js';
 import serviceRoutes from './routes/services.js';
 import mlserviceRoutes from './routes/MLserviceroutes.js';
+import reportRoutes from './routes/reports.js';
 
 dotenv.config();
 
@@ -87,6 +88,7 @@ app.use('/api', userPreferenceRoutes);
 app.use('/api', serviceRoutes);
 app.use('/api', mlserviceRoutes);
 
+app.use('/api', reportRoutes);
 app.use('/api/messages', messagesRoutes);
 
 app.use('/api/conversations', (req, res, next) => {
