@@ -56,8 +56,8 @@ const MessagesPage = () => {
   const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isUserNearBottom, setIsUserNearBottom] = useState(true);
-  const [postCache, setPostCache] = useState({}); // Reintroduced
-  const [listingCache, setListingCache] = useState({}); // Reintroduced
+  const [postCache, setPostCache] = useState({});
+  const [listingCache, setListingCache] = useState({});
 
   const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
   const userCache = useRef({});
@@ -69,7 +69,6 @@ const MessagesPage = () => {
     const container = messagesContainerRef.current;
     if (container) {
       container.scrollTop = container.scrollHeight;
-      console.log('Scrolled to bottom, scrollTop:', container.scrollTop, 'scrollHeight:', container.scrollHeight);
     }
   };
 
@@ -332,7 +331,9 @@ const MessagesPage = () => {
       setMessages((prev) => [...prev, response.data]);
       setNewMessage('');
       setError(null);
-      if (isUserNearBottom) forceScrollToBottom();
+      if (isUserNearBottom) {
+        forceScrollToBottom();
+      }
 
       const postIds = [newMessage.match(/\/feed\?post_id=(\d+)/)?.[1]].filter(Boolean);
       const listingIds = [newMessage.match(/http:\/\/localhost:3000\/marketplace\?listingId=(\d+)/)?.[1]].filter(Boolean);
@@ -466,7 +467,7 @@ const MessagesPage = () => {
         <h3>Conversations</h3>
         {error && <p className="error-message">{error}</p>}
         {isLoadingConversations ? (
-          <div>Loading conversations...</div>
+          <div className={styles.spinner}>Loading conversations...</div>
         ) : (
           conversationList
         )}
@@ -477,7 +478,7 @@ const MessagesPage = () => {
           <>
             <h3>Chat with {selectedConversation.otherUsername}</h3>
             {isLoadingMessages ? (
-              <div>Loading messages...</div>
+              <div className={styles.spinner}>Loading messages...</div>
             ) : (
               <div
                 className={styles.messages}
