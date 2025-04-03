@@ -9,6 +9,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import json
 import numpy as np
 import uvicorn
+from scipy.sparse import hstack
 
 # Load environment variables from the .env file
 load_dotenv()
@@ -48,14 +49,8 @@ def get_user_data(user_id: str):
 
         print(f"User settings: {user_settings}")
 
-        # Fetch user engagement (liked posts, etc.)
-        cursor.execute(f"SELECT post_id FROM user_engagement WHERE user_id = %s", (user_id,))
-        engagement = cursor.fetchall()
-        liked_post_ids = [eng['post_id'] for eng in engagement]
-        print(f"Liked post IDs: {liked_post_ids}")
-
         # Fetch social graph (friends)
-        cursor.execute(f"SELECT friend_id FROM user_social_graph WHERE user_id = %s", (user_id,))
+        cursor.execute(f"SELECT friend_id FROM friends WHERE user_id = %s", (user_id,))
         friends = cursor.fetchall()
         friend_ids = [friend['friend_id'] for friend in friends]
         print(f"Friend IDs: {friend_ids}")
@@ -63,7 +58,7 @@ def get_user_data(user_id: str):
         conn.close()
 
         # Return the user settings (user_interests), liked posts, and friends
-        return user_settings['user_interests'], liked_post_ids, friend_ids
+        return user_settings['user_interests'], friend_ids
 
     except Exception as e:
         print(f"Error fetching user data: {e}")
@@ -71,7 +66,6 @@ def get_user_data(user_id: str):
 
 # Function to fetch listings data from the database
 def get_listings_data():
-    print("Fetching listings data...")
     try:
         conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -156,9 +150,6 @@ def get_feed_data(user_id: str):
         feed_df = pd.DataFrame(list(feed), columns=["post_id", "title", "content", "profile", "image", "date_created", "author", "author_id", "likes_count", "listing_id", "tags"])
         liked_status_df = pd.DataFrame([{'post_id': row['post_id'], 'isLiked': row['isliked']} for row in liked_status])
 
-        print(f"Feed Data (before merge): {feed_df.head()}")
-        print(f"Liked Status Data: {liked_status_df.head()}")
-
         feed_df = feed_df.merge(liked_status_df, on="post_id", how="left")
         feed_df['listing_id'] = feed_df['listing_id'].fillna("No ID")
 
@@ -174,7 +165,7 @@ def get_recommendations(user_id: str):
     print(f"Fetching recommendations for user_id: {user_id}")
 
     try:
-        user_preferred_categories, liked_post_ids, friend_ids = get_user_data(user_id)
+        user_preferred_categories, friend_ids = get_user_data(user_id)
     except HTTPException as e:
         print(f"Error in fetching user data: {e}")
         raise e
@@ -197,28 +188,45 @@ def get_recommendations(user_id: str):
     else:
         preferred_listings = listings.copy()
 
-    # Fill NaN values in description and title with empty strings
-    preferred_listings['description'] = preferred_listings['description'].fillna("")
-    preferred_listings['title'] = preferred_listings['title'].fillna("")
 
-    # Create a column that combines description and title, but only for non-empty ones
-    preferred_listings['combined_text'] = preferred_listings['description'] + " " + preferred_listings['title']
+    # Fill NaN values with meaningful placeholders
+    preferred_listings['description'] = preferred_listings['description'].fillna("No Description")
+    preferred_listings['title'] = preferred_listings['title'].fillna("No Title")
+    preferred_listings['category_name'] = preferred_listings['category_name'].fillna("Unknown Category")
 
-    # Filter out rows where combined_text is empty
-    non_empty_listings = preferred_listings[preferred_listings['combined_text'].str.strip() != ""]
+    # Use separate TfidfVectorizers for each column
+    tfidf_vectorizer_title = TfidfVectorizer(stop_words="english")
+    tfidf_vectorizer_desc = TfidfVectorizer(stop_words="english")
+    tfidf_vectorizer_category = TfidfVectorizer(stop_words="english")
 
-    # If there are non-empty rows, apply the TF-IDF vectorizer
-    if not non_empty_listings.empty:
-        tfidf_vectorizer = TfidfVectorizer(stop_words='english')
-        tfidf_matrix = tfidf_vectorizer.fit_transform(non_empty_listings['combined_text'])
+    tfidf_title = tfidf_vectorizer_title.fit_transform(preferred_listings['title'])
+    tfidf_desc = tfidf_vectorizer_desc.fit_transform(preferred_listings['description'])
+    tfidf_category = tfidf_vectorizer_category.fit_transform(preferred_listings["category_name"])
 
-        cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
+    # Combine TF-IDF matrices (concatenation)
+    tfidf_combined = hstack([tfidf_title, tfidf_desc, tfidf_category]) 
 
-        # Optionally, store cosine similarity values for further processing
-        non_empty_listings['cosine_sim'] = cosine_sim
+    print(tfidf_combined.shape)
 
-        # Merge back to the original preferred listings (including those with empty descriptions/titles)
-        preferred_listings = preferred_listings.merge(non_empty_listings[['id', 'cosine_sim']], on='id', how='left')
+    # Convert sparse matrix to dense format for sampling (only for visualization)
+    tfidf_sample = pd.DataFrame(
+        tfidf_combined.todense(),
+        columns=(
+            list(tfidf_vectorizer_title.get_feature_names_out()) +
+            list(tfidf_vectorizer_desc.get_feature_names_out()) +
+            list(tfidf_vectorizer_category.get_feature_names_out())
+        ),
+        index=preferred_listings["listing_id"]
+    )
+    print(tfidf_sample.sample(5, axis=1).sample(10, axis=0))
+
+    # Compute cosine similarity
+    cosine_sim = cosine_similarity(tfidf_combined)
+    cosine_sim_df = pd.DataFrame(cosine_sim, index=preferred_listings["listing_id"], columns=preferred_listings["listing_id"])
+
+    print('Shape:', cosine_sim_df.shape)
+    print(cosine_sim_df.sample(5, axis=1).round(2))
+
 
     # Now handle confidence_score
     preferred_listings['confidence_score'] = preferred_listings['category_name'].apply(
@@ -236,10 +244,10 @@ def get_recommendations(user_id: str):
 
     feed_tfidf_matrix = tfidf_vectorizer.fit_transform(feed_copy['content'])
 
-    if liked_post_ids:
-        liked_feed_content = feed_copy[feed_copy['post_id'].isin(liked_post_ids)]['content']
+    if feed["isLiked"]:
+        liked_feed_content = feed_copy[feed_copy['isLiked']]['content']
         liked_feed_tfidf_matrix = tfidf_vectorizer.transform(liked_feed_content)
-
+        
         cosine_sim_feed = cosine_similarity(liked_feed_tfidf_matrix, feed_tfidf_matrix)
 
         feed_copy['confidence_score'] = cosine_sim_feed.mean(axis=0)
@@ -250,6 +258,9 @@ def get_recommendations(user_id: str):
 
     print("Final Recommended Listings:\n", preferred_listings[['title', 'category_name', 'confidence_score']])
     print("Final Recommended Feed:\n", feed_copy[['title', 'confidence_score']])
+    
+    
+    ## CREATE WAY TO CHECK LISTING VS FEED. Have the score from each be affected by a percentage based on which is active
 
     return {
         "listings": preferred_listings.to_dict(orient='records'),
