@@ -19,7 +19,6 @@ app = FastAPI()
 
 # Database connection setup using psycopg2
 def get_db_connection():
-    print("Establishing database connection...")
     try:
         conn = psycopg2.connect(
             host=os.getenv("DB_HOST"),
@@ -28,7 +27,6 @@ def get_db_connection():
             password=os.getenv("DB_PASSWORD"),
             port=os.getenv("DB_PORT"),
         )
-        print("Database connection established successfully.")
         return conn
     except Exception as e:
         print(f"Error connecting to the database: {e}")
@@ -36,7 +34,6 @@ def get_db_connection():
 
 # Function to fetch user data (user preferences, liked posts) from the database
 def get_user_data(user_id: str):
-    print(f"Fetching user data for user_id: {user_id}")
     try:
         conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -48,14 +45,10 @@ def get_user_data(user_id: str):
             print(f"Error: User settings not found for user_id: {user_id}")
             raise HTTPException(status_code=404, detail="User settings not found")
 
-        print(f"User settings: {user_settings}")
-
         # Fetch social graph (friends)
         cursor.execute(f"SELECT friend_id FROM friends WHERE user_id = %s", (user_id,))
         friends = cursor.fetchall()
         friend_ids = [friend['friend_id'] for friend in friends]
-        print(f"Friend IDs: {friend_ids}")
-
         conn.close()
 
         # Return the user settings (user_interests), liked posts, and friends
@@ -81,7 +74,6 @@ def get_listings_data():
 
         # Convert the query result into a pandas DataFrame
         listings_df = pd.DataFrame(list(listings), columns=["listing_id", "category_name", "description", "title", "item_type", "date_posted", "location"])
-        print(f"Fetched listings data: {listings_df.head()}")
         return listings_df
 
     except Exception as e:
@@ -90,7 +82,6 @@ def get_listings_data():
 
 # Function to fetch feed data from the database
 def get_feed_data(user_id: str):
-    print(f"Fetching feed data for user_id: {user_id}")
     try:
         conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
@@ -139,16 +130,12 @@ def get_feed_data(user_id: str):
         """, (user_id, tuple(post_ids)))
 
         liked_status = cursor.fetchall()
-        
-        print(f"Fetched liked status data: {liked_status}")
 
         feed_df = pd.DataFrame(list(feed), columns=["post_id", "title", "content", "image", "date_created", "profile", "author", "author_id", "likes_count", "shares_count", "item_details", "listing_id"])
         liked_status_df = pd.DataFrame([{'post_id': row['post_id'], 'isLiked': row['isliked']} for row in liked_status])
 
         feed_df = feed_df.merge(liked_status_df, on="post_id", how="left")
         feed_df['listing_id'] = feed_df['listing_id'].fillna("No ID")
-
-        print(f"Final Merged Feed Data (after cleaning): {feed_df.head()}")
         return feed_df
 
     except Exception as e:
@@ -172,11 +159,8 @@ def calculate_recommendations(user_id, listings, feed_posts, user_preferred_cate
     # Map the TF-IDF scores for listings and feed posts
     mapped_tfidf = map_tfidf_to_ids(tfidf_listings, listings)
     simplified_listing_tfidf = [(listing_id, tfidf_value) for listing_id, _, tfidf_value in mapped_tfidf]
-    print(simplified_listing_tfidf)
-
     mapped_tfidf = map_tfidf_to_ids(tfidf_feed, feed_posts, id_column='post_id')
     simplified_post_tfidf = [(post_id, tfidf_value) for post_id, _, tfidf_value in mapped_tfidf]
-    print(simplified_post_tfidf)
 
     # Iterate through each listing_id in listings or feed posts
     if current_page == 'listings':
@@ -214,7 +198,6 @@ def calculate_recommendations(user_id, listings, feed_posts, user_preferred_cate
     else:
         raise ValueError("current_page must be 'listings' or 'feed'")
 
-    print(sorted_recommendations)
     # # Handle unseen posts and new listings (adjust scores)
     # sorted_recommendations = handle_new_and_unseen_posts(sorted_recommendations, user_id, listings, feed_posts)
     
@@ -322,7 +305,6 @@ def get_post_tags(post_id):
 
 # Create a user-item interaction matrix (e.g., likes, views, etc.)
 def create_user_item_matrix(user_id, listings):
-    print(f"Creating user-item matrix for user_id: {user_id}")
     # Fetch interactions from database
     favorites = get_listing_favorites(listings['listing_id'])
     views = get_user_views(user_id, listings['listing_id'])
@@ -337,7 +319,6 @@ def create_user_item_matrix(user_id, listings):
     })
     
     user_item_matrix = interactions.pivot(index='user_id', columns='listing_id', values='interaction_value')
-    print(f"User-item matrix created:\n{user_item_matrix.head()}")
     return user_item_matrix
 
 def get_listing_favorites(listing_ids):
@@ -384,8 +365,6 @@ def get_user_views(user_id, listing_ids):
 
 # Create a user-feed interaction matrix
 def create_user_feed_matrix(user_id, feed_posts):
-    print(f"Creating user-feed matrix for user_id: {user_id}")
-
     likes = feed_posts["likes_count"]
     shares = feed_posts["shares_count"]
     comments = get_feed_comments(feed_posts['post_id'])
@@ -403,7 +382,6 @@ def create_user_feed_matrix(user_id, feed_posts):
     })
 
     user_feed_matrix = interactions.pivot(index='user_id', columns='post_id', values='interaction_value')
-    print(f"User-feed matrix created:\n{user_feed_matrix.head()}")
     return user_feed_matrix
 
 # Function to get the number of comments for each post
@@ -442,7 +420,6 @@ def get_feed_views(user_id, post_ids):
 
 # Apply TF-IDF transformation to the listings and feed content
 def apply_tfidf_transform(listings, feed_posts):
-    print("Applying TF-IDF transformation to listings and feed posts...")
     tfidf_vectorizer = TfidfVectorizer(stop_words='english', max_features=100)
 
     # Apply TF-IDF to the listings' description
@@ -450,31 +427,24 @@ def apply_tfidf_transform(listings, feed_posts):
 
     # Apply TF-IDF to the feed posts' content
     tfidf_feed = tfidf_vectorizer.fit_transform(feed_posts['content'])
-
-    print(f"TF-IDF for listings and feed posts applied.")
     return tfidf_listings, tfidf_feed
 
 # Combine all matrices (user-item, user-feed, and TF-IDF) into one
 def combine_matrices(user_item_matrix, user_feed_matrix, tfidf_listings, tfidf_feed):
-    print("Combining matrices...")
     # Ensure all matrices are sparse (if not, convert them)
     user_item_matrix = user_item_matrix.fillna(0)
     user_feed_matrix = user_feed_matrix.fillna(0)
 
     # Combine the listings matrices (user-item + tfidf_listings)
     combined_listing_matrix = hstack([user_item_matrix, tfidf_listings])
-    print(f"Combined listing matrix shape: {combined_listing_matrix.shape}")
     
     # Combine the feed matrices (user-feed + tfidf_feed)
     combined_feed_matrix = hstack([user_feed_matrix, tfidf_feed])
-    print(f"Combined feed matrix shape: {combined_feed_matrix.shape}")
     
     return combined_listing_matrix, combined_feed_matrix
 
 @app.get("/recommend")
 async def recommend(user_id: str, current_page: str):
-    print(f"Request received for recommendations for user_id: {user_id} on {current_page} page")
-
     # Fetch data
     listings = get_listings_data()
     feed_posts = get_feed_data(user_id)
@@ -482,16 +452,12 @@ async def recommend(user_id: str, current_page: str):
     
     # Fetch recommendations for listings page
     listing_recommendations = calculate_recommendations(user_id, listings, feed_posts, user_preferred_categories, friend_ids, 'listings')
-    print("Listing Recommendations:")
-    print(listing_recommendations)
 
     # Convert listing recommendations to a dictionary if it's a list of tuples
     listing_recommendations_dict = [{"listing_id": listing_id, "score": score} for listing_id, score in listing_recommendations]
 
     # Fetch recommendations for feed page
     feed_recommendations = calculate_recommendations(user_id, listings, feed_posts, user_preferred_categories, friend_ids, 'feed')
-    print("Feed Recommendations:")
-    print(feed_recommendations)
 
     # Convert feed recommendations to a dictionary if it's a list of tuples
     feed_recommendations_dict = [{"post_id": post_id, "score": score} for post_id, score in feed_recommendations]

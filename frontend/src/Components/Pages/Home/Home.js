@@ -3,7 +3,6 @@ import { Banner } from '../../Common';
 import styles from './Home.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate } from 'react-router-dom';
-import { Recommendations } from '../../Common';
 
 function Home() {    
     const { isAuthenticated, loginWithRedirect, getAccessTokenSilently } = useAuth0();
@@ -78,7 +77,6 @@ function Home() {
     return (
         <div className={styles['home-container']}>
 
-            <Recommendations></Recommendations>
             {/* Banner Section */}
             <Banner
                 title="Welcome to ShopU!"

@@ -13,10 +13,12 @@ import { useLocation } from 'react-router-dom';
 
 
 const SocialFeed = () => {
-  const [feed, setFeed] = useState([]);
-  const [userFeed, setUserFeed] = useState([]);
+  const [basePosts, setBasePosts] = useState([]);
+  const [finalPosts, setFinalPosts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [recommendations, setPostRecommendations] = useState([]);
   const [error, setError] = useState(null);
+  const [userFeed, setUserFeed] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
   const [showComments, setShowComments] = useState(false);
   const [selectedPostId, setSelectedPostId] = useState(null);
@@ -48,13 +50,13 @@ const SocialFeed = () => {
     const searchParams = new URLSearchParams(location.search);
     const postId = searchParams.get('post_id');
 
-    if (postId && feed.length > 0) {
-      const post = feed.find((p) => p.post_id.toString() === postId);
+    if (postId && basePosts.length > 0) {
+      const post = basePosts.find((p) => p.post_id.toString() === postId);
       if (post) {
         setSelectedCard(post);
       }
     }
-  }, [location, feed]);
+  }, [location, basePosts]);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -129,7 +131,7 @@ const SocialFeed = () => {
       if (!response.ok) throw new Error(`Failed to fetch feed: ${response.statusText}`);
       const rawFeed = await response.json();
       if (rawFeed.length === 0) setHasMore(false);
-      setFeed((prevFeed) => {
+      setBasePosts((prevFeed) => {
         const existingPostIds = new Set(prevFeed.map((post) => post.post_id));
         const newPosts = rawFeed.filter((post) => !existingPostIds.has(post.post_id));
         return [...prevFeed, ...newPosts];
@@ -141,6 +143,93 @@ const SocialFeed = () => {
       setLoading(false);
     }
   };
+
+   // Fetch recommendations
+    const fetchRecommendations = async () => {
+      try {
+        const token = await getAccessTokenSilently();
+  
+        if (!token) {
+          setError("Authorization token missing");
+          return;
+        }
+  
+        const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/recommendations`, {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { current_page: 'feed' },
+        });
+  
+        console.log("API Response:", response.data);
+  
+        const { recommendations } = response.data;
+        if (recommendations && recommendations.feed_recommendations) {
+          setPostRecommendations(recommendations.feed_recommendations);
+        } else {
+          setError("No feed recommendations found");
+        }
+      } catch (error) {
+        console.error("Error fetching recommendations:", error);
+        setError("Failed to fetch recommendations");
+      }
+    };
+
+  // Wait for both basePosts and recommendations to have data
+  const fetchData = async () => {
+    try {
+      // Check if both basePosts and recommendations have data
+      if (basePosts.length === 0 || recommendations.length === 0) {
+        return;  // Don't proceed if either is empty
+      }
+  
+      const postsMap = new Map(basePosts.map(p => [p.post_id, p]));
+  
+      // Reorder Posts according to the recommended order
+      const ordered = recommendations
+        .map(rec => {
+          // Convert both to strings before comparison
+          const post = postsMap.get(rec.post_id);
+          return post;
+        })
+        .filter(Boolean); // Filter out any undefined values (if a post is not found)
+  
+      // Find posts not in recommendations and add them to the end of ordered
+      const remainingPosts = basePosts.filter(post => 
+        !recommendations.some(rec => rec.post_id === post.post_id)
+      );
+  
+      // Append the remaining posts to the ordered list
+      const finalPosts = [...ordered, ...remainingPosts];
+  
+      // Update the state with the final list of posts
+      setFinalPosts(finalPosts);
+    } catch (error) {
+      console.error("Error processing data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  
+    // useEffect to fetch Posts and recommendations only once
+    useEffect(() => {
+      const loadData = async () => {
+        try {
+          setLoading(true); 
+          await Promise.all([fetchFeed(), fetchRecommendations()]);
+        } catch (error) {
+          console.error("Error loading data:", error);
+        }
+      };
+  
+      loadData();
+    }, []);  // Empty dependency array to run only once
+  
+    // useEffect to process data once both Posts and recommendations are available
+    useEffect(() => {
+      if (basePosts.length > 0 && recommendations.length > 0) {
+        fetchData(); // Fetch data after both have content
+      }
+    }, [basePosts, recommendations]); 
 
   const fetchUserFeed = async () => {
     if (!userId) return;
@@ -165,7 +254,7 @@ const SocialFeed = () => {
     if (inView && hasMore) {
       setPage((prevPage) => prevPage + 1);
     }
-  }, [inView, hasMore, feed.length]);
+  }, [inView, hasMore, basePosts.length]);
 
   const handleShowComments = (post_id) => {
     setSelectedPostId(post_id);
@@ -263,71 +352,87 @@ const SocialFeed = () => {
           !isMobile && isGridLayout ? { marginLeft: '260px' } : { marginLeft: '0' }
         }
       >
-        {isGridLayout ? (
-          <Masonry
-            breakpointCols={{ default: 8, 2816:7, 2560: 6, 2176: 5, 1920: 4, 1536: 3, 1280:2,  768: 1 }}
-            className={styles.masonryGrid}
-            columnClassName={styles.masonryColumn}
-          >
-            {feed.map((post, index) => (
-              <div
-                key={post.post_id}
-                className={styles.gridItem}
-                ref={index === feed.length - 1 ? ref : null}
-                onClick={() => handleCardClick(post)}
-              >
-                <SocialCard
-                  post_id={post.post_id}
-                  image={post.image}
-                  title={post.title}
-                  description={post.content}
-                  profilePic={post.profile}
-                  author={post.author}
-                  authorId={post.author_id}
-                  initialLikes={post.likes_count}
-                  initialShares={post.shares}
-                  isLikedAlready={post.isliked}
-                  tags={post.tags}
-                  listingId={post.listing_id}
-                  onShowComments={() => handleShowComments(post.post_id)}
-                  reloadFeed={reloadFeed}
-                  allFriends={friends}
-                  friendsLoading={friendsLoading}
-                  selected={selectedCard !== null}
-                />
-              </div>
-            ))}
-          </Masonry>
-        ) : (
-          <div className={styles.scrollView}>
-            {feed.map((post, index) => (
-              <div
-                key={post.post_id}
-                className={styles.scrollItem}
-                ref={index === feed.length - 1 ? ref : null}
-                onClick={() => handleCardClick(post)}
-              >
-                <SocialCard
-                  post_id={post.post_id}
-                  image={post.image}
-                  title={post.title}
-                  description={post.content}
-                  profilePic={post.profile}
-                  author={post.author}
-                  authorId={post.author_id}
-                  initialLikes={post.likes_count}
-                  initialShares={post.shares}
-                  isLikedAlready={post.isliked}
-                  tags={post.tags}
-                  listingId={post.listing_id}
-                  onShowComments={() => handleShowComments(post.post_id)}
-                  reloadFeed={reloadFeed}
-                  allFriends={friends}
-                  friendsLoading={friendsLoading}
-                />
-              </div>
-            ))}
+        {loading ? (
+          <div className="loadingContainer">
+            <div className="spinner-border text-primary" role="status"></div>
+            <p>Loading listings...</p>
           </div>
+        ) : (
+          isGridLayout ? (
+            <Masonry
+              breakpointCols={{
+                default: 8,
+                2816: 7,
+                2560: 6,
+                2176: 5,
+                1920: 4,
+                1536: 3,
+                1280: 2,
+                768: 1,
+              }}
+              className={styles.masonryGrid}
+              columnClassName={styles.masonryColumn}
+            >
+              {finalPosts.map((post, index) => (
+                <div
+                  key={post.post_id}
+                  className={styles.gridItem}
+                  ref={index === finalPosts.length - 1 ? ref : null}
+                  onClick={() => handleCardClick(post)}
+                >
+                  <SocialCard
+                    post_id={post.post_id}
+                    image={post.image}
+                    title={post.title}
+                    description={post.content}
+                    profilePic={post.profile}
+                    author={post.author}
+                    authorId={post.author_id}
+                    initialLikes={post.likes_count}
+                    initialShares={post.shares}
+                    isLikedAlready={post.isliked}
+                    tags={post.tags}
+                    listingId={post.listing_id}
+                    onShowComments={() => handleShowComments(post.post_id)}
+                    reloadFeed={reloadFeed}
+                    allFriends={friends}
+                    friendsLoading={friendsLoading}
+                    selected={selectedCard !== null}
+                  />
+                </div>
+              ))}
+            </Masonry>
+          ) : (
+            <div className={styles.scrollView}>
+              {finalPosts.map((post, index) => (
+                <div
+                  key={post.post_id}
+                  className={styles.scrollItem}
+                  ref={index === finalPosts.length - 1 ? ref : null}
+                  onClick={() => handleCardClick(post)}
+                >
+                  <SocialCard
+                    post_id={post.post_id}
+                    image={post.image}
+                    title={post.title}
+                    description={post.content}
+                    profilePic={post.profile}
+                    author={post.author}
+                    authorId={post.author_id}
+                    initialLikes={post.likes_count}
+                    initialShares={post.shares}
+                    isLikedAlready={post.isliked}
+                    tags={post.tags}
+                    listingId={post.listing_id}
+                    onShowComments={() => handleShowComments(post.post_id)}
+                    reloadFeed={reloadFeed}
+                    allFriends={friends}
+                    friendsLoading={friendsLoading}
+                  />
+                </div>
+              ))}
+            </div>
+          )
         )}
         {loading && <p>Loading more posts...</p>}
       </div>

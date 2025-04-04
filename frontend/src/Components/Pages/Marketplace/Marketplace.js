@@ -6,12 +6,19 @@ import styles from './Marketplace.module.css'; // Import CSS module for styling
 import { useNavigate, useLocation } from 'react-router-dom';
 import ListingModal from './Listings';
 import { useAuth0 } from '@auth0/auth0-react';
+import axios from 'axios';
 
 export const Marketplace = () => {
-  const [listings, setListings] = useState([]);
+  const [baseListings, setBaseListings] = useState([]);
+  const [finalListings, setFinalListings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [recommendations, setListingRecommendations] = useState([]);
+  const [error, setError] = useState(null);
+
+
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState({});
-  const [filteredResults, setFilteredResults] = useState(listings);  // Default to show all listings
+  const [filteredResults, setFilteredResults] = useState(baseListings);  // Default to show all listings
   const [suggestions, setSuggestions] = useState([]); // Store suggested search results
   const [isDropdownVisible, setDropdownVisible] = useState(false); // Control visibility of suggestions
   const [showModal, setShowModal] = useState(false);
@@ -28,7 +35,7 @@ export const Marketplace = () => {
       threshold: 0.3, // Adjust threshold for fuzziness (lower is stricter)
       keys: ['title', 'description'], // Fields to search in each listing
     };
-    return new Fuse(listings, options);
+    return new Fuse(baseListings, options);
   }, []);
 
   // Handle search input changes
@@ -38,7 +45,7 @@ export const Marketplace = () => {
 
     if (query.length > 0) {
       // Perform a fuzzy search for suggestions, apply filters first
-      const filteredData = applyFilters(listings);
+      const filteredData = applyFilters(baseListings);
       const results = fuse.search(query).filter(result => filteredData.includes(result.item));
       setSuggestions(results.slice(0, 5).map(result => result.item)); // Show top 5 suggestions
       setDropdownVisible(true);
@@ -86,7 +93,7 @@ export const Marketplace = () => {
   // Filter listings based on search query and active filters
   useEffect(() => {
     const filterListings = () => {
-      let filtered = applyFilters(listings);
+      let filtered = applyFilters(finalListings);
 
       // Apply filters from activeFilters (categories, type, ratings)
       //filtered = applyFilters(filtered);
@@ -103,7 +110,7 @@ export const Marketplace = () => {
     };
 
     filterListings();
-  }, [listings, searchQuery, activeFilters]);
+  }, [finalListings, searchQuery, activeFilters]);
 
   //Sets the active filters based on the query params in the url
   useEffect(() => {
@@ -124,53 +131,117 @@ export const Marketplace = () => {
     }
   }, [location]);
 
+   // Fetch listings
+   const fetchListings = async () => {
+    try {
+      setLoading(true);
+      const token = await getAccessTokenSilently();
+
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      const rawData = await response.json();
+      const formattedData = rawData.map(item => ({
+        id: item.listing_id,
+        user_id: item.user_id, 
+        title: item.title,
+        description: item.description,
+        category: item.category,
+        type: item.item_type,
+        rating: item.star_rating,
+        price: item.price,
+        image: item.file_keys,  
+        author: item.author,
+        profile: item.profile,
+        location: item.location,
+        services: item.services
+      }));
+
+      setBaseListings(formattedData);
+    } catch (error) {
+      console.error('Error fetching listings:', error);
+    }
+  };
+
+  // Fetch recommendations
+  const fetchRecommendations = async () => {
+    try {
+      const token = await getAccessTokenSilently();
+
+      if (!token) {
+        setError("Authorization token missing");
+        return;
+      }
+
+      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/recommendations`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { current_page: 'listings' },
+      });
+
+      console.log("API Response:", response.data);
+
+      const { recommendations } = response.data;
+      if (recommendations && recommendations.listing_recommendations) {
+        setListingRecommendations(recommendations.listing_recommendations);
+      } else {
+        setError("No listing recommendations found");
+      }
+    } catch (error) {
+      console.error("Error fetching recommendations:", error);
+      setError("Failed to fetch recommendations");
+    }
+  };
+
+  // Wait for both baseListings and recommendations to have data
+  const fetchData = async () => {
+    try {
+      // Check if both baseListings and recommendations have data
+      if (baseListings.length === 0 || recommendations.length === 0) {
+        return;  // Don't proceed if either is empty
+      }
+
+      const listingMap = new Map(baseListings.map(l => [l.id, l]));
+
+      // Reorder listings according to the recommended order
+      const ordered = recommendations
+        .map(rec => {
+          // Convert both to strings before comparison
+          const listing = listingMap.get(String(rec.listing_id)); 
+          return listing;
+        })
+        .filter(Boolean); // Filter out any undefined values (if a listing is not found)
+
+      setFinalListings(ordered);
+    } catch (error) {
+      console.error("Error processing data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // useEffect to fetch listings and recommendations only once
   useEffect(() => {
-    // Fetch the most recent listings from the server
-    const fetchListings = async () => {
+    const loadData = async () => {
       try {
-        const token = await getAccessTokenSilently();
-
-        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-  
-        const rawData = await response.json();
-  
-        // Map the data to match the desired format, now including user_id
-        const formattedData = rawData.map(item => ({
-          id: item.listing_id,
-          user_id: item.user_id,  // NEW: Include the seller's user_id
-          title: item.title,
-          description: item.description,
-          category: item.category,
-          type: item.item_type,
-          rating: item.star_rating,
-          price: item.price,
-          image: item.file_keys,  // or item.file_keys[0] if you only want one image
-          author: item.author,
-          profile: item.profile,
-          location: item.location,
-          services: item.services
-        }));
-
-        setListings(formattedData);
-        // If there's a listingId in the URL, open the modal for that listing
-        if (activeFilters.listingId) {
-          const selectedListing = formattedData.find(listing => listing.id.toString() === activeFilters.listingId.toString());
-          if (selectedListing) {
-            setSelectedListing(selectedListing);
-            setShowListingModal(true);
-          }
-        }
+        await Promise.all([fetchListings(), fetchRecommendations()]);
       } catch (error) {
-        console.error('Error fetching listings:', error);
+        console.error("Error loading data:", error);
       }
     };
-  
-    fetchListings();
-  }, [activeFilters]);
+
+    loadData();
+  }, []);  // Empty dependency array to run only once
+
+  // useEffect to process data once both listings and recommendations are available
+  useEffect(() => {
+    if (baseListings.length > 0 && recommendations.length > 0) {
+      fetchData(); // Fetch data after both have content
+    }
+  }, [baseListings, recommendations]); 
+
 
   // Filter change handler (when filter options are selected or modified)
   const handleFilterChange = (filter) => {
@@ -298,9 +369,16 @@ export const Marketplace = () => {
         </div>
 
         {/* Card Grid displaying filtered results */}
+        {loading ? (
+          <div className={styles.cardGridContainer}>
+            <div className="spinner-border text-primary" role="status"></div>
+            <p>Loading listings...</p>
+          </div>
+        ) : (
         <div className={styles.cardGridContainer}>
           <CardGrid listings={filteredResults} className={styles.cardGrid} openListingDetails={handleCardClick} />
         </div>
+        )}
       </div>
 
     </div>
