@@ -204,11 +204,26 @@ export const Marketplace = () => {
   };
 
   // Handler when user clicks a listing
-  const handleCardClick = (listing) => {
+  const handleCardClick = async (listing) => {
     setSelectedListing(listing);
     setShowListingModal(true);
+    try {
+      const token = await getAccessTokenSilently();
+      // Passing listing_id as a query parameter in the URL
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/view?listing_id=${listing.id}`, {
+        method: 'POST', 
+        headers: { Authorization: `Bearer ${token}` },
+      });
+  
+      if (!response.ok) {
+        throw new Error("Failed to track view");
+      }
+  
+    } catch (error) {
+      console.error("Error tracking view:", error);
+    }
   };
-
+  
   // Close modal for listing popup
   const handleCloseListingModal = () => {
     setShowListingModal(false);

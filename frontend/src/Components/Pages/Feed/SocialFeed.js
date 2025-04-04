@@ -212,11 +212,30 @@ const SocialFeed = () => {
     fetchFeed(pageArg);
   };
 
-  const handleCardClick = (post) => {
-    if(isGridLayout){
+  const handleCardClick = async (post) => {
+    if (isGridLayout) {
       setSelectedCard(post);
+  
+      try {
+        const token = await getAccessTokenSilently();
+  
+        // Passing post_id as query parameter in the URL
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/view?post_id=${post.post_id}`, {
+          method: 'POST', 
+          headers: { Authorization: `Bearer ${token}` },
+        });
+  
+        if (!response.ok) {
+          throw new Error("Failed to track view");
+        }
+  
+      } catch (error) {
+        console.error("Error tracking view:", error);
+      }
     }
   };
+  
+  
 
   const closeCardModal = () => {
     setSelectedCard(null);
