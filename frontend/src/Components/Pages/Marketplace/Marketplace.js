@@ -107,6 +107,17 @@ export const Marketplace = () => {
       }
 
       setFilteredResults(filtered);
+      if (activeFilters.listingId?.[0]) {
+        const selectedListing = finalListings.find(
+          (listing) => listing.id === activeFilters.listingId[0]
+        );
+        if (selectedListing) {
+          setSelectedListing(selectedListing);
+          setShowListingModal(true);
+        }
+      }
+      
+    
     };
 
     filterListings();
