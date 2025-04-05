@@ -78,7 +78,7 @@ export const handleInsertView = async (req, res) => {
 export const getRecommendations = async (req, res) => {
     try {
         const userId = extractUserIdFromToken(req);
-        const currentPage = req.query.page || 'feed';
+        const currentPage = req.query.current_page || 'feed';
         const pythonApiUrl = `${pythonApiBaseUrl}/recommend?user_id=${userId}&current_page=${currentPage}`;
 
         const { data } = await axios.get(pythonApiUrl);

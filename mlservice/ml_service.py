@@ -59,33 +59,48 @@ def get_user_data(user_id: str):
         raise HTTPException(status_code=500, detail="Error fetching user data")
 
 # Function to fetch listings data from the database
-def get_listings_data():
+def get_listings_data(user_id: str):
     try:
         conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
-        
+
         cursor.execute(""" 
-            SELECT l.listing_id, c.name AS category_name, l.description, l.title, l.item_type, l.date_posted, l.location
-            FROM listings l
-            JOIN categories c ON l.category_id = c.category_id
-        """)
+            SELECT
+                l.listing_id,
+                c.name AS category_name,
+                l.description,
+                l.title,
+                l.item_type,
+                l.date_posted,
+                l.location,
+                l.user_id AS author_id,  -- Added author_id to the query
+                (CASE WHEN ulv.listing_id IS NOT NULL THEN TRUE ELSE FALSE END) AS viewed
+            FROM
+                listings l
+            JOIN
+                categories c ON l.category_id = c.category_id
+            LEFT JOIN
+                user_listing_viewed ulv ON ulv.listing_id = l.listing_id AND ulv.user_id = %s
+        """, (user_id,))
+
         listings = cursor.fetchall()
         conn.close()
 
-        # Convert the query result into a pandas DataFrame
-        listings_df = pd.DataFrame(list(listings), columns=["listing_id", "category_name", "description", "title", "item_type", "date_posted", "location"])
+        listings_df = pd.DataFrame(list(listings), columns=["listing_id", "category_name", "description", "title", "item_type", "date_posted", "location", "author_id", "viewed"])
         return listings_df
 
     except Exception as e:
         print(f"Error fetching listings data: {e}")
         raise HTTPException(status_code=500, detail="Error fetching listings data")
 
+
+
 # Function to fetch feed data from the database
 def get_feed_data(user_id: str):
     try:
         conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
-        
+
         cursor.execute(""" 
             SELECT
                 f.post_id,
@@ -99,19 +114,25 @@ def get_feed_data(user_id: str):
                 f.likes_count,
                 f.shares_count,
                 f.item_details,
-                f.listing_id
-            FROM
-                feed_posts f
-            JOIN
-                users u ON f.user_id = u.user_id
-            WHERE
-                f.user_id != %s
-            ORDER BY
-                f.date_created DESC;
-        """, (user_id,))
+                f.listing_id,
+                COALESCE(ARRAY_AGG(t.tag_name) FILTER (WHERE t.tag_name IS NOT NULL), ARRAY[]::TEXT[]) AS tags,
+                CASE 
+                    WHEN upv.post_id IS NOT NULL THEN TRUE 
+                    ELSE FALSE 
+                END AS viewed
+            FROM feed_posts f
+            JOIN users u ON f.user_id = u.user_id
+            LEFT JOIN user_post_viewed upv 
+                ON f.post_id = upv.post_id AND upv.user_id = %s
+            LEFT JOIN post_tags pt ON f.post_id = pt.post_id -- Join with post_tags
+            LEFT JOIN tags t ON pt.tag_id = t.tag_id -- Join with tags
+            WHERE f.user_id != %s
+            GROUP BY f.post_id, u.user_id, f.image_url, f.title, f.content, f.date_created, u.profile_image, u.name, f.likes_count, f.shares_count, f.item_details, f.listing_id, upv.post_id
+            ORDER BY f.date_created DESC;
+
+        """, (user_id, user_id))
 
         feed = cursor.fetchall()
-
         if not feed:
             print("No feed posts found for the user.")
             return []
@@ -131,7 +152,7 @@ def get_feed_data(user_id: str):
 
         liked_status = cursor.fetchall()
 
-        feed_df = pd.DataFrame(list(feed), columns=["post_id", "title", "content", "image", "date_created", "profile", "author", "author_id", "likes_count", "shares_count", "item_details", "listing_id"])
+        feed_df = pd.DataFrame(list(feed), columns=["post_id", "title", "content", "image", "date_created", "profile", "author", "author_id", "likes_count", "shares_count", "item_details", "listing_id", "tags", "viewed"])
         liked_status_df = pd.DataFrame([{'post_id': row['post_id'], 'isLiked': row['isliked']} for row in liked_status])
 
         feed_df = feed_df.merge(liked_status_df, on="post_id", how="left")
@@ -141,6 +162,8 @@ def get_feed_data(user_id: str):
     except Exception as e:
         print(f"Error fetching feed data: {e}")
         raise HTTPException(status_code=500, detail="Error fetching feed data")
+
+
     
 
 # Recommendation calculation logic for listings and feed data
@@ -199,10 +222,10 @@ def calculate_recommendations(user_id, listings, feed_posts, user_preferred_cate
         raise ValueError("current_page must be 'listings' or 'feed'")
 
     # # Handle unseen posts and new listings (adjust scores)
-    # sorted_recommendations = handle_new_and_unseen_posts(sorted_recommendations, user_id, listings, feed_posts)
+    sorted_recommendations = handle_new_and_unseen_posts(sorted_recommendations, user_id, listings, feed_posts, current_page)
     
     # # Apply friend and category logic to adjust recommendations further
-    # sorted_recommendations = adjust_for_friends_and_categories(sorted_recommendations, friend_ids, user_preferred_categories)
+    sorted_recommendations = adjust_for_friends_and_categories(sorted_recommendations, friend_ids, user_preferred_categories, listings, feed_posts, current_page)
     
     # Return sorted listing IDs or post IDs with their final scores
     return sorted_recommendations
@@ -213,7 +236,7 @@ def map_tfidf_to_ids(tfidf_matrix, data_frame, id_column='listing_id'):
     Maps the non-zero TF-IDF values to their corresponding item IDs (listing_id or feed_post_id).
     
     :param tfidf_matrix: Sparse matrix (csr_matrix) containing the TF-IDF values
-    :param data_frame: pandas DataFrame containing item details, where each item has a unique identifier (`listing_id` or `feed_post_id`)
+    :param data_frame: pandas DataFrame containing item details, where each item has a unique identifier (`listing_id` or `post_id`)
     :param id_column: Name of the column containing the unique ID for each item (default is 'listing_id', can be changed for feed_posts)
     :return: List of tuples (item_id, term_index, tfidf_value) representing the TF-IDF values
     """
@@ -233,74 +256,89 @@ def map_tfidf_to_ids(tfidf_matrix, data_frame, id_column='listing_id'):
 
 
 
-# def handle_new_and_unseen_posts(sorted_recommendations, user_id, listings, feed_posts):
-#     """
-#     Adjust recommendations to handle unseen posts and new listings by prioritizing them
-#     if they are relevant (high TF-IDF scores) or if they are recent.
-#     """
-#     unseen_posts = []
-
-#     # Assume that unseen posts are those with no user interaction
-#     for post_id, score in sorted_recommendations:
-#         if post_id not in listings.get('user_interactions', {}).get(user_id, []):  # Unseen posts
-#             unseen_posts.append(post_id)
-
-#     # Prioritize unseen posts by boosting their recommendation score
-#     for post_id in unseen_posts:
-#         # Boost score for unseen posts
-#         sorted_recommendations.append((post_id, 10))  # Boost factor for unseen posts (adjust as needed)
-    
-#     return sorted_recommendations
-
-# def adjust_for_friends_and_categories(sorted_recommendations, friend_ids, user_preferred_categories):
-#     """
-#     Adjust recommendations by considering interactions from friends and the user's preferred categories.
-#     """
-#     adjusted_recommendations = []
-
-#     # Boost posts that friends have interacted with
-#     for post_id, score in sorted_recommendations:
-#         if any(friend_id in friend_ids for friend_id in friend_ids):
-#             score += 2  # Boost factor for friends' interactions (adjust as needed)
-        
-#         # Boost posts in preferred categories
-#         post_category = get_post_tags(post_id)  # Assume this function returns the category of the post
-#         if post_category in user_preferred_categories:
-#             score += 3  # Boost factor for category relevance (adjust as needed)
-        
-#         adjusted_recommendations.append((post_id, score))
-    
-#     # Sort recommendations again based on the updated score
-#     adjusted_recommendations = sorted(adjusted_recommendations, key=lambda x: x[1], reverse=True)
-
-#     return adjusted_recommendations
-
-def get_post_tags(post_id):
+def handle_new_and_unseen_posts(sorted_recommendations, user_id, listings_df, feed_df, currPage):
     """
-    Get the tags for a specific post based on its post_id.
-    
-    Args:
-    - post_id (str): The ID of the post.
-    
-    Returns:
-    - list: The tags associated with the post.
+    Adjust recommendations by separately boosting scores for unseen listings and feed posts.
+    Boost is applied if content is relevant and unseen.
     """
-    try:
-        # Find the post row by post_id
-        post = posts[posts['post_id'] == post_id]
-        
-        # Check if the post exists
-        if post.empty:
-            raise ValueError(f"Post with ID {post_id} not found.")
-        
-        # Return the tags for the post (assuming tags are stored in a list format in the 'tags' column)
-        return post['tags'].values[0]  # Assuming 'tags' is a column with list of tags
-    
-    except Exception as e:
-        # If there is an error (e.g., post_id not found), return an empty list
-        print(f"Error getting tags for post {post_id}: {e}")
-        return []
 
+    if currPage == "listings":
+        unseen_ids = set(listings_df[~listings_df['viewed']]["listing_id"])
+    else: 
+        unseen_ids = set(feed_df[~feed_df['viewed']]["post_id"])
+
+    boosted_recommendations = []
+
+    for id, score in sorted_recommendations:
+        if id in unseen_ids:
+            boosted_recommendations.append((id, score + 0.5))
+        else:
+            boosted_recommendations.append((id, score))
+
+    boosted_recommendations.sort(key=lambda x: x[1], reverse=True)
+
+    return boosted_recommendations
+
+from difflib import SequenceMatcher
+
+def fuzzy_match(str1, str2, threshold=0.7):
+    return SequenceMatcher(None, str1.lower(), str2.lower()).ratio() >= threshold
+
+def adjust_for_friends_and_categories(sorted_recommendations, friend_ids, user_preferred_categories, listings_df, feed_df, currPage):
+    """
+    Adjust recommendations by boosting scores based on:
+    - Whether the author is a friend
+    - Whether the listing/post matches preferred categories or tags (fuzzy match)
+    
+    Parameters:
+    - sorted_recommendations: list of (id, score) tuples
+    - friend_ids: list of friend user IDs
+    - user_preferred_categories: list of strings
+    - listings_df / feed_df: full DataFrame for context
+    - currPage: 'listings' or 'feed'
+    """
+    adjusted_recommendations = []
+
+    if currPage == 'listings':
+        df = listings_df
+        id_col = 'listing_id'
+        category_col = 'category_name'
+        author_col = 'author_id'
+    else:
+        df = feed_df
+        id_col = 'post_id'
+        category_col = 'tags' 
+        author_col = 'author_id'
+
+    df = df.set_index(id_col)
+
+    for item_id, score in sorted_recommendations:
+        if item_id not in df.index:
+            adjusted_recommendations.append((item_id, score))
+            continue
+
+        row = df.loc[item_id]
+
+        # Boost if author is a friend
+        if row[author_col] in friend_ids:
+            score += 0.3
+
+        # Boost for matching category or tags
+        if currPage == 'listings':
+            category = row[category_col]
+            if any(fuzzy_match(category, pref) for pref in user_preferred_categories):
+                score += 0.6
+        else:
+            tags = row[category_col]
+            if isinstance(tags, str):
+                tags = [tag.strip() for tag in tags.split(',')]
+            if any(fuzzy_match(tag, pref) for tag in tags for pref in user_preferred_categories):
+                score += 0.6
+
+        adjusted_recommendations.append((item_id, score))
+
+    adjusted_recommendations.sort(key=lambda x: x[1], reverse=True)
+    return adjusted_recommendations
 
 
 # Create a user-item interaction matrix (e.g., likes, views, etc.)
@@ -446,7 +484,7 @@ def combine_matrices(user_item_matrix, user_feed_matrix, tfidf_listings, tfidf_f
 @app.get("/recommend")
 async def recommend(user_id: str, current_page: str):
     # Fetch data
-    listings = get_listings_data()
+    listings = get_listings_data(user_id)
     feed_posts = get_feed_data(user_id)
     user_preferred_categories, friend_ids = get_user_data(user_id)
     
