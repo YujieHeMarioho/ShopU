@@ -20,7 +20,8 @@ import {
     getPostCommentCount,
     getFavorites,
     handleFavoriteAction,
-    getPostLikes
+    getPostLikes,
+    getPostById,
 } from '../controllers/feed.js';
 import upload from '../middleware/multer.js';
 
@@ -84,5 +85,8 @@ router.get('/feed/comments/count/:postId', getPostCommentCount);
 router.get('/feed/favorites', getFavorites);
 
 router.post('/feed/favorites/:postId', handleFavoriteAction);
+
+// Get a single feed post by ID (NEW ROUTE)
+router.get('/feed/post/:postId', getPostById);
 
 export default router;

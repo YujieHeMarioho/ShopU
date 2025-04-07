@@ -920,3 +920,60 @@ export const handleFavoriteAction = async (req, res) => {
     res.status(500).json({ error: 'Failed to update favorite' });
   }
 };
+
+//geting post by the id to showing in the message 
+export const getPostById = async (req, res) => {
+  const { postId } = req.params;
+
+  try {
+    const userId = extractUserIdFromToken(req);
+
+    const query = `
+      SELECT
+        f.post_id,
+        f.title,
+        f.content,
+        fi.file_key AS image,
+        u.name AS author,
+        u.profile_image AS profile
+      FROM
+        feed_posts f
+      JOIN
+        users u ON f.user_id = u.user_id
+      JOIN
+        post_images fi ON f.post_id = fi.post_id
+      WHERE
+        f.post_id = $1;
+    `;
+
+    const result = await pool.query(query, [postId]);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    const post = result.rows[0];
+
+    // Generate S3 signed URL for the post image
+    if (post.image) {
+      const command = new GetObjectCommand({
+        Bucket: bucketName,
+        Key: post.image,
+      });
+      post.image = await getSignedUrl(s3, command, { expiresIn: 86400 });
+    }
+
+    // Generate S3 signed URL for the profile image
+    if (post.profile) {
+      const command = new GetObjectCommand({
+        Bucket: profileBucketName,
+        Key: post.profile,
+      });
+      post.profile = await getSignedUrl(s3, command, { expiresIn: 86400 });
+    }
+
+    res.status(200).json(post);
+  } catch (err) {
+    console.error('Error fetching post by ID:', err.message);
+    res.status(500).json({ error: err.message || 'Database error' });
+  }
+};

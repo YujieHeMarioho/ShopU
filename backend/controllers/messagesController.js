@@ -129,28 +129,29 @@ export const markConversationMessagesRead = async (req, res) => {
 
 export const sendOffer = async (req, res) => {
   try {
-    const { offer_price, buyer_id, conversation_id } = req.body;
-    const { listing_id } = req.params;
-    const buyer = await pool.query('SELECT name FROM users WHERE user_id = $1', [buyer_id]);
-    const listing = await pool.query('SELECT title FROM listings WHERE listing_id = $1', [listing_id]);
-    
-    // Ensure buyer and listing exist
-    if (!buyer.rows.length || !listing.rows.length) {
-      return res.status(400).json({ error: 'Buyer or listing not found' });
+    const { offer_price, buyer_id, conversation_id, content, listing_id } = req.body;
+    const { listing_id: listingIdFromParams } = req.params;
+
+    console.log('Received offer data:', req.body); // Log incoming data
+
+    const listingId = listing_id || listingIdFromParams;
+    if (!listingId) {
+      return res.status(400).json({ error: 'Listing ID is required' });
     }
 
-    // Construct the offer message content
-    const content = `Offer from ${buyer.rows[0].name}: $${offer_price} for ${listing.rows[0].title}`;
+    const query = `
+      INSERT INTO messages (conversation_id, sender_id, content, offer_price, listing_id, created_at)
+      VALUES ($1, $2, $3, $4, $5, NOW())
+      RETURNING *;
+    `;
+    const values = [conversation_id, buyer_id, content, offer_price, listingId];
+    const result = await pool.query(query, values);
 
-    // Insert the offer into the messages table
-    const query = `INSERT INTO messages (conversation_id, sender_id, content, offer_price) VALUES ($1, $2, $3, $4)`;
-    const offerValues = [conversation_id, buyer_id, content, offer_price];
-    const result = await pool.query(query, offerValues);  
+    console.log('Saved message:', result.rows[0]); // Log saved message
 
-    // Send back the conversation_id in the response
-    res.status(201).json({ conversation_id: conversation_id });
+    res.status(201).json(result.rows[0]);
   } catch (error) {
-    console.error('Error Sending Offer to Seller:', error);
+    console.error('Error sending offer to seller:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
