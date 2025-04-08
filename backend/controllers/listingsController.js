@@ -577,7 +577,6 @@ export const uploadImages = async (req, res) => {
       return res.status(400).json({ message: "No files uploaded" });
     }
 
-    console.log('did it hit the try')
     const uploadedFiles = [];
 
     for (const file of req.files) {
@@ -796,10 +795,8 @@ export const isSellerCheck = async (req, res) => {
 
     if (result.rows.length > 0) {
       res.status(200).json({ hasListing: true });
-      console.log('it returns a good result')
     } else {
       res.status(200).json({ hasListing: false });
-      console.log('it returns a bad result')
     }
   } catch (error) {
     console.error('Failed to check seller status:', error);
