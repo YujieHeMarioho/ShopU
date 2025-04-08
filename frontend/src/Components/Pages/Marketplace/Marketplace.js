@@ -125,8 +125,8 @@ export const Marketplace = () => {
     }));
 
     // Open modal if listingId is in URL
-    if (listingId && finalListings.length > 0) {
-      const listing = finalListings.find(l => l.id.toString() === listingId.toString());
+    if (listingId && baseListings.length > 0) {
+      const listing = baseListings.find(l => l.id.toString() === listingId.toString());
       if (listing) {
         setSelectedListing(listing);
         setShowListingModal(true);
@@ -135,7 +135,45 @@ export const Marketplace = () => {
       setShowListingModal(false);
       setSelectedListing(null);
     }
-  }, [location, finalListings]);
+  }, [location, baseListings]);
+
+  const updateUrl = (newParams) => {
+    const params = new URLSearchParams(window.location.search);
+  
+    // Update search query
+    if (newParams.searchQuery !== undefined) {
+      if (newParams.searchQuery) {
+        params.set('search', newParams.searchQuery);
+      } else {
+        params.delete('search');
+      }
+    }
+  
+    // Update categories
+    if (newParams.categories !== undefined) {
+      if (newParams.categories.length > 0) {
+        params.set('category', newParams.categories.join(','));
+      } else {
+        params.delete('category');
+      }
+    }
+  
+    // Update listingId
+    if (newParams.listingId !== undefined) {
+      if (newParams.listingId) {
+        params.set('listingId', newParams.listingId);
+      } else {
+        params.delete('listingId');
+      }
+    }
+  
+    // Update the URL in the address bar without reloading the page
+    window.history.replaceState(
+      null,
+      '',
+      `${window.location.pathname}?${params.toString()}`
+    );
+  };
 
    // Fetch listings
    const fetchListings = async () => {
@@ -257,12 +295,18 @@ export const Marketplace = () => {
 
 
   const handleFilterChange = (filter) => {
-    setActiveFilters(prevState => ({
-      ...prevState,
-      ...filter,
-      listingId: null, // Reset listingId when filters change
-    }));
+    setActiveFilters(prevState => {
+      const newFilters = {
+        ...prevState,
+        ...filter,
+        listingId: null // Explicitly remove listingId when filters change
+      };
+  
+      updateUrl(newFilters); // Reflect changes in the URL
+      return newFilters;
+    });
   };
+  
 
   const handleCreateListing = () => {
     setShowModal(true);
@@ -286,6 +330,13 @@ export const Marketplace = () => {
   const handleCardClick = async (listing) => {
     setSelectedListing(listing);
     setShowListingModal(true);
+
+    updateUrl({
+      ...activeFilters,
+      listingId: listing.id,
+    });
+
+
     try {
       const token = await getAccessTokenSilently();
       // Passing listing_id as a query parameter in the URL
@@ -307,6 +358,11 @@ export const Marketplace = () => {
   const handleCloseListingModal = () => {
     setShowListingModal(false);
     setSelectedListing(null);
+
+    updateUrl({
+      ...activeFilters,
+      listingId: null,
+    });
   };
 
   return (
@@ -383,6 +439,7 @@ export const Marketplace = () => {
           show={showListingModal}
           onHide={handleCloseListingModal}
           listing={selectedListing}
+          setSelectedListing={setSelectedListing}
         />
       )}
     </div>
