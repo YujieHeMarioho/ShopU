@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAllListings, createItemListing, createServiceListing, getFavoritedListings, getCommunityListings, uploadImages, getAllCategories, editListing, deleteListing, getListingCount, getAllUserListings, getUserListingsCount, getSimilarListings, getAUsersListings } from '../controllers/listingsController.js';
+import { getUserServices, getAllListings, getListingById, createItemListing, createServiceListing, getFavoritedListings, getCommunityListings, uploadImages, getAllCategories, editListing, deleteListing, getListingCount, getAllUserListings, getUserListingsCount, getSimilarListings, getAUsersListings } from '../controllers/listingsController.js';
 import upload from '../middleware/multer.js';
 
 const router = express.Router();
@@ -17,8 +17,7 @@ router.get('/listings/user', getAllUserListings);  // When a GET request is made
 
 router.get('/listings/user/count/:user_id', getUserListingsCount);
 
-
-
+router.get('/listings/:listing_id/services', getUserServices) //get all the services from a listing
 
 router.get('/listings/communities/:community_id', getCommunityListings)
 
@@ -43,6 +42,9 @@ router.put('/listings/:id/edit', editListing);
 
 // route to delete a listing 
 router.delete('/listings/:id/delete', deleteListing);
+
+//geting list by id 
+router.get('/listings/:listingId', getListingById);
 
 export default router;
 

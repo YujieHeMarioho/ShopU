@@ -690,3 +690,92 @@ export const getAllCategories = async (req, res) => {
     res.status(500).json({ error: 'Database error' });
   }
 };
+
+
+
+// Add this new endpoint
+export const getListingById = async (req, res) => {
+  const { listingId } = req.params;
+
+  const query = `
+    SELECT
+      l.listing_id AS id,
+      l.user_id,
+      l.title,
+      l.description,
+      c.name AS category,
+      l.item_type AS type,
+      l.price,
+      l.location,
+      ARRAY_AGG(DISTINCT li.file_key) AS file_keys,
+      u.name AS author,
+      u.profile_image AS profile
+    FROM listings l
+    JOIN categories c ON l.category_id = c.category_id
+    JOIN users u ON l.user_id = u.user_id
+    LEFT JOIN listing_images li ON l.listing_id = li.listing_id
+    WHERE l.listing_id = $1
+    GROUP BY
+      l.listing_id,
+      l.user_id,
+      l.title,
+      l.description,
+      c.name,
+      l.item_type,
+      l.price,
+      l.location,
+      u.name,
+      u.profile_image;
+  `;
+
+  try {
+    const result = await pool.query(query, [listingId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Listing not found' });
+    }
+
+    const listing = result.rows[0];
+    const signedUrls = await Promise.all(
+      (listing.file_keys || []).map(async (fileKey) => {
+        const command = new GetObjectCommand({
+          Bucket: bucketName,
+          Key: fileKey,
+        });
+        return getSignedUrl(s3, command, { expiresIn: 86400 });
+      })
+    );
+
+    if (listing.profile) {
+      const command = new GetObjectCommand({
+        Bucket: profileBucket,
+        Key: listing.profile,
+      });
+      listing.profile = await getSignedUrl(s3, command, { expiresIn: 86400 });
+    }
+
+    const listingWithUrls = {
+      ...listing,
+      file_keys: signedUrls,
+    };
+
+    res.status(200).json(listingWithUrls);
+  } catch (err) {
+    console.error('Error fetching listing:', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+};
+
+export const getUserServices = async (req, res) => {
+  const { listing_id } = req.params;
+
+  const serviceQuery = 'SELECT * FROM listing_services WHERE listing_id = $1';
+
+  try {
+    const result = await pool.query(serviceQuery, [listing_id]);
+    res.status(200).json(result.rows);
+  }
+  catch (error) {
+    console.error('Failed fetching services', error);
+    res.status(500).json({ error: 'Database error' });
+  }
+};

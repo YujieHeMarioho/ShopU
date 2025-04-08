@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Banner, CardGrid, FilterSidebar } from '../../Common';
 import { Form, ListGroup, Modal, Button } from 'react-bootstrap';
-import Fuse from 'fuse.js';  // Import Fuse.js library
-import styles from './Marketplace.module.css'; // Import CSS module for styling
+import Fuse from 'fuse.js';
+import styles from './Marketplace.module.css';
 import { useNavigate, useLocation } from 'react-router-dom';
 import ListingModal from './Listings';
 import { useAuth0 } from '@auth0/auth0-react';
@@ -29,17 +29,16 @@ export const Marketplace = () => {
 
   const [showListingModal, setShowListingModal] = useState(false);
   const [selectedListing, setSelectedListing] = useState(null);
-  // Fuse.js setup for fuzzy search
+
   const fuse = useMemo(() => {
     const options = {
       includeScore: true,
-      threshold: 0.3, // Adjust threshold for fuzziness (lower is stricter)
-      keys: ['title', 'description'], // Fields to search in each listing
+      threshold: 0.3,
+      keys: ['title', 'description'],
     };
     return new Fuse(baseListings, options);
   }, []);
 
-  // Handle search input changes
   const handleSearchChange = (e) => {
     const query = e.target.value;
     setSearchQuery(query);
@@ -48,7 +47,7 @@ export const Marketplace = () => {
       // Perform a fuzzy search for suggestions, apply filters first
       const filteredData = applyFilters(baseListings);
       const results = fuse.search(query).filter(result => filteredData.includes(result.item));
-      setSuggestions(results.slice(0, 5).map(result => result.item)); // Show top 5 suggestions
+      setSuggestions(results.slice(0, 5).map(result => result.item));
       setDropdownVisible(true);
     } else {
       setSuggestions([]);
@@ -56,42 +55,35 @@ export const Marketplace = () => {
     }
   };
 
-  // Apply filters before returning data for search
   const applyFilters = (data) => {
     let filtered = data;
-    // Apply filters from activeFilters (categories, type, ratings)
     if (activeFilters.categories && activeFilters.categories.length > 0) {
       filtered = filtered.filter((listing) =>
         activeFilters.categories.includes(listing.category)
       );
     }
-
     if (activeFilters.type && activeFilters.type !== 'both') {
       filtered = filtered.filter((listing) => listing.type === activeFilters.type);
     }
-
     if (activeFilters.ratings && activeFilters.ratings.length > 0) {
       filtered = filtered.filter((listing) => {
         const rating = listing.rating || 0;
         return activeFilters.ratings.some((selectedRating) => {
           if (selectedRating === '3 stars+') return rating >= 3.0;
           if (selectedRating === '4 stars+') return rating >= 4.0;
-          if (selectedRating === '5 stars') return rating == 5.0;
+          if (selectedRating === '5 stars') return rating === 5.0;
           return false;
         });
       });
     }
-
     return filtered;
   };
 
-  // Handle suggestion click
   const handleSuggestionClick = (suggestion) => {
-    setSearchQuery(suggestion.title); // Update the search query with the suggestion
-    setDropdownVisible(false); // Hide the suggestions dropdown
+    setSearchQuery(suggestion.title);
+    setDropdownVisible(false);
   };
 
-  // Filter listings based on search query and active filters
   useEffect(() => {
     const filterListings = () => {
       let filtered = applyFilters(finalListings);
@@ -106,7 +98,6 @@ export const Marketplace = () => {
           listing.description.toLowerCase().includes(searchQuery.toLowerCase())
         );
       }
-
       setFilteredResults(filtered);
       if (activeFilters.listingId?.[0]) {
         const selectedListing = finalListings.find(
@@ -120,28 +111,31 @@ export const Marketplace = () => {
       
     
     };
-
     filterListings();
   }, [finalListings, searchQuery, activeFilters]);
 
-  //Sets the active filters based on the query params in the url
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const category = params.get('category');
     const listingId = params.get('listingId');
-    if (category) {
-      setActiveFilters(prevFilters => ({
-        ...prevFilters,
-        categories: [category],
-      }));
+    setActiveFilters((prevFilters) => ({
+      ...prevFilters,
+      categories: category ? [category] : prevFilters.categories,
+      listingId: listingId || null, // Store as string or null
+    }));
+
+    // Open modal if listingId is in URL
+    if (listingId && listings.length > 0) {
+      const listing = listings.find(l => l.id.toString() === listingId.toString());
+      if (listing) {
+        setSelectedListing(listing);
+        setShowListingModal(true);
+      }
+    } else {
+      setShowListingModal(false);
+      setSelectedListing(null);
     }
-    if (listingId) {
-      setActiveFilters(prevFilters => ({
-        ...prevFilters,
-        listingId: [listingId],
-      }));
-    }
-  }, [location]);
+  }, [location, listings]);
 
    // Fetch listings
    const fetchListings = async () => {
@@ -262,32 +256,28 @@ export const Marketplace = () => {
   }, [baseListings, recommendations, recommendationsError]); 
 
 
-  // Filter change handler (when filter options are selected or modified)
   const handleFilterChange = (filter) => {
     setActiveFilters(prevState => ({
       ...prevState,
       ...filter,
-      listingId: "none",
+      listingId: null, // Reset listingId when filters change
     }));
+    navigate('/marketplace'); // Reset URL to base marketplace when filters change
   };
 
-  // Open modal when "Create New Listing" button is clicked
   const handleCreateListing = () => {
     setShowModal(true);
   };
 
-  // Close modal for creating listing
   const handleCloseModal = () => {
     setShowModal(false);
   };
 
-  // Navigate to create item listing page
   const handleNewItemListing = () => {
     setShowModal(false);
     navigate('/create-item-listing');
   };
 
-  // Navigate to create service listing page
   const handleNewServiceListing = () => {
     setShowModal(false);
     navigate('/create-service-listing');
@@ -318,73 +308,53 @@ export const Marketplace = () => {
   const handleCloseListingModal = () => {
     setShowListingModal(false);
     setSelectedListing(null);
+    navigate('/marketplace'); // Reset URL when modal closes
   };
-
 
   return (
     <div>
-    <div className={styles.marketplaceContainer}>
-      {/* Search Bar */}
-      <div className="my-4">
-        <Form.Control
-          type="text"
-          placeholder="Search listings..."
-          value={searchQuery}
-          onChange={handleSearchChange}
-          className={styles.searchBar}
-        />
-
-        {/* Show suggestions if dropdown is visible */}
-        {isDropdownVisible && suggestions.length > 0 && (
-          <ListGroup className={styles.suggestionsDropdown}>
-            {suggestions.map((suggestion) => (
-              <ListGroup.Item
-                key={suggestion.id}
-                action
-                onClick={() => handleSuggestionClick(suggestion)}
-              >
-                {suggestion.title}
-              </ListGroup.Item>
-            ))}
-          </ListGroup>
-        )}
-
-        {/* Create New Listing Button */}
-        <div className={styles.createListingButtonContainer}>
-          <Button
-            className={styles.createListingButton}
-            onClick={handleCreateListing}
-          >
-            Create New Listing
-          </Button>
-        </div>
-
-        {/* Modal for Additional Options */}
-        <Modal show={showModal} onHide={handleCloseModal} centered>
-          <Modal.Header closeButton>
-            <Modal.Title style={{ color: 'black' }}>Select Listing Type</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <div className="d-grid gap-2">
-              <Button variant="primary" onClick={handleNewItemListing}>
-                Create New Item Listing
-              </Button>
-              <Button variant="secondary" onClick={handleNewServiceListing}>
-                Create New Service Listing
-              </Button>
-            </div>
-          </Modal.Body>
-        </Modal>
-      </div>
-
-      {/* Layout container for the filter sidebar and card grid */}
-      <div className={styles.layoutContainer}>
-        {/* Filter Sidebar */}
-        <div className={styles.filterSidebarContainer}>
-          <FilterSidebar
-            onFilterChange={handleFilterChange}
-            initialFilters={activeFilters}
+      <div className={styles.marketplaceContainer}>
+        <div className="my-4">
+          <Form.Control
+            type="text"
+            placeholder="Search listings..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            className={styles.searchBar}
           />
+          {isDropdownVisible && suggestions.length > 0 && (
+            <ListGroup className={styles.suggestionsDropdown}>
+              {suggestions.map((suggestion) => (
+                <ListGroup.Item
+                  key={suggestion.id}
+                  action
+                  onClick={() => handleSuggestionClick(suggestion)}
+                >
+                  {suggestion.title}
+                </ListGroup.Item>
+              ))}
+            </ListGroup>
+          )}
+          <div className={styles.createListingButtonContainer}>
+            <Button className={styles.createListingButton} onClick={handleCreateListing}>
+              Create New Listing
+            </Button>
+          </div>
+          <Modal show={showModal} onHide={handleCloseModal} centered>
+            <Modal.Header closeButton>
+              <Modal.Title style={{ color: 'black' }}>Select Listing Type</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <div className="d-grid gap-2">
+                <Button variant="primary" onClick={handleNewItemListing}>
+                  Create New Item Listing
+                </Button>
+                <Button variant="secondary" onClick={handleNewServiceListing}>
+                  Create New Service Listing
+                </Button>
+              </div>
+            </Modal.Body>
+          </Modal>
         </div>
 
         {/* Card Grid displaying filtered results */}
@@ -399,14 +369,15 @@ export const Marketplace = () => {
         </div>
         )}
       </div>
-
-    </div>
-    {showListingModal && (
-        <ListingModal show={showListingModal} onHide={handleCloseListingModal} listing={selectedListing} />
+      {showListingModal && (
+        <ListingModal
+          show={showListingModal}
+          onHide={handleCloseListingModal}
+          listing={selectedListing}
+        />
       )}
     </div>
   );
-
 };
 
 export default Marketplace;

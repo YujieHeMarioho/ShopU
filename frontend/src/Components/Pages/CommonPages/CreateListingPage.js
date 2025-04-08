@@ -195,33 +195,32 @@ const CreateListingPage = () => {
           return;
       }
 
-      // Prepare the payload to send as JSON
       const payload = {
           title: formData.businessName,
           description: formData.description,
           category: formData.category,
           type: 'service',
-          price: formData.services[0].price, // Single price, assuming services[0] contains the primary price
+          price: formData.services[0].price, 
           condition: 'New',
           location: formData.location,
-          services: formData.services,  // Directly include the services array (don't stringify)
+          services: formData.services,  
           images: uploadedImages,
       };
 
-      // Convert the entire payload to JSON (only stringify the whole object)
+
       const jsonString = JSON.stringify(payload);
 
-      // Get the token for authorization
+
       const token = await getAccessTokenSilently();
 
-      // Send the POST request with the JSON payload
+  
       const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings/create/service`, {
           method: 'POST',
           headers: {
-              'Content-Type': 'application/json', // We are sending JSON, not multipart/form-data
+              'Content-Type': 'application/json', 
               'Authorization': `Bearer ${token}`,
           },
-          body: jsonString, // Send the JSON stringified body
+          body: jsonString, 
       });
 
       // Handle the response

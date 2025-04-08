@@ -3,7 +3,7 @@ import ReactCalendar from "react-calendar";
 import { Card, ListGroup, Row, Col, Button, Modal, Form } from "react-bootstrap";
 import { useAuth0 } from "@auth0/auth0-react"; // Import useAuth0
 import styles from "./Appointments.module.css"; // Import the CSS module
-
+import ScheduleAppointmentModal from "./ScheduleAppointmentModal";
 import "react-calendar/dist/Calendar.css"; // Import calendar styles
 
 const AppointmentsComponent = () => {
@@ -13,11 +13,40 @@ const AppointmentsComponent = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [listings, setListings] = useState([]);
   const [newDate, setNewDate] = useState("");
   const [newTime, setNewTime] = useState("");
+  const { getAccessTokenSilently, user } = useAuth0();
+  const [reloadAppointments, setReloadAppointments] = useState(false);
 
-  const { getAccessTokenSilently } = useAuth0(); // Get the token from Auth0
+  useEffect(() => {
+    const fetchListingsAndServices = async () => {
+      try {
+        const token = await getAccessTokenSilently();
+
+        // Fetch listings
+        const listingsResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/listings/user/${user.sub}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        if (!listingsResponse.ok) {
+          throw new Error("Failed to fetch listings.");
+        }
+
+        const listingsData = await listingsResponse.json();
+        setListings(listingsData);
+      } catch (err) {
+        setError(err.message);
+        console.error("Error fetching listings:", err);
+      }
+    };
+
+    fetchListingsAndServices();
+  }, [getAccessTokenSilently]);
 
   // Helper function to format date for comparison
   const formatDate = (date) => {
@@ -32,15 +61,15 @@ const AppointmentsComponent = () => {
     const [hours, minutes] = time.split(":");
     return `${hours}:${minutes}`; // Return only hours and minutes
   };
-  
+
 
   // Calculate 2 weeks from today
   const today = new Date();
   const twoWeeksFromNow = new Date();
   twoWeeksFromNow.setDate(today.getDate() + 14); // Add 14 days to today
 
-   // Get the appointments for the selected date
-   const selectedAppointments = appointments.filter(
+  // Get the appointments for the selected date
+  const selectedAppointments = appointments.filter(
     (appointment) => formatDate(appointment.date) === formatDate(selectedDate)
   );
 
@@ -76,7 +105,7 @@ const AppointmentsComponent = () => {
     const fetchAppointments = async () => {
       try {
         const token = await getAccessTokenSilently(); // Get the access token
-        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/services`, {
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/services/${user.sub}`, {
           headers: {
             'Authorization': `Bearer ${token}`, // Send the token in the request header
           },
@@ -93,10 +122,15 @@ const AppointmentsComponent = () => {
         setError(err.message);
         setLoading(false);
       }
+
+      if (reloadAppointments) {
+        fetchAppointments();
+        setReloadAppointments(false); 
+      }
     };
 
     fetchAppointments();
-  }, [getAccessTokenSilently]); // Ensure to fetch appointments when the component mounts
+  }, [getAccessTokenSilently, reloadAppointments]); // Ensure to fetch appointments when the component mounts
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
@@ -107,11 +141,14 @@ const AppointmentsComponent = () => {
   };
 
   const handleRescheduleSubmit = async () => {
+    console.log(selectedAppointment)
     try {
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/appointments/${selectedAppointment.id}/reschedule`, {
+      const token = await getAccessTokenSilently();
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/services/appointment/${selectedAppointment.service_id}/reschedule`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ newDate, newTime }),
       });
@@ -122,12 +159,65 @@ const AppointmentsComponent = () => {
 
       alert('Appointment rescheduled successfully!');
       setShowRescheduleModal(false);
-      // Optionally, you can refresh the appointments list here
+      setReloadAppointments(true)
+      setNewDate('');
+      setNewTime('');
     } catch (err) {
       alert('Failed to reschedule appointment');
       console.error(err);
     }
   };
+
+  const cancelAppointment = async (appointment) => {
+    try {
+      const token = await getAccessTokenSilently();
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/services/appointment/${appointment.service_id}/cancel`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok && appointment.customer_id != null) {
+        const conversationResponse = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/conversations/${user.sub}/${appointment.customer_id}/find`, {
+          method: "GET",
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+
+        const conversationData = await conversationResponse.json();
+        console.log(conversationData);
+
+        if (!conversationResponse.ok) {
+          throw new Error(conversationData.message || 'Failed to create conversation');
+        }
+
+
+        const messageData = {
+          content: `Your appointment for ${appointment.service_name} @ ${formatDate(appointment.date)} ${formatTime(appointment.time)} has been canceled`,
+          senderId: user.sub,
+        };
+
+        await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/messages/${conversationData.conversation_id}/messages`, {
+          method: "POST",
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(messageData),
+        });
+      }
+
+      alert('Appointment Canceled!');
+
+      setReloadAppointments(true)
+    } catch (err) {
+      alert('Failed to reschedule appointment');
+      console.error(err);
+    }
+  }
 
   return (
     <div className={styles.container}>
@@ -166,6 +256,7 @@ const AppointmentsComponent = () => {
           <Card className={styles.card}>
             <Card.Body>
               <h3>Appointments for {selectedDate.toDateString()}</h3>
+              <Button onClick={() => setShowScheduleModal(true)}>Schedule Appointment</Button>
               <ListGroup>
                 {appointments.filter(
                   (appointment) => formatDate(appointment.date) === formatDate(selectedDate)
@@ -174,7 +265,8 @@ const AppointmentsComponent = () => {
                     .filter((appointment) => formatDate(appointment.date) === formatDate(selectedDate))
                     .map((appointment, index) => (
                       <ListGroup.Item key={index}>
-                        <strong>{appointment.time}</strong> - {appointment.service_name} for {appointment.customer_name}
+                        <strong>{appointment.time}</strong> - {appointment.service_name} for{" "}
+                        <strong>{appointment.customer_name ? appointment.customer_name : "Unbooked"}</strong>
                         <Button
                           variant="warning"
                           size="sm"
@@ -183,12 +275,20 @@ const AppointmentsComponent = () => {
                         >
                           Reschedule
                         </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          className="float-right"
+                          onClick={() => cancelAppointment(appointment)}>
+                          Cancel
+                        </Button>
                       </ListGroup.Item>
                     ))
                 ) : (
                   <ListGroup.Item>No appointments scheduled.</ListGroup.Item>
                 )}
               </ListGroup>
+
             </Card.Body>
           </Card>
         </Col>
@@ -221,7 +321,7 @@ const AppointmentsComponent = () => {
               deliverableServices.map((service, index) => (
                 <ListGroup.Item key={index}>
                   <strong>{service.service_name}</strong> for {service.customer_name} -{" "}
-                  {service.remainingDays === 0 ? <strong>Due Today</strong>: `${service.remainingDays} day(s) remaining`}
+                  {service.remainingDays === 0 ? <strong>Due Today</strong> : `${service.remainingDays} day(s) remaining`}
                 </ListGroup.Item>
               ))
             ) : (
@@ -266,6 +366,15 @@ const AppointmentsComponent = () => {
           </Button>
         </Modal.Footer>
       </Modal>
+
+      {/* Schedule Appointment Modal */}
+      <ScheduleAppointmentModal
+        show={showScheduleModal}
+        listings={listings}
+        selectedDate={selectedDate}
+        onHide={() => setShowScheduleModal(false)}
+        setReloadAppointments
+      />
     </div>
   );
 };
