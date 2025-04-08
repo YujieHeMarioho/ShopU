@@ -136,11 +136,11 @@ export const sendOffer = async (req, res) => {
     }
 
     const query = `
-      INSERT INTO messages (conversation_id, sender_id, content, offer_price, listing_id, created_at)
-      VALUES ($1, $2, $3, $4, $5, NOW())
+      INSERT INTO messages (conversation_id, sender_id, content, offer_price,  created_at)
+      VALUES ($1, $2, $3, $4, NOW())
       RETURNING *;
     `;
-    const values = [conversation_id, buyer_id, content, offer_price, listingId];
+    const values = [conversation_id, buyer_id, content, offer_price];
     const result = await pool.query(query, values);
 
     console.log('Saved message:', result.rows[0]); // Log saved message
