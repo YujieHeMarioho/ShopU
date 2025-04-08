@@ -10,7 +10,7 @@ import axios from 'axios';
 import { format } from 'date-fns';
 import ReportModal from '../../Common/ReportModal';
 
-export const ListingModal = ({ show, onHide, listing }) => {
+export const ListingModal = ({ show, onHide, listing, setSelectedListing }) => {
    const [dropDownTitle, setDropDownTitle] = useState('Select an Option');
    const { getAccessTokenSilently, user, isAuthenticated } = useAuth0();
    const navigate = useNavigate();
@@ -108,7 +108,7 @@ export const ListingModal = ({ show, onHide, listing }) => {
    }, [listing]);
 
    const handleCardClick = (listing) => {
-      navigate(`/marketplace?listingId=${listing.id}`);
+      setSelectedListing(listing);
    };
 
    const handleDropDownClick = (option) => {;
@@ -302,7 +302,11 @@ export const ListingModal = ({ show, onHide, listing }) => {
             type: item.item_type,
             rating: item.star_rating,
             price: item.price,
+            location: item.location,
             image: item.file_keys,
+            author: item.author,
+            profile: item.profile,
+            services: item.services,
          }));
 
          setCategoryListings(formattedData);
