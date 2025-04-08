@@ -125,8 +125,8 @@ export const Marketplace = () => {
     }));
 
     // Open modal if listingId is in URL
-    if (listingId && listings.length > 0) {
-      const listing = listings.find(l => l.id.toString() === listingId.toString());
+    if (listingId && finalListings.length > 0) {
+      const listing = finalListings.find(l => l.id.toString() === listingId.toString());
       if (listing) {
         setSelectedListing(listing);
         setShowListingModal(true);
@@ -135,7 +135,7 @@ export const Marketplace = () => {
       setShowListingModal(false);
       setSelectedListing(null);
     }
-  }, [location, listings]);
+  }, [location, finalListings]);
 
    // Fetch listings
    const fetchListings = async () => {
@@ -262,7 +262,6 @@ export const Marketplace = () => {
       ...filter,
       listingId: null, // Reset listingId when filters change
     }));
-    navigate('/marketplace'); // Reset URL to base marketplace when filters change
   };
 
   const handleCreateListing = () => {
@@ -308,7 +307,6 @@ export const Marketplace = () => {
   const handleCloseListingModal = () => {
     setShowListingModal(false);
     setSelectedListing(null);
-    navigate('/marketplace'); // Reset URL when modal closes
   };
 
   return (
@@ -357,6 +355,15 @@ export const Marketplace = () => {
           </Modal>
         </div>
 
+        <div className={styles.layoutContainer}>
+        {/* Filter Sidebar */}
+        <div className={styles.filterSidebarContainer}>
+          <FilterSidebar
+            onFilterChange={handleFilterChange}
+            initialFilters={activeFilters}
+          />
+        </div>
+
         {/* Card Grid displaying filtered results */}
         {loading ? (
           <div className={styles.cardGridContainer}>
@@ -369,6 +376,8 @@ export const Marketplace = () => {
         </div>
         )}
       </div>
+
+    </div>
       {showListingModal && (
         <ListingModal
           show={showListingModal}
