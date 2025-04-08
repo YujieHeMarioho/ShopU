@@ -30,6 +30,21 @@
             "name": "ShopUAWS",
             "database": "shopU",
             "username": "postgres"
+        },
+        {
+            "pgOptions": {
+                "ssl": {
+                    "rejectUnauthorized": false
+                }
+            },
+            "previewLimit": 50,
+            "server": "database-2.cbp1wwybyrvo.us-east-1.rds.amazonaws.com",
+            "port": 5432,
+            "askForPassword": true,
+            "driver": "PostgreSQL",
+            "name": "ShopUDB",
+            "database": "shopU",
+            "username": "postgres"
         }
     ]
 }

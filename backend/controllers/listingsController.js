@@ -764,3 +764,18 @@ export const getListingById = async (req, res) => {
     res.status(500).json({ error: 'Database error' });
   }
 };
+
+export const getUserServices = async (req, res) => {
+  const { listing_id } = req.params;
+
+  const serviceQuery = 'SELECT * FROM listing_services WHERE listing_id = $1';
+
+  try {
+    const result = await pool.query(serviceQuery, [listing_id]);
+    res.status(200).json(result.rows);
+  }
+  catch (error) {
+    console.error('Failed fetching services', error);
+    res.status(500).json({ error: 'Database error' });
+  }
+};

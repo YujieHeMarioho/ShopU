@@ -35,7 +35,6 @@ export const getConversations = async (req, res) => {
   }
 };
 
-
 // Get all messages for a specific conversation
 export const getMessages = async (req, res) => {
   const { conversationId } = req.params;
@@ -98,9 +97,6 @@ export const sendMessage = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
-
-
-
 
 // NEW: Mark all messages as read
 export const markConversationMessagesRead = async (req, res) => {

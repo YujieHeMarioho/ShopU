@@ -4,9 +4,10 @@ import { CardComponent } from '../../Common';
 import styles from './Listings.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
 import { useNavigate, Link } from 'react-router-dom';
-import { FaMapMarkerAlt, FaMapPin, FaFlag } from 'react-icons/fa';
+import { FaMapPin, FaFlag } from 'react-icons/fa';
 import OfferModal from "./OfferModal";
 import axios from 'axios';
+import { format } from 'date-fns';
 import ReportModal from '../../Common/ReportModal';
 
 export const ListingModal = ({ show, onHide, listing }) => {
@@ -21,18 +22,21 @@ export const ListingModal = ({ show, onHide, listing }) => {
    const [categoryListings, setCategoryListings] = useState([]);
    const [location, setLocation] = useState('');
    const [showOfferModal, setShowOfferModal] = useState(false);
+   const [selectedServiceId, setSelectedServiceId] = useState(null);
+   const [appointments, setAppointments] = useState([]);;
+   const [selectedTimeSlot, setSelectedTimeSlot] = useState(null);
+   const [appointmentMap, setAppointmentMap] = useState({});
+
    const isOwner = isAuthenticated && listing && listing.user_id === user?.sub;
    const isServiceListing = listing.type == 'service';
+
    const dropdownOptions = isServiceListing
       ? listing.services.map(service => ({
          label: `${service.service_name} - $${service.service_price}`,
          value: service.service_id
       }))
-      : [
-         { label: 'Drop Off Location', value: 'drop_off' },
-         { label: 'Pickup From Seller', value: 'pickup' },
-         { label: 'Shipped', value: 'shipped' }
-      ];
+      : [];
+
       const [showReportModal, setShowReportModal] = useState(false);
       const [reportingItemId, setReportingItemId] = useState(null);
 
@@ -43,6 +47,38 @@ export const ListingModal = ({ show, onHide, listing }) => {
          setEditDescription(listing.description);
       }
    }, [isEditing, listing]);
+
+   
+   useEffect(() => {
+      // Run this logic only when appointments change
+      const tempAppointmentMap = appointments.reduce((map, appt) => {
+          let cleanDate = appt.date.substring(0, 10);
+          let time = appt.time.includes(":") ? appt.time : `${appt.time}:00`;
+  
+          const appointmentDateString = `${cleanDate}T${time}`;
+          const appointmentDate = new Date(appointmentDateString);
+  
+          if (isNaN(appointmentDate.getTime())) {
+              console.error("Invalid Date:", appointmentDateString);
+              return map;
+          }
+  
+          const formattedDate = format(appointmentDate, 'MM/dd/yyyy, hh:mm a');
+  
+
+          map[formattedDate] = appt.service_id;
+          return map;
+      }, {});
+  
+      setAppointmentMap(tempAppointmentMap);
+  }, [appointments]);  
+
+   useEffect(() => {
+      if (selectedServiceId) {
+
+         handleScheduleAppointment();
+      }
+   }, [selectedServiceId]); 
 
    useEffect(() => {
       if (!listing) return;
@@ -75,17 +111,70 @@ export const ListingModal = ({ show, onHide, listing }) => {
       navigate(`/marketplace?listingId=${listing.id}`);
    };
 
-   const handleDropDownClick = (option) => {
-      setDropDownTitle(option);
+   const handleDropDownClick = (option) => {;
+      setDropDownTitle(option.label);
+      setSelectedServiceId(option.value);
    };
 
    const handleOfferSeller = () => {
       setShowOfferModal(true)
    }
 
-   const handleScheduleAppointment = () => {
+   const handleScheduleAppointment = async () => {
+      if (!selectedServiceId) {
+         alert("Please select a service first.");
+         return;
+      }
 
-   }
+      try {
+         const token = await getAccessTokenSilently();
+         const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/services/${selectedServiceId}/appointments`, {
+            headers: {
+               'Authorization': `Bearer ${token}`,
+            },
+         });
+
+         const data = await response.json();
+         if (data.length === 0) {
+            setAppointments([]);
+         } else {
+            setAppointments(data); 
+         }
+      } catch (error) {
+         console.error("Error fetching appointments:", error);
+      }
+   };
+
+   const handleBook = async (slot) => {
+      if (!slot) {
+         alert("Please select a time slot first.");
+         return;
+      }
+
+      try {
+         const token = await getAccessTokenSilently();
+         const selectedAppointment = appointmentMap[selectedTimeSlot];
+         const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/services/book/${selectedAppointment}`, {
+            method: 'POST',
+            headers: {
+               'Authorization': `Bearer ${token}`,
+               'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+               customer_id: user.sub
+            })
+         });
+
+         if (response.ok) {
+            alert("Appointment booked!");
+            window.location.reload();
+         } else {
+            alert("Failed to book. Try again.");
+         }
+      } catch (error) {
+         console.error("Error booking appointment:", error);
+      }
+   };
 
    const handleEditClick = () => {
       setIsEditing(true); // Enable edit mode
@@ -223,6 +312,28 @@ export const ListingModal = ({ show, onHide, listing }) => {
       }
    };
 
+const renderAppointments = (appointments) => {
+    return appointments.map((appt) => {
+        let cleanDate = appt.date.substring(0, 10);
+        let time = appt.time.includes(":") ? appt.time : `${appt.time}:00`;
+
+        const appointmentDateString = `${cleanDate}T${time}`;
+        const appointmentDate = new Date(appointmentDateString);
+
+        if (isNaN(appointmentDate.getTime())) {
+            console.error("Invalid Date:", appointmentDateString);
+            return null;
+        }
+
+        const formattedDate = format(appointmentDate, 'MM/dd/yyyy, hh:mm a');
+
+        return (
+            <Dropdown.Item key={appt.appointment_id} eventKey={formattedDate}>
+                {formattedDate}
+            </Dropdown.Item>
+        );
+    });
+};
    const handleReportClick = () => {
       // setReportingItemId(currUserId);
        setShowReportModal(true);
@@ -339,28 +450,6 @@ export const ListingModal = ({ show, onHide, listing }) => {
                      )}
                   </div>
 
-               <div className="row">
-                  <div className="col-md-6">
-                     <div className={styles.productOptions}>
-                        <label htmlFor="product-options-dropdown">
-                        {isServiceListing ? 'Service Options' : 'Product Options'}
-                        </label>
-                        <Dropdown>
-                        <Dropdown.Toggle variant="outline-light" className={styles.dropdownToggle}>
-                           {dropDownTitle}
-                        </Dropdown.Toggle>
-
-                        <Dropdown.Menu className={styles.dropdownMenu}>
-                           {dropdownOptions.map(option => (
-                              <Dropdown.Item key={option.value} onClick={() => handleDropDownClick(option.label)}>
-                              {option.label}
-                              </Dropdown.Item>
-                           ))}
-                        </Dropdown.Menu>
-                        </Dropdown>
-                     </div>
-                  </div>
-
                   <div className="col-md-6">
                      <div className={styles.reportSection}>
                         {!isOwner && (                     
@@ -382,19 +471,92 @@ export const ListingModal = ({ show, onHide, listing }) => {
                         />
                      </div>
                   </div>
-               </div>
+                  
+                  {/* Product/Service Options Dropdown */}
+                  {isServiceListing && !selectedServiceId && (
+                     <div className={styles.productOptions}>
+                        <label htmlFor="product-options-dropdown">
+                           Service Options
+                        </label>
+                        <Dropdown>
+                           <Dropdown.Toggle variant="outline-light" className={styles.dropdownToggle}>
+                              {dropDownTitle}
+                           </Dropdown.Toggle>
 
-                  {/* Offer Seller / Schedule Appointment Button */}
-                  <div className={styles.offerSellerButton}>
-                     <Button variant="dark" className="mb-2" onClick={isServiceListing ? handleScheduleAppointment : handleOfferSeller}>
-                        {isServiceListing ? 'Schedule an Appointment' : 'Offer Seller!'}
-                     </Button>
-                     <OfferModal
-                        show={showOfferModal}
-                        onHide={() => setShowOfferModal(false)}
-                        listing={listing}
-                     />
-                  </div>
+                           <Dropdown.Menu className={styles.dropdownMenu}>
+                              {dropdownOptions.map(option => (
+                                 <Dropdown.Item key={option.value} onClick={() => handleDropDownClick(option)}>
+                                    {option.label}
+                                 </Dropdown.Item>
+                              ))}
+                           </Dropdown.Menu>
+                        </Dropdown>
+                     </div>
+                  )}
+
+                  {/* Schedule Appointment Section for Services */}
+                  {isServiceListing && selectedServiceId && (
+                     <div className={styles.scheduleAppointmentSection}>
+                        {/* Available Time Slot Dropdown */}
+                        <label htmlFor="time-slot-dropdown">
+                           {listing.services.find(service => service.service_id === selectedServiceId)?.service_name}
+                           - ${listing.services.find(service => service.service_id === selectedServiceId)?.service_price || 'N/A'}
+                        </label>
+                        <Dropdown onSelect={(e) => setSelectedTimeSlot(e)}>
+                           <Dropdown.Toggle variant="outline-light" className={styles.dropdownToggle}>
+                              {selectedTimeSlot ? selectedTimeSlot : 'Choose a time'}
+                           </Dropdown.Toggle>
+                           <Dropdown.Menu className={styles.dropdownMenu}>
+                              {appointments.length > 0 ? (
+                                 renderAppointments(appointments)
+                              ) : (
+                                 <Dropdown.Item>No available slots</Dropdown.Item>
+                              )}
+                           </Dropdown.Menu>
+                        </Dropdown>
+
+                        {/* Book Appointment and Cancel Button */}
+                        <div className={styles.actionButtons}>
+                           <Button
+                              variant="success"
+                              className="mt-2"
+                              onClick={() => handleBook(selectedTimeSlot)}
+                           >
+                              Book Appointment
+                           </Button>
+                           <Button
+                              variant="secondary"
+                              className="mt-2"
+                              onClick={() => {
+                                 setSelectedServiceId(null); 
+                                 setSelectedTimeSlot(null); 
+                                 setAppointments([]); 
+                              }}
+                           >
+                              Cancel
+                           </Button>
+                        </div>
+                     </div>
+                  )}
+
+                  {/* For non-service listings, do not show product options */}
+                  {!isServiceListing && !isEditing && (
+                     <div className={styles.offerSellerButton}>
+                        <Button
+                           variant="dark"
+                           className="mb-2"
+                           onClick={handleOfferSeller}
+                        >
+                           Offer Seller!
+                        </Button>
+                        <OfferModal
+                           show={showOfferModal}
+                           onHide={() => setShowOfferModal(false)}
+                           listing={listing}
+                        />
+                     </div>
+                  )}
+
 
                   {/* Message Seller Button */}
                   <div className={styles.messageSellerButton}>

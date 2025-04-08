@@ -14,6 +14,7 @@ const Header = () => {
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
     const [categories, setCategories] = useState([]);
     const [unreadTotal, setUnreadTotal] = useState(0);
+    const [isSeller, setSeller] = useState(false);
     const [showMobileLinks, setShowMobileLinks] = useState(false);
     const [themeMode, setTheme] = useState(localStorage.getItem('theme') || 'light'); // Default theme is light
     const [userRoles, setUserRoles] = useState([]);
