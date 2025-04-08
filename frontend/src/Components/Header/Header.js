@@ -14,7 +14,6 @@ const Header = () => {
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
     const [categories, setCategories] = useState([]);
     const [unreadTotal, setUnreadTotal] = useState(0);
-    const [isSeller, setSeller] = useState(false);
     const [showMobileLinks, setShowMobileLinks] = useState(false);
     const [themeMode, setTheme] = useState(localStorage.getItem('theme') || 'light'); // Default theme is light
     const [userRoles, setUserRoles] = useState([]);
@@ -33,14 +32,16 @@ const Header = () => {
         'Marketplace',
         'Feed',
         'Community',
-        'Become A Seller',
+        isAuthenticated && user ? 'Seller-Dashboard' : 'Become A Seller',
         'Friends',
+        'About',
       ];
 
     useEffect(() => {
             fetchUserInfo();
     }, [currUserId]);
     
+
     useEffect(() => {
         const getUserRoles = async () => {
           if (isAuthenticated) {
@@ -53,7 +54,6 @@ const Header = () => {
             }
           }
         };
-    
         getUserRoles();
       }, [isAuthenticated, getAccessTokenSilently]);
     

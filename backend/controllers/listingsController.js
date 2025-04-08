@@ -12,7 +12,7 @@ const profileBucket = buckets.profile;
 const extractUserIdFromToken = (req) => {
   const token = req.headers.authorization && req.headers.authorization.split(' ')[1];
   let user_id;
-  
+
   if (!token) {
     throw new Error('Token is missing from the authorization header');
   }
@@ -70,7 +70,7 @@ export const getAllListings = async (req, res) => {
       u.name,               
       u.profile_image;
   `;
-  
+
   try {
     const result = await pool.query(query);
     // Loop through each listing and generate signed URLs
@@ -87,14 +87,14 @@ export const getAllListings = async (req, res) => {
           })
         );
 
-          if (listing.profile) {
-            const command = new GetObjectCommand({
-                Bucket: profileBucket,
-                Key: listing.profile,
-            });
+        if (listing.profile) {
+          const command = new GetObjectCommand({
+            Bucket: profileBucket,
+            Key: listing.profile,
+          });
 
-            // Generate the signed URL
-            listing.profile = await getSignedUrl(s3, command, { expiresIn: 86400 });
+          // Generate the signed URL
+          listing.profile = await getSignedUrl(s3, command, { expiresIn: 86400 });
         }
 
         return {
@@ -178,7 +178,7 @@ const getUserListings = async (userId) => {
   `;
 
   const result = await pool.query(query, [userId]);
-  
+
   return Promise.all(
     result.rows.map(async (listing) => {
       const signedUrls = await Promise.all(
@@ -271,37 +271,37 @@ export const getCommunityListings = async (req, res) => {
         
 `;
 
-try {
-  const result = await pool.query(query, [community_id]);
+  try {
+    const result = await pool.query(query, [community_id]);
 
-  // Loop through each listing and generate signed URLs
-  const listingsWithUrls = await Promise.all(
-    result.rows.map(async (listing) => {
-      // Generate pre-signed URLs for file_keys
-      const signedUrls = await Promise.all(
-        (listing.file_keys || []).map(async (fileKey) => {
-          const command = new GetObjectCommand({
-            Bucket: bucketName,
-            Key: fileKey,
-          });
+    // Loop through each listing and generate signed URLs
+    const listingsWithUrls = await Promise.all(
+      result.rows.map(async (listing) => {
+        // Generate pre-signed URLs for file_keys
+        const signedUrls = await Promise.all(
+          (listing.file_keys || []).map(async (fileKey) => {
+            const command = new GetObjectCommand({
+              Bucket: bucketName,
+              Key: fileKey,
+            });
 
-          return getSignedUrl(s3, command, { expiresIn: 86400 }); // URL expires in 1 day
-        })
-      );
+            return getSignedUrl(s3, command, { expiresIn: 86400 }); // URL expires in 1 day
+          })
+        );
 
-      // Return the listing with the signed URLs
-      return {
-        ...listing,
-        file_keys: signedUrls,
-      };
-    })
-  );
+        // Return the listing with the signed URLs
+        return {
+          ...listing,
+          file_keys: signedUrls,
+        };
+      })
+    );
 
-  res.status(200).json(listingsWithUrls);
-} catch (err) {
-  console.error('Error running query:', err);
-  res.status(500).json({ error: 'Database error' });
-}
+    res.status(200).json(listingsWithUrls);
+  } catch (err) {
+    console.error('Error running query:', err);
+    res.status(500).json({ error: 'Database error' });
+  }
 };
 
 
@@ -402,7 +402,7 @@ export const createItemListing = async (req, res) => {
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8,  $9)
             RETURNING *;
         `;
-    const listingValues = [title, description, category, type,  price, condition, new Date().toISOString(), userId, location];
+    const listingValues = [title, description, category, type, price, condition, new Date().toISOString(), userId, location];
 
 
     // Execute listings table query
@@ -469,9 +469,9 @@ export const createServiceListing = async (req, res) => {
         VALUES ($1, $2, $3, $4);
       `;
       const serviceValues = [
-        listingResult.rows[0].listing_id, 
-        service.name, 
-        service.estimatedTime || 0, 
+        listingResult.rows[0].listing_id,
+        service.name,
+        service.estimatedTime || 0,
         service.price
       ];
 
@@ -488,7 +488,7 @@ export const createServiceListing = async (req, res) => {
 export const editListing = async (req, res) => {
   const listingID = req.params.id;
   const { title, price, description } = req.body;
-  
+
   try {
     const updates = [];
     const values = [];
@@ -612,7 +612,7 @@ export const uploadImages = async (req, res) => {
 };
 
 // returns listings of the same category
-export const getSimilarListings = async ( req, res ) => {
+export const getSimilarListings = async (req, res) => {
   const category = req.params.category;
   const listingID = req.params.id;
   const categoryQuery = `SELECT category_id FROM public.categories WHERE name = $1`;
@@ -641,7 +641,7 @@ export const getSimilarListings = async ( req, res ) => {
             l.price;
       `;
 
-    try {
+  try {
     const categoryResult = await pool.query(categoryQuery, [category]);
     const categoryID = categoryResult.rows[0].category_id;
     const result = await pool.query(query, [categoryID, listingID]);
@@ -776,6 +776,33 @@ export const getUserServices = async (req, res) => {
   }
   catch (error) {
     console.error('Failed fetching services', error);
+    res.status(500).json({ error: 'Database error' });
+  }
+};
+
+export const isSellerCheck = async (req, res) => {
+  const { user_id } = req.params;
+
+  const checkQuery = `
+    SELECT *
+    FROM listings 
+    WHERE user_id = $1 
+      AND item_type = 'service'
+    LIMIT 1;
+  `;
+
+  try {
+    const result = await pool.query(checkQuery, [user_id]);
+
+    if (result.rows.length > 0) {
+      res.status(200).json({ hasListing: true });
+      console.log('it returns a good result')
+    } else {
+      res.status(200).json({ hasListing: false });
+      console.log('it returns a bad result')
+    }
+  } catch (error) {
+    console.error('Failed to check seller status:', error);
     res.status(500).json({ error: 'Database error' });
   }
 };
