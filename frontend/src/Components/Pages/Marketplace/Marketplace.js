@@ -13,6 +13,7 @@ export const Marketplace = () => {
   const [finalListings, setFinalListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [recommendations, setListingRecommendations] = useState([]);
+  const [recommendationsError, setRecommendationsError] = useState(false);
   const [error, setError] = useState(null);
 
 
@@ -203,6 +204,7 @@ export const Marketplace = () => {
     } catch (error) {
       console.error("Error fetching recommendations:", error);
       setError("Failed to fetch recommendations");
+      setRecommendationsError(true);
     }
   };
 
@@ -210,8 +212,14 @@ export const Marketplace = () => {
   const fetchData = async () => {
     try {
       // Check if both baseListings and recommendations have data
-      if (baseListings.length === 0 || recommendations.length === 0) {
-        return;  // Don't proceed if either is empty
+      if (baseListings.length === 0) {
+        return;
+      }
+
+      if(recommendations.length == 0){
+        setFinalListings(baseListings);
+        setLoading(false);
+        return;
       }
 
       const listingMap = new Map(baseListings.map(l => [l.id, l]));
@@ -248,10 +256,10 @@ export const Marketplace = () => {
 
   // useEffect to process data once both listings and recommendations are available
   useEffect(() => {
-    if (baseListings.length > 0 && recommendations.length > 0) {
+    if (baseListings.length > 0 &&  (recommendations.length > 0 || recommendationsError)) {
       fetchData(); // Fetch data after both have content
     }
-  }, [baseListings, recommendations]); 
+  }, [baseListings, recommendations, recommendationsError]); 
 
 
   // Filter change handler (when filter options are selected or modified)

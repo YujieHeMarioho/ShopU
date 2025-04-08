@@ -457,5 +457,6 @@ h2{
   text-align: center;
   z-index: 1000; /* Ensure it's on top */
   position: relative; /* Make sure it is rendered on top of other content */
+  border: 2px solid red;
 }
 

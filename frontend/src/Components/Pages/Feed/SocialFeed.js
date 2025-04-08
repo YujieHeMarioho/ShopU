@@ -17,6 +17,7 @@ const SocialFeed = () => {
   const [finalPosts, setFinalPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [recommendations, setPostRecommendations] = useState([]);
+  const [recommendationsError, setRecommendationsError] = useState(false);
   const [error, setError] = useState(null);
   const [userFeed, setUserFeed] = useState([]);
   const [selectedCard, setSelectedCard] = useState(null);
@@ -170,6 +171,7 @@ const SocialFeed = () => {
       } catch (error) {
         console.error("Error fetching recommendations:", error);
         setError("Failed to fetch recommendations");
+        setRecommendationsError(true);
       }
     };
 
@@ -177,8 +179,14 @@ const SocialFeed = () => {
   const fetchData = async () => {
     try {
       // Check if both basePosts and recommendations have data
-      if (basePosts.length === 0 || recommendations.length === 0) {
-        return;  // Don't proceed if either is empty
+      if (basePosts.length === 0) {
+        return;
+      }
+
+      if(recommendations.length == 0){
+        setFinalPosts(basePosts);
+        setLoading(false);
+        return;
       }
   
       const postsMap = new Map(basePosts.map(p => [p.post_id, p]));
@@ -226,10 +234,13 @@ const SocialFeed = () => {
   
     // useEffect to process data once both Posts and recommendations are available
     useEffect(() => {
-      if (basePosts.length > 0 && recommendations.length > 0) {
-        fetchData(); // Fetch data after both have content
+      if (
+        basePosts.length > 0 &&
+        (recommendations.length > 0 || recommendationsError)
+      ) {
+        fetchData(); // Safe to fetch once we have either recommendations or know they failed
       }
-    }, [basePosts, recommendations]); 
+    }, [basePosts, recommendations, recommendationsError]);
 
   const fetchUserFeed = async () => {
     if (!userId) return;
@@ -331,7 +342,7 @@ const SocialFeed = () => {
   };
 
   if (loading && page === 1) return <p>Loading feed...</p>;
-  if (error) return <p>{error}</p>;
+  // if (error) return <p>{error}</p>;
 
   return (
     <div className={styles.socialFeedContainer}>
@@ -353,11 +364,10 @@ const SocialFeed = () => {
         }
       >
         {loading ? (
-          <div className="loadingContainer">
-            <div className="spinner-border text-primary" role="status"></div>
+          <div className={styles.loadingContainer}>
             <p>Loading listings...</p>
           </div>
-        ) : (
+        ) :  (
           isGridLayout ? (
             <Masonry
               breakpointCols={{
@@ -434,7 +444,6 @@ const SocialFeed = () => {
             </div>
           )
         )}
-        {loading && <p>Loading more posts...</p>}
       </div>
 
       <CustomModal 
