@@ -448,3 +448,15 @@ h2{
   opacity: 1;
 }
 
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* Full screen height */
+  text-align: center;
+  z-index: 1000; /* Ensure it's on top */
+  position: relative; /* Make sure it is rendered on top of other content */
+  border: 2px solid red;
+}
+
