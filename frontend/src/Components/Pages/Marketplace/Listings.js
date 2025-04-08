@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Button, Dropdown, Carousel, Form } from 'react-bootstrap';
+import { Button, Dropdown, Carousel, Form } from 'react-bootstrap';
 import { CardComponent } from '../../Common';
 import styles from './Listings.module.css';
 import { useAuth0 } from '@auth0/auth0-react';
