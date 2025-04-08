@@ -257,6 +257,80 @@ p {
     gap: 10px;
 }
 
+/* Product/Service Options Dropdown */
+.productOptions {
+    margin-bottom: 20px;
+}
+
+.productOptions label {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+}
+
+.dropdownToggle {
+    width: 100%;
+    background-color: #f8f9fa;
+    border: 1px solid #ced4da;
+    color: #495057;
+    padding: 10px;
+    text-align: left;
+    font-size: 16px;
+}
+
+.dropdownMenu {
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.dropdownItem {
+    padding: 10px;
+    font-size: 14px;
+    color: #495057;
+}
+
+.dropdownItem:hover {
+    background-color: #f1f1f1;
+}
+
+/* Schedule Appointment Section */
+.scheduleAppointmentSection {
+    margin-top: 20px;
+}
+
+.scheduleAppointmentSection label {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.scheduleAppointmentSection .dropdownToggle {
+    width: 100%;
+    background-color: #f8f9fa;
+    border: 1px solid #ced4da;
+    color: #495057;
+    padding: 10px;
+    text-align: left;
+    font-size: 16px;
+}
+
+.scheduleAppointmentSection .dropdownMenu {
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.scheduleAppointmentSection .actionButtons {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.scheduleAppointmentSection .actionButtons button {
+    width: 48%;
+}
+
 /* Mobile View Adjustments */
 @media (max-width: 768px) {
     .modalBody {

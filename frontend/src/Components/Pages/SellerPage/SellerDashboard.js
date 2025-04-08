@@ -165,8 +165,6 @@ const handleDeleteAppointment = (appointment) => {
       <section className={styles.section}>
   <h2>My Appointments</h2>
     <AppointmentsComponent/>
-
-  
     </section>
 
     </Container>
