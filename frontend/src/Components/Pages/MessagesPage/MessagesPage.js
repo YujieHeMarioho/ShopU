@@ -462,62 +462,65 @@ const MessagesPage = () => {
   }, [displayedConversations, selectedConversation]);
 
   return (
-    <div className={styles.messagesPage}>
-      <div className={styles.history}>
-        <h3>Conversations</h3>
-        {error && <p className="error-message">{error}</p>}
-        {isLoadingConversations ? (
-          <div className={styles.spinner}>Loading conversations...</div>
-        ) : (
-          conversationList
-        )}
-      </div>
+    <div>
+      <button className={styles.switchButton} onClick={() => navigate('/groupchats')}>View Your Community Chats</button>
+      <div className={styles.messagesPage}>
+        <div className={styles.history}>
+          <h3>Conversations</h3>
+          {error && <p className="error-message">{error}</p>}
+          {isLoadingConversations ? (
+            <div className={styles.spinner}>Loading conversations...</div>
+          ) : (
+            conversationList
+          )}
+        </div>
 
-      <div className={styles.mainContent}>
-        {selectedConversation ? (
-          <>
-            <h3>Chat with {selectedConversation.otherUsername}</h3>
-            {isLoadingMessages ? (
-              <div className={styles.spinner}>Loading messages...</div>
-            ) : (
-              <div
-                className={styles.messages}
-                ref={messagesContainerRef}
-                onScroll={handleScroll}
-              >
-                {messages.map((message) => {
-                  const isSent =
-                    message.sender_id?.toLowerCase() === user.sub.toLowerCase();
-                  return (
-                    <div key={message.message_id} className={isSent ? styles.sent : styles.received}>
-                      <div className={styles.messageBubble}>
-                        <p>{renderMessageContent(message)}</p>
-                        <span className={styles.messageTime}>
-                          {new Date(message.created_at).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </span>
+        <div className={styles.mainContent}>
+          {selectedConversation ? (
+            <>
+              <h3>Chat with {selectedConversation.otherUsername}</h3>
+              {isLoadingMessages ? (
+                <div className={styles.spinner}>Loading messages...</div>
+              ) : (
+                <div
+                  className={styles.messages}
+                  ref={messagesContainerRef}
+                  onScroll={handleScroll}
+                >
+                  {messages.map((message) => {
+                    const isSent =
+                      message.sender_id?.toLowerCase() === user.sub.toLowerCase();
+                    return (
+                      <div key={message.message_id} className={isSent ? styles.sent : styles.received}>
+                        <div className={styles.messageBubble}>
+                          <p>{renderMessageContent(message)}</p>
+                          <span className={styles.messageTime}>
+                            {new Date(message.created_at).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
+              )}
+              <div className={styles.messageInput}>
+                <input
+                  type="text"
+                  placeholder="Type a message..."
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyDown={handleKeyPress}
+                />
+                <button onClick={handleSendMessage}>Send</button>
               </div>
-            )}
-            <div className={styles.messageInput}>
-              <input
-                type="text"
-                placeholder="Type a message..."
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyDown={handleKeyPress}
-              />
-              <button onClick={handleSendMessage}>Send</button>
-            </div>
-          </>
-        ) : (
-          <p>Select a conversation to view messages.</p>
-        )}
+            </>
+          ) : (
+            <p>Select a conversation to view messages.</p>
+          )}
+        </div>
       </div>
     </div>
   );

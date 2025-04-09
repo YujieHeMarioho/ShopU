@@ -1,4 +1,9 @@
-import { pool } from '../pool.js';
+import { s3, pool, buckets } from '../pool.js';
+import { PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+
+const bucketName = buckets.profile;
+
 
 // Get all conversations for a user
 export const getConversations = async (req, res) => {
@@ -52,6 +57,54 @@ export const getMessages = async (req, res) => {
   }
 };
 
+// Get all messages for a specific groupchat
+export const getMessagesGroupchat = async (req, res) => {
+  const { communityId } = req.params;
+  console.log('Fetching messages for community ID:', communityId); // Debug log
+
+  try {
+    const result = await pool.query(
+        `SELECT * FROM groupchat_messages 
+        LEFT JOIN users ON sender_id = user_id
+        WHERE community_id = $1 ORDER BY created_at ASC`, // Use created_at instead of timestamp
+        [communityId]
+    );
+
+    const messagesWithUrls = await Promise.all(
+      result.rows.map(async (message) => {
+      // Generate a pre-signed URL for the community's image file_key (if it exists)
+      let imageUrl = null;
+      if (message.profile_image) {
+          const command = new GetObjectCommand({
+          Bucket: bucketName,
+          Key: message.profile_image, // The file_key from the community_images table
+          });
+  
+          // Generate the signed URL
+          imageUrl = await getSignedUrl(s3, command, { expiresIn: 86400 }); // URL expires in 1 day
+      }
+  
+      // Return the community with the signed URL for the image (if it exists)
+      return {
+          message_id: message.message_id,
+          community_id: message.community_id,
+          sender_id: message.sender_id,
+          content: message.content,
+          created_at: message.created_at,
+          imageUrl: imageUrl, // Add image URL to the community data
+          name: message.name
+      };
+      })
+    );
+      
+    console.log('Messages fetched:', messagesWithUrls); // Debug log
+    res.status(200).json(messagesWithUrls);
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 // Create a new conversation
 export const createConversation = async (req, res) => {
   const { user1_id, user2_id } = req.body;
@@ -89,6 +142,34 @@ export const sendMessage = async (req, res) => {
     const result = await pool.query(
       `INSERT INTO messages (conversation_id, sender_id, content, created_at) VALUES ($1, $2, $3, NOW()) RETURNING *`,
       [conversationId, senderId, content]
+    );
+    console.log('Message sent successfully:', result.rows[0]); // Debug log
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Error sending message:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Send a message in a groupchat
+export const sendMessageGroupchat = async (req, res) => {
+  const { communityId } = req.params;
+  const { senderId, content } = req.body;
+  console.log('Incoming message details:', {
+    communityId,
+    senderId,
+    content,
+  }); // Debug log
+
+  if (!content || !content.trim()) {
+    console.error('Message content is missing or empty'); // Debug log
+    return res.status(400).json({ error: 'Message content is required.' });
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO groupchat_messages (community_id, sender_id, content, created_at) VALUES ($1, $2, $3, NOW()) RETURNING *`,
+      [communityId, senderId, content]
     );
     console.log('Message sent successfully:', result.rows[0]); // Debug log
     res.status(201).json(result.rows[0]);

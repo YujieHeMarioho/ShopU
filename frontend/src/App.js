@@ -23,6 +23,7 @@ import { AuthenticationGuard } from "./Components/authentication-guard";
 import { useAuth0 } from '@auth0/auth0-react';
 import CheckOut from './Components/Pages/CheckOut/CheckOut'; // Import CheckOut page
 import MessagesPage from './Components/Pages/MessagesPage/MessagesPage';
+import GroupchatPage from './Components/Pages/MessagesPage/GroupchatPage';
 import ChatContent from './Components/Pages/ChatContent/ChatContent';
 import EmailVerificationRequired from './Components/Utilities/EmailVerificationRequired';
 import AdminDashboard from './Components/Pages/Administration/AdminDashboard';
@@ -100,6 +101,7 @@ function App() {
             {/* New Checkout Page */}
             <Route path="/cart" element={<AuthenticationGuard component={CheckOut} />} />
             <Route path="/messages" element={<AuthenticationGuard component={MessagesPage} />} />
+            <Route path="/groupchats" element={<AuthenticationGuard component={GroupchatPage} />} />
             <Route path="/community/:community_id" element={<AuthenticationGuard component={CommunityHome} />} />
             <Route path="/chat/:conversation_id" element={<AuthenticationGuard component={ChatContent} />} />
             <Route path="/feed/:post_id" element={<AuthenticationGuard component={SocialFeed} />} />
