@@ -283,7 +283,7 @@ const GroupchatPage = () => {
           <h3>Groupchats</h3>
           {error && <p className="error-message">{error}</p>}
           {isLoadingConversations ? (
-            <div className={styles.spinner}>Loading chats...</div>
+            <div className={styles.spinner}></div>
           ) : conversations.length === 0 ? (
             <p>No groupchats found. Go to communities to start chatting!</p>
           ) : (
@@ -320,7 +320,7 @@ const GroupchatPage = () => {
             <>
               <h3>Chat with the {selectedConversation.name}</h3>
               {isLoadingMessages ? (
-                <div className={styles.spinner}>Loading messages...</div>
+                <div className={styles.spinner}></div>
               ) : (
                 <div
                   className={styles.messages}

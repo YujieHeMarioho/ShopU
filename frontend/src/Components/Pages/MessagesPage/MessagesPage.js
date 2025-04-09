@@ -469,7 +469,7 @@ const MessagesPage = () => {
           <h3>Conversations</h3>
           {error && <p className="error-message">{error}</p>}
           {isLoadingConversations ? (
-            <div className={styles.spinner}>Loading conversations...</div>
+            <div className={styles.spinner}></div>
           ) : (
             conversationList
           )}
@@ -480,7 +480,7 @@ const MessagesPage = () => {
             <>
               <h3>Chat with {selectedConversation.otherUsername}</h3>
               {isLoadingMessages ? (
-                <div className={styles.spinner}>Loading messages...</div>
+                <div className={styles.spinner}></div>
               ) : (
                 <div
                   className={styles.messages}
