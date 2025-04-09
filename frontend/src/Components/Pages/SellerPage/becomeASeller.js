@@ -15,7 +15,7 @@ function BecomeASeller() {
         <p className={styles.heroDescription}>
           Empower your entrepreneurial journey by joining our platform.
         </p>
-        <Button className={styles.ctaButton} variant="warning">
+        <Button className={styles.ctaButton} variant="warning" onClick={() => navigate("/marketplace")}>
           Join Now
         </Button>
       </section>
