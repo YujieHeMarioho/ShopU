@@ -4,10 +4,20 @@
 .messagesPage {
     display: flex;
     height: calc(100vh - 120px); /* Subtract header (60px) and footer (60px) */
-    padding-top: 60px; /* Header height */
     padding-bottom: 60px; /* Footer height */
     overflow: hidden;
     background-color: var(--background-color);
+}
+
+.switchButton {
+    height: 60px;
+    background-color: var(--primary-color);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 20px;
+    border: none;
+    margin-top: 5px;
+    margin-bottom: 5px;
 }
 
 /* Left Half: Conversation History */
@@ -380,6 +390,28 @@
     }
 }
 
+.senderAvatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #ddd
+}
+
+.senderInfo {
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+}
+.senderMetadata {
+    display: flex;
+    flex-direction: row;
+    justify-content: end;
+}
+.sender {
+    margin: 0;
+    color: white;
+}
 
 /* shared card  */
 

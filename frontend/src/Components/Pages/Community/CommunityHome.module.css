@@ -2,9 +2,16 @@
 .communityHomeContainer {
 	background-color: var(--background-color);
 	padding: 20px;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
+  }
+
+  .tabsContainer {
+	margin-left: 10%;
+	margin-right: 10%
+  }
+
+  .allTabContent {
+	margin-left: 10%;
+	margin-right: 10%
   }
   
   /* Title */

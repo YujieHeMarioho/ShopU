@@ -36,6 +36,40 @@ export const createConversation = async (req, res) => {
   }
 };
 
+export const joinGroupchat = async (req, res) => {
+  const { user_id, community_id } = req.body;
+
+  console.log('Received request to join conversation:', { user_id, community_id });
+
+  if (!user_id || !community_id) {
+    return res.status(400).json({ error: 'Both user ID and community ID required.' });
+  }
+  try {
+    const existingQuery = `
+      SELECT * FROM groupchat_members
+      WHERE (user_id = $1 AND community_id = $2)
+    `;
+    const existingResult = await pool.query(existingQuery, [user_id, community_id]);
+
+    if (existingResult.rows.length > 0) {
+      console.log('Already joined:', existingResult.rows[0]);
+      return res.json({ community_id: existingResult.rows[0].community_id });
+    }
+
+    const insertQuery = `
+      INSERT INTO groupchat_members (user_id, community_id, joined_at)
+      VALUES ($1, $2, NOW())
+    `;
+    const insertResult = await pool.query(insertQuery, [user_id, community_id]);
+
+    console.log('Joined groupchat with ID:', community_id);
+    res.json({ community_id: community_id });
+  } catch (error) {
+    console.error('Error joining groupchat:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 
 
 // Fetch all conversations for a user
@@ -58,6 +92,30 @@ export const getConversations = async (req, res) => {
     res.json(result.rows);
   } catch (error) {
     console.error('Error fetching conversations:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Fetch all groupchats for a user
+export const getGroupchats = async (req, res) => {
+  const { userId } = req.params;
+
+  console.log('Fetching conversations for user:', userId);
+
+  try {
+    const result = await pool.query(
+      `
+      SELECT community_id, user_id, joined_at
+      FROM groupchat_members
+      WHERE user_id = $1
+      `,
+      [userId]
+    );
+
+    console.log('groupchats fetched:', result.rows);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching groupchats:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
@@ -96,4 +154,3 @@ export const conversationBetweenUsers = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 }
-

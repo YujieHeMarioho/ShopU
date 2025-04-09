@@ -5,6 +5,8 @@ import {
   getMessages,
   sendMessage,
   markConversationMessagesRead,
+  getMessagesGroupchat,
+  sendMessageGroupchat,
   sendOffer,
 } from '../controllers/messagesController.js';
 
@@ -19,8 +21,14 @@ router.post('/conversations', createConversation);
 // Route to get all messages in a specific conversation
 router.get('/:conversationId/messages', getMessages);
 
+// Route to get all messages in a specific groupchat
+router.get('/:communityId/messages/groupchat', getMessagesGroupchat);
+
 // Route to send a message in a specific conversation
 router.post('/:conversationId/messages', sendMessage);
+
+// Route to send a message in a specific conversation
+router.post('/:communityId/messages/groupchat', sendMessageGroupchat);
 
 // NEW: Route to mark all messages in a conversation as read
 router.post('/:conversationId/mark-read', markConversationMessagesRead);

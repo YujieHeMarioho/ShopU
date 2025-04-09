@@ -314,7 +314,14 @@ export const addCommunity = async (req, res) => {
             [user_id, name, description, joined_at, 1]
         );
         comm_id = result.rows[0].community_id;
-        //res.status(201).json(result.rows[0]);
+
+        //create new groupchat
+        const result_gc = await pool.query(
+            `INSERT INTO community_chats (created_at, community_id) 
+            VALUES ($1, $2) RETURNING chat_id;`,
+            [joined_at, comm_id]
+        );
+        
     } catch (err) {
         console.error(err);
         return res.status(500).json({ error: 'Internal Server Error' });
@@ -488,6 +495,7 @@ export const deleteCommunity = async (req, res) => {
         const cleanUp = await pool.query('DELETE FROM community_members WHERE community_id = $1', [community_id]);
         const cleanUp2 = await pool.query('DELETE FROM communities_posts WHERE community_id = $1', [community_id]);
         const cleanUp3 = await pool.query('DELETE FROM communities_listings WHERE community_id = $1', [community_id]);
+        const cleanUp4 = await pool.query('DELETE FROM community_chats WHERE community_id = $1', [community_id]);
 
         const result = await pool.query(
             'DELETE FROM communities WHERE community_id = $1 RETURNING *',

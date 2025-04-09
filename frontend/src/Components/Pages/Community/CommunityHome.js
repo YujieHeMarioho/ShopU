@@ -5,7 +5,7 @@ import axios from 'axios';
 import {CardGrid, SocialCard, CommentSection, CustomModal} from '../../Common'
 import Masonry from 'react-masonry-css';
 import ListingModal from '../Marketplace/Listings';
-import { Modal } from 'react-bootstrap';
+import { Container, Row, Col, Card, Button, InputGroup, Form, Tab, Tabs, Modal } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import styles from "./CommunityHome.module.css";
 import feedStyles from '../Feed/SocialFeed.module.css';
@@ -24,6 +24,7 @@ const CommunityHome = () => {
   const [selectedCard, setSelectedCard] = useState(null);
   const [showModal, setShowModal] = useState(false); // State to toggle the modal
   const navigate = useNavigate();
+  const [key, setKey] = useState('posts');
   const [selectedPostId, setSelectedPostId] = useState(null);
   const [showComments, setShowComments] = useState(false);
   const { user, isAuthenticated, getAccessTokenSilently, isLoading: authLoading } = useAuth0();
@@ -425,6 +426,23 @@ const leaveCommunity = async () => {
   }
 };
 
+const handleJoinGroupchat = async () => {
+  console.log("join groupchat clicked");
+  try {
+    const token = await getAccessTokenSilently();
+    const memberResponse = await axios.post(
+      `${process.env.REACT_APP_BACKEND_URL}/api/conversations/groupchat`,
+      {user_id: user.sub, community_id: community_id},
+      { headers: { Authorization: `Bearer ${token}` }}
+    );
+  }
+  catch (e)
+  {
+  }
+  navigate('/groupchats')
+}
+
+
   return (
     <div className={styles.communityHomeContainer}> 
       <h1 className={styles.communityPageTitle}>{community.name + " Homepage"}</h1>
@@ -441,7 +459,7 @@ const leaveCommunity = async () => {
           <div className={styles.communityButtons}>
           <button onClick={isJoined ? leaveCommunity : joinCommunity}>{isJoined ? "Leave" : "Join"}</button>
               
-            <button>Visit Community Groupchat</button>
+            <button onClick={() => handleJoinGroupchat()}>Visit Community Groupchat</button>
           </div>
         </div>
         <div className={styles.content}>
@@ -450,76 +468,86 @@ const leaveCommunity = async () => {
             <p className={styles.cardText}>{community.description}</p>
         </div>
       </div>
-      <p className={styles.sectionTitle}>Members</p>
-      <div className={styles.membersGrid}>
-        {members.map((member) => (
-          <div key={member.user_id} className={styles.memberCard}>
-            <img
-              src={member.profile_picture || 'https://via.placeholder.com/100'}
-              alt={member.name || `User ${member.user_id}`}
-              className={styles.memberAvatar}
-            />
-            <div className={styles.memberInfo}>
-              <h3>{member.name || `User ${member.user_id}`}</h3>
+      <div className={styles.allTabContent}>
+        <Tabs activeKey={key} onSelect={(k) => setKey(k)} id="community-tabs" className={`mb-3 ${styles.tabsContainer}`}>
+          <Tab eventKey="posts" title="Posts">
+            <div style={{width: "100%"}}>
+              {feed.length === 0 ? (
+                <p className={styles.defaultFiller}>No posts available.</p>
+              ) : (
+                <Masonry
+                  breakpointCols={{ default: 8, 2560: 6, 1920:5, 1280: 3, 1024: 2, 768: 1 }}
+                  className={feedStyles.masonryGrid}
+                  columnClassName={feedStyles.masonryColumn}
+                >
+                {feed.map((post) => (
+                  <div key={post.post_id} className={feedStyles.gridItem} onClick={() => handleFeedCardClick(post)}> 
+                  {console.log(post.profile)}
+                    <SocialCard
+                      post_id={post.post_id}
+                      image={post.image}
+                      title={post.title}
+                      description={post.content}
+                      profilePic={post.profile}
+                      author={post.author}
+                      authorId={post.author_id}
+                      initialLikes={post.likes_count}
+                      initialShares={post.shares}
+                      isLikedAlready={post.isliked}
+                      tags={post.tags}
+                      listingId={post.listing_id}
+                      onShowComments={() => handleShowComments(post.post_id)}
+                      reloadFeed={reloadFeed}
+                      allFriends={friends}
+                      friendsLoading={friendsLoading}
+                      selected={selectedCard !== null}
+                    />
+                  </div>
+                ))}
+                </Masonry>
+              )
+              }
             </div>
-            <div className={styles.memberActions}>
-               <button
-                className={styles.memberMessageButton}
-                onClick={() => handleMessage(member.user_id)}>
-                Message
-              </button> 
-              <button
-                className={styles.addFriendButton}
-                /* onClick={() => handleFriend(member.user_id)} */
-              >
-                Add Friend
-              </button> 
+          </Tab>
+
+          <Tab eventKey="listings" title="Listings">
+            <div className={listingStyles.cardGridContainer}>
+              <CardGrid listings={listings} className={listingStyles.cardGrid} openListingDetails={handleCardClick} />
             </div>
-          </div>
-        ))}
-      </div>
-      <p className={styles.sectionTitle}>Listings</p>
-      <div className={listingStyles.cardGridContainer}>
-        <CardGrid listings={listings} className={listingStyles.cardGrid} openListingDetails={handleCardClick} />
-      </div>
-      <p className={styles.sectionTitle}>Social Posts</p>
-      <div style={{width: "100%"}}>
-        {feed.length === 0 ? (
-          <p className={styles.defaultFiller}>No posts available.</p>
-        ) : (
-          <Masonry
-            breakpointCols={{ default: 8, 2560: 6, 1920:5, 1280: 3, 1024: 2, 768: 1 }}
-            className={feedStyles.masonryGrid}
-            columnClassName={feedStyles.masonryColumn}
-          >
-          {feed.map((post) => (
-            <div key={post.post_id} className={feedStyles.gridItem} onClick={() => handleFeedCardClick(post)}> 
-            {console.log(post.profile)}
-              <SocialCard
-                post_id={post.post_id}
-                image={post.image}
-                title={post.title}
-                description={post.content}
-                profilePic={post.profile}
-                author={post.author}
-                authorId={post.author_id}
-                initialLikes={post.likes_count}
-                initialShares={post.shares}
-                isLikedAlready={post.isliked}
-                tags={post.tags}
-                listingId={post.listing_id}
-                onShowComments={() => handleShowComments(post.post_id)}
-                reloadFeed={reloadFeed}
-                allFriends={friends}
-                friendsLoading={friendsLoading}
-                selected={selectedCard !== null}
-              />
+          </Tab>
+
+          <Tab eventKey='members' title="Members">
+            <div className={styles.membersGrid}>
+              {members.map((member) => (
+                <div key={member.user_id} className={styles.memberCard}>
+                  <img
+                    src={member.profile_picture || 'https://via.placeholder.com/100'}
+                    alt={member.name || `User ${member.user_id}`}
+                    className={styles.memberAvatar}
+                  />
+                  <div className={styles.memberInfo}>
+                    <h3>{member.name || `User ${member.user_id}`}</h3>
+                  </div>
+                  <div className={styles.memberActions}>
+                    <button
+                      className={styles.memberMessageButton}
+                      onClick={() => handleMessage(member.user_id)}>
+                      Message
+                    </button> 
+                    <button
+                      className={styles.addFriendButton}
+                      /* onClick={() => handleFriend(member.user_id)} */
+                    >
+                      Add Friend
+                    </button> 
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-          </Masonry>
-        )
-        }
+          </Tab>
+        </Tabs>
       </div>
+      
       {selectedListing && (<ListingModal show={showListingModal} onHide={handleCloseListingModal} listing={selectedListing} />)}
       
        <CustomModal 
