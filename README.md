@@ -1,153 +1,176 @@
-# 🛍️ ShopU
+# ShopU
 
-ShopU is a full-stack e-commerce platform that enables users to browse products, connect with friends, and perform secure online transactions. The platform is designed with scalability, real-time communication, and modern web technologies in mind.
+ShopU is a multi-service web app with:
 
----
+- a **React (Create React App)** frontend (`frontend/`)
+- a **Node.js / Express** backend API (`backend/`)
+- a **Python FastAPI** “ML service” used for recommendations (`mlservice/`)
 
-## 🚀 Features
+## Repo structure
 
-* 🔐 User Authentication (Auth0 / custom login system)
-* 🛒 Product browsing and purchasing
-* 💳 Secure payments (PayPal integration)
-* 👥 Social features (friends system, messaging)
-* 💬 Real-time communication (WebSocket-based chat)
-* ❤️ Favorites and personalized feeds
-* 🔍 Search and filtering system
-* 🧾 Seller and buyer interaction system
+- `frontend/`: React UI (Auth0 auth, PayPal integration, talks to the backend via `REACT_APP_BACKEND_URL`)
+- `backend/`: Express API (Postgres via `pg`, Auth0 JWT validation middleware, S3 image storage/signing, calls `mlservice/`)
+- `mlservice/`: FastAPI app that reads from Postgres and returns recommendation scores
+- `docker-compose.yml`: GitLab Runner container (for CI runners), not a full local dev stack
+- `.gitlab-ci.yml`: CI pipeline (frontend + backend tests/build + deploy to AWS services)
 
----
+## Prerequisites
 
-## 🏗️ Tech Stack
+- **Node.js 20+** (CI uses `node:20`)
+- **npm**
+- **Python 3.10+** (recommended) for `mlservice/`
+- A **PostgreSQL** database reachable by the backend + mlservice
+- (Optional) **AWS S3** buckets for image storage
+- (Optional) **Auth0** tenant/app for authentication
 
-### Frontend
+## Environment variables
 
-* React.js
-* JavaScript / TypeScript
-* HTML / CSS
+This repo currently contains `.env` files under service folders. Treat these as **secrets**:
 
-### Backend
+- Do **not** commit real credentials
+- Prefer creating your own local `.env` files
+- Rotate any keys that were committed previously
 
-* Node.js
-* Express.js
+### Backend (`backend/.env`)
 
-### Database
+The backend expects at minimum:
 
-* PostgreSQL
+- `PORT` (example: `8080`)
+- `CLIENT_ORIGIN_URL` (example: `http://localhost:3000`)
+- `BACKEND_URL` (example: `http://localhost:8080`)
 
-### DevOps / Tools
+Database (Postgres):
 
-* Docker & Docker Compose
-* Git & GitHub
-* CI/CD (planned or implemented)
+- `DB_HOST`
+- `DB_NAME`
+- `DB_USER`
+- `DB_PASSWORD`
+- `DB_PORT`
 
----
+Auth0 (used by controllers/middleware):
 
-## 📁 Project Structure
+- `AUTH0_DOMAIN`
+- `AUTH0_ISSUER_BASE_URL`
+- `AUTH0_AUDIENCE`
+- `AUTH0_CLIENT_ID`
+- `AUTH0_CLIENT_SECRET`
 
-```
-ShopU/
-├── frontend/        # React frontend
-├── backend/         # Node.js backend API
-├── docker/          # Docker configuration
-├── scripts/         # Utility scripts
-└── README.md
-```
+AWS / S3 (used for uploads + signed URLs):
 
----
+- `BUCKET_REGION`
+- `BUCKET_ACCESS_KEY`
+- `BUCKET_SECRET_KEY`
+- `BUCKET_NAME_FEED`
+- `BUCKET_NAME_LISTINGS`
+- `BUCKET_NAME_COMMUNITIES`
+- `BUCKET_NAME_PROFILE`
 
-## ⚙️ Installation & Setup
+ML service base URL (optional, defaults to `http://localhost:8000`):
 
-### 1. Clone the repository
+- `PYTHON_API_BASE_URL`
 
-```
-git clone https://github.com/YujieHeMarioho/ShopU.git
-cd ShopU
-```
+### Frontend (`frontend/.env`)
 
-### 2. Setup environment variables
+Common variables:
 
-Create `.env` files:
+- `REACT_APP_BACKEND_URL` (example: `http://localhost:8080`)
+- `REACT_APP_AUTH0_DOMAIN`
+- `REACT_APP_AUTH0_CLIENT_ID`
+- `REACT_APP_AUTH0_AUDIENCE`
+- `REACT_APP_AUTH0_REDIRECT_URI` (example: `http://localhost:3000`)
+- `REACT_APP_PAYPAL_CLIENT_ID`
 
-```
-backend/.env
-frontend/.env
-```
+### ML service (`mlservice/.env`)
 
-Example:
+The ML service connects directly to Postgres:
 
-```
-# backend/.env
-PORT=5000
-DATABASE_URL=your_database_url
-AWS_ACCESS_KEY_ID=your_key
-AWS_SECRET_ACCESS_KEY=your_secret
-```
+- `DB_HOST`
+- `DB_NAME`
+- `DB_USER`
+- `DB_PASSWORD`
+- `DB_PORT`
 
-⚠️ **Important:** Never commit `.env` files to GitHub.
+## Run locally (dev)
 
----
+You’ll typically run **three processes**: backend, frontend, and mlservice.
 
-### 3. Run with Docker (Recommended)
+### 1) Start the backend API
 
-```
-docker-compose up --build
-```
-
----
-
-### 4. Run manually (Optional)
-
-#### Backend
-
-```
+```bash
 cd backend
-npm install
-npm run dev
+npm ci
+npm run server
 ```
 
-#### Frontend
+By default the backend listens on `PORT` (commonly `8080`).
 
+Notes:
+
+- Many `/api/*` endpoints are protected by Auth0 JWT middleware.
+- The root endpoint (`/`) is a simple health check returning `"Hello from backend! V1"`.
+
+### 2) Start the ML service
+
+The ML service is a FastAPI app that runs on port `8000` by default.
+
+```bash
+cd mlservice
+python -m venv .venv
+source .venv/bin/activate
+
+# install dependencies (adjust as needed for your environment)
+pip install fastapi uvicorn pandas numpy scipy scikit-learn psycopg2-binary python-dotenv
+
+python ml_service.py
 ```
+
+The backend calls it via:
+
+- `PYTHON_API_BASE_URL` (defaults to `http://localhost:8000`)
+- endpoint: `GET /recommend?user_id=...&current_page=feed|listings`
+
+### 3) Start the frontend
+
+```bash
 cd frontend
-npm install
+npm ci
 npm start
 ```
 
----
+The app runs at `http://localhost:3000`.
 
-## 🌐 Usage
+## Tests
 
-* Frontend: http://localhost:3000
-* Backend API: http://localhost:5000
+Frontend:
 
----
+```bash
+cd frontend
+npm test
+```
 
-## 🧪 Future Improvements
+Backend:
 
-* Improve recommendation system
-* Add AI-based product suggestions
-* Enhance CI/CD pipeline
-* Optimize database performance
-* Add mobile support
+```bash
+cd backend
+npm test
+```
 
----
+## CI / Deployment (GitLab)
 
-## 🤝 Contributing
+The `.gitlab-ci.yml` pipeline includes:
 
-Contributions are welcome! Feel free to open issues or submit pull requests.
+- **Test**: runs frontend + backend tests in Node 20
+- **Build**: builds the React app
+- **Deploy** (main branch): syncs `frontend/build/` to an S3 bucket, triggers an Amplify deployment, and deploys backend to Elastic Beanstalk
 
----
+Deployment relies on CI variables such as:
 
-## 📄 License
+- `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION`
+- `FRONTEND_BUCKET_NAME`
+- `AMPLFIY_APP_ID`
 
-This project is for educational and development purposes.
+## Security notes
 
----
+- Never commit real `.env` values (DB passwords, AWS keys, Auth0 secrets).
+- If secrets were committed, rotate them immediately (AWS IAM keys, DB credentials, Auth0 client secret).
 
-## 👨‍💻 Author
-
-**Yujie He**
-
-* GitHub: https://github.com/YujieHeMarioho
-
----
